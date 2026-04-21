@@ -1,10 +1,11 @@
-import { useFormik } from 'formik';
-import { toFormikValidationSchema } from 'zod-formik-adapter';
-import { authSchema } from '../schemas/auth.schema';
+"use client";
+import { useFormik } from "formik";
+import { toFormikValidationSchema } from "zod-formik-adapter";
+import {loginSchema, LoginSchemaType} from '@/features/auth'
 
 export const useAuthForm = (onSubmit: (values: any) => void) =>
-  useFormik({
-    initialValues: {},
-    validationSchema: toFormikValidationSchema(authSchema),
-    onSubmit,
+  useFormik<LoginSchemaType>({
+    initialValues: { phone: "", password: "" },
+    validationSchema: toFormikValidationSchema(loginSchema),
+    onSubmit
   });
