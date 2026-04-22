@@ -33,7 +33,7 @@ export const {{camelCase name}}Schema = z.object({
   // TODO: define fields
 });
 
-export type {{properCase name}}Schema = z.infer<typeof {{camelCase name}}Schema>;
+export type {{properCase name}}SchemaType = z.infer<typeof {{camelCase name}}Schema>;
 `,
         },
         {

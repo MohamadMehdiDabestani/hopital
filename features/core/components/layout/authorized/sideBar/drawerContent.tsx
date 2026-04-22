@@ -26,9 +26,9 @@ type MenuGroup = { title: string; items: MenuItem[] };
 
 const menu: MenuGroup[] = [
   {
-    title: "عنوان آکوردین ۱",
+    title: "پذیرش",
     items: [
-      { title: "عنوان آیتم ۱", url: "/doctor" },
+      { title: "لیست پذیرش", url: "/dashboard/admision" },
       { title: "d", url: "/doctor/d" },
     ],
   },
