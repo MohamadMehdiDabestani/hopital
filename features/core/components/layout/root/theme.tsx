@@ -8,6 +8,16 @@ export const theme = createTheme({
   },
 
   components: {
+    MuiTextField: {
+      defaultProps: {
+        variant: "filled",
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        variant: "filled",
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         "@font-face": [
