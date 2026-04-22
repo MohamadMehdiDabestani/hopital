@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { theme } from "./theme";
 import { CacheProvider } from "@emotion/react";
 import { createEmotionCache } from "./emotionCache";
+import { Notification } from "@/features/core";
 
 const cache = createEmotionCache();
 export const MuiThemeProvider = ({ children }: {children: ReactNode}) => {
@@ -12,6 +13,7 @@ export const MuiThemeProvider = ({ children }: {children: ReactNode}) => {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}
+        <Notification />
       </ThemeProvider>
     </CacheProvider>
   );
