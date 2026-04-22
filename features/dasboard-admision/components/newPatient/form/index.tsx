@@ -1,36 +1,55 @@
 "use client";
 import { useDasboardAdmisionForm } from "@/features/dasboard-admision";
 import {
+  Avatar,
+  Box,
   Button,
-  FormControl,
-  FormHelperText,
+  Chip,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
+  Typography,
 } from "@mui/material";
+import { AutoCompleteG } from "@/features/core";
+type Doctor = {
+  id: string;
+  name: string;
+  queueCount: number;
+  specialty: string;
+};
+// Yes , I know it is not good but I can not install Prisma ...
 const selectList = [
   {
-    id: 1,
-    doctorName: "نام دکتر 1",
+    id: "1",
+    name: "ALI",
+    queueCount: 2,
+
+    specialty: "sp",
   },
   {
-    id: 2,
-    doctorName: "نام دکتر 2",
+    id: "2",
+    name: "Hassan",
+    queueCount: 5,
+    specialty: "sp",
   },
   {
-    id: 3,
-    doctorName: "نام دکتر 3",
+    id: "5",
+    name: "Reza",
+    queueCount: 20,
+    specialty: "jjjghfhdks",
   },
 ];
+function getQueueColor(queueCount: number): "success" | "warning" | "error" {
+  if (queueCount <= 3) return "success";
+  if (queueCount <= 6) return "warning";
+  return "error";
+}
 export const NewPatientForm = () => {
   const formik = useDasboardAdmisionForm((values) => {
     console.log("submited", values);
   });
   return (
     <Grid container spacing={5} component="form" onSubmit={formik.handleSubmit}>
-            <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{ xs: 12, sm: 4 }}>
         <TextField
           label="کد ملی"
           fullWidth
@@ -48,49 +67,67 @@ export const NewPatientForm = () => {
             },
           }}
           error={Boolean(formik.touched.codeMeli && formik.errors.codeMeli)}
-          helperText={
-            formik.touched.codeMeli && formik.errors.codeMeli
-              ? formik.errors.codeMeli
-              : ""
-          }
+          helperText={formik.touched.codeMeli && formik.errors.codeMeli}
         />
       </Grid>
 
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-        component={FormControl}
-        error={Boolean(formik.touched.doctorId && formik.errors.doctorId)}
-      >
-        <InputLabel id="doctor-select-label">پزشک</InputLabel>
-        <Select
-          labelId="doctor-select-label"
-          id="doctor-select"
-          name="doctorId"
-          label="پزشک"
-          value={formik.values.doctorId || ""}
-          onChange={(event) => {
-            const selectedValue = Number(event.target.value);
-            formik.setFieldValue("doctorId", selectedValue);
+      <Grid size={{ xs: 12, sm: 4 }}>
+        <AutoCompleteG<Doctor>
+          error={Boolean(formik.touched.doctorId && formik.errors.doctorId)}
+          loading={false}
+          onChange={(doc) => formik.setFieldValue("doctorId", doc?.id)}
+          options={selectList}
+          getOptionLabel={(d) => d.name}
+          groupBy={(d) => d.specialty}
+          renderOption={(props, option) => {
+            const color = getQueueColor(option.queueCount);
+            return (
+              <Box
+                component="li"
+                {...props}
+                key={option.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.2,
+                  py: 0.6,
+                }}
+              >
+                <Avatar>{option.name.at(0)}</Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" noWrap>
+                    {option.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {option.specialty}
+                  </Typography>
+                </Box>
+                <Chip
+                  size="small"
+                  color={color}
+                  label={`${option.queueCount} نفر در صف`}
+                  variant="filled"
+                />
+              </Box>
+            );
           }}
-        >
-          <MenuItem value="">
-            <em>انتخاب کنید</em>
-          </MenuItem>
-          {selectList.map((doctor) => (
-            <MenuItem key={doctor.id} value={doctor.id}>
-              {doctor.doctorName}
-            </MenuItem>
-          ))}
-        </Select>
-        {formik.touched.doctorId && formik.errors.doctorId && (
-          <FormHelperText>{formik.errors.doctorId}</FormHelperText>
-        )}
+          helperText={formik.touched.doctorId && formik.errors.doctorId}
+          value={
+            selectList.find((d) => d.id == formik.values.doctorId.toString()) ??
+            null
+          }
+        />
       </Grid>
       <Grid
         size={{ xs: 12, sm: 4 }}
         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <Button variant="contained" color="primary" type="submit" sx={{width : {xs : "100%" , sm : "auto"}}}>
+        <Button
+          variant="contained"
+          color="primary"
+          type="submit"
+          sx={{ width: { xs: "100%", sm: "50%" } }}
+        >
           ذخیره
         </Button>
       </Grid>

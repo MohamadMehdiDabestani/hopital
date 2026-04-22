@@ -1,4 +1,4 @@
-import { Grid, Paper } from "@mui/material";
+import { Paper } from "@mui/material";
 import { NewPatientForm } from "./form";
 
 export const NewPatient = () => {
