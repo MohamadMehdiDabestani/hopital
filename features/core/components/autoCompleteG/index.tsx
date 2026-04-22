@@ -26,7 +26,7 @@ type PickerProps<T> = {
   label?: string;
 };
 
-export function AutoCompleteG<T>({
+export const  AutoCompleteG = <T,>({
   options,
   value,
   onChange,
@@ -40,7 +40,7 @@ export function AutoCompleteG<T>({
   helperText,
   error = false,
   label = "انتخاب",
-}: PickerProps<T>) {
+}: PickerProps<T>) => {
   return (
     <Autocomplete
       fullWidth
