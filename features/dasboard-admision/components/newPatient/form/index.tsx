@@ -1,6 +1,7 @@
 "use client";
 import { useDasboardAdmisionForm } from "@/features/dasboard-admision";
 import {
+  Autocomplete,
   Avatar,
   Box,
   Button,
@@ -9,13 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { AutoCompleteG } from "@/features/core";
-type Doctor = {
-  id: string;
-  name: string;
-  queueCount: number;
-  specialty: string;
-};
+
 // Yes , I know it is not good but I can not install Prisma ...
 const selectList = [
   {
@@ -72,13 +67,20 @@ export const NewPatientForm = () => {
       </Grid>
 
       <Grid size={{ xs: 12, sm: 4 }}>
-        <AutoCompleteG<Doctor>
-          error={Boolean(formik.touched.doctorId && formik.errors.doctorId)}
-          loading={false}
-          onChange={(doc) => formik.setFieldValue("doctorId", doc?.id)}
+        <Autocomplete
+          fullWidth
+          disablePortal
+          clearOnEscape
+          autoHighlight
           options={selectList}
+          value={
+            selectList.find((d) => d.id == formik.values.doctorId.toString()) ??
+            null
+          }
           getOptionLabel={(d) => d.name}
           groupBy={(d) => d.specialty}
+          
+          onChange={(_, v) => formik.setFieldValue("doctorId", v?.id)}
           renderOption={(props, option) => {
             const color = getQueueColor(option.queueCount);
             return (
@@ -111,11 +113,14 @@ export const NewPatientForm = () => {
               </Box>
             );
           }}
-          helperText={formik.touched.doctorId && formik.errors.doctorId}
-          value={
-            selectList.find((d) => d.id == formik.values.doctorId.toString()) ??
-            null
-          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="دکتر"
+              helperText={formik.touched.doctorId && formik.errors.doctorId}
+              error={Boolean(formik.touched.doctorId && formik.errors.doctorId)}
+            />
+          )}
         />
       </Grid>
       <Grid
