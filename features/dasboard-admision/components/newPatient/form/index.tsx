@@ -10,13 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { AutoCompleteG } from "@/features/core";
-type Doctor = {
-  id: string;
-  name: string;
-  queueCount: number;
-  specialty: string;
-};
+
 // Yes , I know it is not good but I can not install Prisma ...
 const selectList = [
   {
