@@ -13,8 +13,8 @@ import {
   TextField,
   TableSortLabel,
 } from "@mui/material";
-import { useMemo, useState } from "react";
-
+import { useMemo, useReducer, useState } from "react";
+import { tehranTimezone } from "@/features/core";
 type Status =
   | "در انتظار"
   | "داخل مطب"
@@ -33,7 +33,7 @@ type ReceptionRow = {
   status: Status;
 };
 
-const rows: ReceptionRow[] = [
+const initial: ReceptionRow[] = [
   {
     id: 1,
     fullName: "علی رضایی",
@@ -56,21 +56,12 @@ const rows: ReceptionRow[] = [
     id: 3,
     fullName: "مهدی احمدی",
     codeMeli: "1122334455",
-    receptionTime: "2026-04-22T07:45:00Z",
+    receptionTime: "2026-04-22T07:45:00+03:30",
     status: "تعلیق",
     exitRoomAt: null,
     treatTime: null,
   },
 ];
-
-const formatTehran = (iso: string) => {
-  const dtf = new Intl.DateTimeFormat("fa-IR-u-nu-latn", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Asia/Tehran",
-  });
-  return dtf.format(new Date(iso));
-};
 
 const statusColor = (s: Status) => {
   switch (s) {
@@ -97,6 +88,28 @@ type SortKey =
   | "treatTime"
   | "exitRoomAt";
 
+type Action =
+  | { type: "ADD"; payload: ReceptionRow }
+  | { type: "SET"; payload: ReceptionRow[] }
+  | { type: "UPDATE"; payload: ReceptionRow }
+  | { type: "REMOVE"; payload: number };
+const rowsReducer = (state: ReceptionRow[], action: Action) => {
+  switch (action.type) {
+    case "ADD":
+      console.log([action.payload, ...state])
+      return [action.payload, ...state];
+    case "SET":
+      return action.payload;
+    case "UPDATE":
+      return state.map((r) =>
+        r.id === action.payload.id ? action.payload : r,
+      );
+    case "REMOVE":
+      return state.filter((r) => r.id !== action.payload);
+    default:
+      return state;
+  }
+};
 export const ReceptionTable = () => {
   const [query, setQuery] = useState("");
   const [orderBy, setOrderBy] = useState<SortKey>("receptionTime");
@@ -110,7 +123,7 @@ export const ReceptionTable = () => {
       setOrder("asc");
     }
   };
-
+  const [rows, dispatch] = useReducer(rowsReducer, initial);
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter(
@@ -118,9 +131,9 @@ export const ReceptionTable = () => {
         r.fullName.toLowerCase().includes(q) ||
         r.codeMeli.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query , rows]);
   const normalize = (v: string | null | number) => {
-    if (v === null) return -Infinity; // یا Infinity بسته به اینکه null آخر/اول بیاید
+    if (v === null) return -Infinity;
     return typeof v === "string" ? new Date(v).getTime() : v;
   };
   const sortedRows = useMemo(() => {
@@ -203,9 +216,13 @@ export const ReceptionTable = () => {
               <TableRow key={row.id}>
                 <TableCell>{row.fullName}</TableCell>
                 <TableCell>{row.codeMeli}</TableCell>
-                <TableCell>{formatTehran(row.receptionTime)}</TableCell>
-                <TableCell>{row.treatTime ?formatTehran(row.treatTime) : "--"}</TableCell>
-                <TableCell>{row.exitRoomAt ? formatTehran(row.exitRoomAt) : "--"}</TableCell>
+                <TableCell>{tehranTimezone(row.receptionTime)}</TableCell>
+                <TableCell>
+                  {row.treatTime ? tehranTimezone(row.treatTime) : "--"}
+                </TableCell>
+                <TableCell>
+                  {row.exitRoomAt ? tehranTimezone(row.exitRoomAt) : "--"}
+                </TableCell>
                 <TableCell>
                   <Chip
                     label={row.status}
