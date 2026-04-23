@@ -11,7 +11,6 @@ import {
   Chip,
   Button,
   TextField,
-  Box,
   TableSortLabel,
 } from "@mui/material";
 import { useMemo, useState } from "react";
@@ -27,8 +26,10 @@ type Status =
 type ReceptionRow = {
   id: number;
   fullName: string;
-  nationalId: string;
-  enteredAt: string; // ISO
+  codeMeli: string;
+  receptionTime: string; // ISO
+  treatTime: string | null; // ISO
+  exitRoomAt: string | null;
   status: Status;
 };
 
@@ -36,23 +37,29 @@ const rows: ReceptionRow[] = [
   {
     id: 1,
     fullName: "علی رضایی",
-    nationalId: "1234567890",
-    enteredAt: "2026-04-22T08:15:00Z",
+    codeMeli: "1234567890",
+    receptionTime: "2026-04-22T08:15:00Z",
+    treatTime: null,
+    exitRoomAt: null,
     status: "در انتظار",
   },
   {
     id: 2,
     fullName: "زهرا کاظمی",
-    nationalId: "0987654321",
-    enteredAt: "2026-04-22T09:05:00Z",
+    codeMeli: "0987654321",
+    receptionTime: "2026-04-22T09:05:00Z",
+    treatTime: "2026-04-22T09:05:00Z",
     status: "داخل مطب",
+    exitRoomAt: null,
   },
   {
     id: 3,
     fullName: "مهدی احمدی",
-    nationalId: "1122334455",
-    enteredAt: "2026-04-22T07:45:00Z",
+    codeMeli: "1122334455",
+    receptionTime: "2026-04-22T07:45:00Z",
     status: "تعلیق",
+    exitRoomAt: null,
+    treatTime: null,
   },
 ];
 
@@ -83,11 +90,16 @@ const statusColor = (s: Status) => {
 };
 
 type Order = "asc" | "desc";
-type SortKey = "fullName" | "nationalId" | "enteredAt";
+type SortKey =
+  | "fullName"
+  | "codeMeli"
+  | "receptionTime"
+  | "treatTime"
+  | "exitRoomAt";
 
 export const ReceptionTable = () => {
   const [query, setQuery] = useState("");
-  const [orderBy, setOrderBy] = useState<SortKey>("enteredAt");
+  const [orderBy, setOrderBy] = useState<SortKey>("receptionTime");
   const [order, setOrder] = useState<Order>("desc");
 
   const handleSort = (key: SortKey) => {
@@ -104,18 +116,21 @@ export const ReceptionTable = () => {
     return rows.filter(
       (r) =>
         r.fullName.toLowerCase().includes(q) ||
-        r.nationalId.toLowerCase().includes(q)
+        r.codeMeli.toLowerCase().includes(q),
     );
   }, [query]);
-
+  const normalize = (v: string | null | number) => {
+    if (v === null) return -Infinity; // یا Infinity بسته به اینکه null آخر/اول بیاید
+    return typeof v === "string" ? new Date(v).getTime() : v;
+  };
   const sortedRows = useMemo(() => {
     const sorted = [...filteredRows].sort((a, b) => {
-      let aVal: string | number = a[orderBy];
-      let bVal: string | number = b[orderBy];
+      let aVal: string | number = normalize(a[orderBy]);
+      let bVal: string | number = normalize(b[orderBy]);
 
-      if (orderBy === "enteredAt") {
-        aVal = new Date(a.enteredAt).getTime();
-        bVal = new Date(b.enteredAt).getTime();
+      if (orderBy === "receptionTime") {
+        aVal = new Date(a.receptionTime).getTime();
+        bVal = new Date(b.receptionTime).getTime();
       }
 
       if (aVal < bVal) return order === "asc" ? -1 : 1;
@@ -131,16 +146,18 @@ export const ReceptionTable = () => {
   };
 
   return (
-    <Paper sx={{ mt:2,p:2, display: "grid", gap: 2 }} >
+    <Paper sx={{ mt: 2, p: 2, display: "grid", gap: 2 }}>
       <TextField
-        placeholder="جستجو بر اساس نام یا کد ملی"
+        label="جستجو بر اساس نام یا کد ملی"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        sx={{mb:2}}
+        sx={{ mb: 2 }}
       />
 
-      <TableContainer sx={t => ({border: `1px solid ${t.palette.grey['A200']}`})}>
-        <Table  >
+      <TableContainer
+        sx={(t) => ({ border: `1px solid ${t.palette.grey["A200"]}` })}
+      >
+        <Table>
           <TableHead>
             <TableRow>
               <TableCell sortDirection={orderBy === "fullName" ? order : false}>
@@ -153,30 +170,29 @@ export const ReceptionTable = () => {
                 </TableSortLabel>
               </TableCell>
 
-              <TableCell
-                sortDirection={orderBy === "nationalId" ? order : false}
-              >
+              <TableCell sortDirection={orderBy === "codeMeli" ? order : false}>
                 <TableSortLabel
-                  active={orderBy === "nationalId"}
-                  direction={orderBy === "nationalId" ? order : "asc"}
-                  onClick={() => handleSort("nationalId")}
+                  active={orderBy === "codeMeli"}
+                  direction={orderBy === "codeMeli" ? order : "asc"}
+                  onClick={() => handleSort("codeMeli")}
                 >
                   کد ملی
                 </TableSortLabel>
               </TableCell>
 
               <TableCell
-                sortDirection={orderBy === "enteredAt" ? order : false}
+                sortDirection={orderBy === "receptionTime" ? order : false}
               >
                 <TableSortLabel
-                  active={orderBy === "enteredAt"}
-                  direction={orderBy === "enteredAt" ? order : "asc"}
-                  onClick={() => handleSort("enteredAt")}
+                  active={orderBy === "receptionTime"}
+                  direction={orderBy === "receptionTime" ? order : "asc"}
+                  onClick={() => handleSort("receptionTime")}
                 >
                   تاریخ و ساعت ورود
                 </TableSortLabel>
               </TableCell>
-
+              <TableCell> تاریخ و ساعت ورود به مطب</TableCell>
+              <TableCell> تاریخ و ساعت خروج از مطب</TableCell>
               <TableCell>وضعیت</TableCell>
               <TableCell>عملیات</TableCell>
             </TableRow>
@@ -186,8 +202,10 @@ export const ReceptionTable = () => {
             {sortedRows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>{row.fullName}</TableCell>
-                <TableCell>{row.nationalId}</TableCell>
-                <TableCell>{formatTehran(row.enteredAt)}</TableCell>
+                <TableCell>{row.codeMeli}</TableCell>
+                <TableCell>{formatTehran(row.receptionTime)}</TableCell>
+                <TableCell>{row.treatTime ?formatTehran(row.treatTime) : "--"}</TableCell>
+                <TableCell>{row.exitRoomAt ? formatTehran(row.exitRoomAt) : "--"}</TableCell>
                 <TableCell>
                   <Chip
                     label={row.status}
