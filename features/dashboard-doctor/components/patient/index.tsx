@@ -13,6 +13,7 @@ import {
   Alert,
   Paper,
   Stack,
+  TextField,
 } from "@mui/material";
 import { Grid } from "@mui/system";
 import PrescriptionSection from "./prescription";
@@ -98,26 +99,28 @@ export const DoctorPatient = () => {
               <CardContent>
                 <Typography variant="h6">تاریخچه ویزیت‌ها</Typography>
                 <Divider sx={{ my: 1 }} />
-                <Box sx={{
-                  maxHeight: 160, // یا هر ارتفاع مناسب
-                  overflowY: "auto",
-                }}>
-
-                {currentPatient.history && currentPatient.history.length > 0 ? (
-                  <List>
-                    {currentPatient.history.map((h, i) => (
-                      <ListItem key={i} divider>
-                        <ListItemText
-                          primary={`تاریخ: ${h.date}`}
-                          secondary={h.notes}
+                <Box
+                  sx={{
+                    maxHeight: 160,
+                    overflowY: "auto",
+                  }}
+                >
+                  {currentPatient.history &&
+                  currentPatient.history.length > 0 ? (
+                    <List>
+                      {currentPatient.history.map((h, i) => (
+                        <ListItem key={i} divider>
+                          <ListItemText
+                            primary={`تاریخ: ${h.date}`}
+                            secondary={h.notes}
                           />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Alert severity="info">تاریخچه‌ای ثبت نشده است</Alert>
-                )}
-                  </Box>
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Alert severity="info">تاریخچه‌ای ثبت نشده است</Alert>
+                  )}
+                </Box>
               </CardContent>
             </Card>
           </Grid>
@@ -126,7 +129,39 @@ export const DoctorPatient = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <ParaclinicPickerModal />
+            <Card sx={{ mt:2, width: "100%" }}>
+              <CardContent>
+                <TextField
+                fullWidth
+                sx={{mb:2}}
+                  label="توضیحات اضافه بیمار"
+                  // value={}
+                  // onChange={}
+                  multiline
+                />
+                <TextField
+                fullWidth
+                sx={{mb:2}}
+                  label="توضیحات اضافه ویزیت"
+                  // value={}
+                  // onChange={}
+                  multiline
+                />
+                <TextField
+                fullWidth
+                sx={{mb:2}}
+                  label="بیماری های خاص بیمار"
+                  // value={}
+                  // onChange={}
+                  multiline
+                />
+                 <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+      <Button color="success" variant="contained">اتمام ویزیت</Button>
+    </Box>
+              </CardContent>
+            </Card>
           </Grid>
+          
         </Fragment>
       )}
 

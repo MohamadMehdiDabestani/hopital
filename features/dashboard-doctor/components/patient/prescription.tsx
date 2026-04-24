@@ -21,7 +21,9 @@ import {
   Dialog,
   FormControlLabel,
   Checkbox,
+  Alert,
 } from "@mui/material";
+import WarningIcon from '@mui/icons-material/Warning'
 import DeleteIcon from "@mui/icons-material/Delete";
 
 type Drug = {
@@ -119,7 +121,6 @@ const DRUGS: Drug[] = [
   { id: 70, name: "موپیروسین پماد" },
 ];
 
-
 const readyNotes = [
   "با غذا مصرف شود",
   "قبل از خواب",
@@ -129,8 +130,6 @@ const readyNotes = [
 ];
 
 const PrescriptionSection = () => {
-
-
   const handleRemove = (id: number) => {
     setSelected((prev) => prev.filter((p) => p.id !== id));
   };
@@ -157,13 +156,18 @@ const PrescriptionSection = () => {
     setSelected((prev) =>
       prev.some((x) => x.id === drug.id)
         ? prev.filter((x) => x.id !== drug.id)
-        : [...prev, drug]
+        : [...prev, drug],
     );
   };
 
   return (
     <Card>
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
         <DialogTitle>انتخاب دارو</DialogTitle>
         <DialogContent>
           <TextField
@@ -212,7 +216,7 @@ const PrescriptionSection = () => {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">بخش دارو</Typography>
+          <Typography variant="h6">داروها</Typography>
           <Button color="info" variant="outlined" onClick={() => setOpen(true)}>
             نمایش دارو ها
           </Button>
@@ -220,92 +224,103 @@ const PrescriptionSection = () => {
         <Divider sx={{ my: 1 }} />
 
         {/* تنظیمات هر دارو */}
-        <Stack spacing={2} sx={{ mt: 2 }}>
-          {selected.length === 0 ? (
-            <Typography color="text.secondary">
+        <Stack sx={{ mt: 2 }}>
+          <Box
+            sx={{
+              maxHeight: 330,
+              overflowY: "auto",
+            }}
+          >
+            {selected.length === 0 ? (
+              <Alert color="warning" icon={<WarningIcon />}>
               هنوز دارویی انتخاب نشده است.
-            </Typography>
-          ) : (
-            selected.map((p) => (
-              <Card key={p.id} variant="outlined">
-                <CardContent>
-                  <Stack
-                    direction="row"
-                    sx={{
-                      mb: 1,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography variant="subtitle1">{p.name}</Typography>
-                    <IconButton onClick={() => handleRemove(p.id)} color="error" sx={{ml : 1}}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="هر چند ساعت"
-                        // value={p}
-                        // onChange={(e) =>
-                        //   handleUpdate(p.drug.id, {
-                        //     intervalHours: e.target.value
-                        //       ? Number(e.target.value)
-                        //       : "",
-                        //   })
-                        // }
-                        slotProps={{ htmlInput: { min: 1 } }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="چند روز در هفته"
-                        // value={p.daysPerWeek}
-                        // onChange={(e) =>
-                        //   handleUpdate(p.drug.id, {
-                        //     daysPerWeek: e.target.value
-                        //       ? Number(e.target.value)
-                        //       : "",
-                        //   })
-                        // }
-                        slotProps={{ htmlInput: { min: 1, max: 7 } }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <TextField
-                        fullWidth
-                        label="توضیحات"
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        multiline
-                      />
-
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{ mt: 1, flexWrap: "wrap" }}
+            </Alert>
+            ) : (
+              selected.map((p) => (
+                <Card key={p.id} sx={{ mb: 2 }} variant="outlined">
+                  <CardContent>
+                    <Stack
+                      direction="row"
+                      sx={{
+                        mb: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Typography variant="subtitle1">{p.name}</Typography>
+                      <IconButton
+                        onClick={() => handleRemove(p.id)}
+                        color="error"
+                        sx={{ ml: 1 }}
                       >
-                        {readyNotes.map((item) => (
-                          <Chip
-                            key={item}
-                            label={item}
-                            onClick={() => handleAddNote(item)}
-                            sx={{ mb: 1 }}
-                            clickable
-                          />
-                        ))}
-                      </Stack>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Stack>
+
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="هر چند ساعت"
+                          // value={p}
+                          // onChange={(e) =>
+                          //   handleUpdate(p.drug.id, {
+                          //     intervalHours: e.target.value
+                          //       ? Number(e.target.value)
+                          //       : "",
+                          //   })
+                          // }
+                          slotProps={{ htmlInput: { min: 1 } }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="چند روز در هفته"
+                          // value={p.daysPerWeek}
+                          // onChange={(e) =>
+                          //   handleUpdate(p.drug.id, {
+                          //     daysPerWeek: e.target.value
+                          //       ? Number(e.target.value)
+                          //       : "",
+                          //   })
+                          // }
+                          slotProps={{ htmlInput: { min: 1, max: 7 } }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <TextField
+                          fullWidth
+                          label="توضیحات"
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          multiline
+                        />
+
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ mt: 1, flexWrap: "wrap" }}
+                        >
+                          {readyNotes.map((item) => (
+                            <Chip
+                              key={item}
+                              label={item}
+                              onClick={() => handleAddNote(item)}
+                              sx={{ mb: 1 }}
+                              clickable
+                            />
+                          ))}
+                        </Stack>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </Box>
         </Stack>
       </CardContent>
     </Card>

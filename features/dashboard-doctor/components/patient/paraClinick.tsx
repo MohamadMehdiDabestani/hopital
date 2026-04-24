@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -21,7 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-
+import WarningIcon from '@mui/icons-material/Warning'
 type ParaclinicItem = {
   id: number;
   name: string;
@@ -93,7 +94,6 @@ const ParaclinicPickerModal = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* چک‌لیست با اندازه‌ی خودکار برای هر مورد */}
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             {filtered.map((d) => {
               const checked = selected.some((x) => x.id === d.id);
@@ -131,7 +131,7 @@ const ParaclinicPickerModal = () => {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">بخش آزمایش</Typography>
+          <Typography variant="h6">آزمایشات</Typography>
           <Button color="info" variant="outlined" onClick={() => setOpen(true)}>
             نمایش آزمایشات
           </Button>
@@ -141,9 +141,9 @@ const ParaclinicPickerModal = () => {
         {/* تنظیمات هر دارو */}
         <Box sx={{ mt: 2 }}>
           {selected.length === 0 ? (
-            <Typography color="text.secondary">
-              هنوز دارویی انتخاب نشده است.
-            </Typography>
+            <Alert color="warning" icon={<WarningIcon />}>
+              هنوز آزمایشی انتخاب نشده است.
+            </Alert>
           ) : (
             selected.map((p) => (
               <Chip sx={{mx:1}} key={p.id} label={p.name} onDelete={() => toggle(p)} />
