@@ -17,7 +17,7 @@ import { DrugRow } from "./drugRow";
 import { DRUGS } from "@/features/dashboard-doctor";
 import { DialogList } from "../dialogList";
 
-export const PrescriptionSection = () => {
+export const Prescription = () => {
   const [field, , helpers] =
     useField<DashboardDoctorPatientDrugSchema[]>("drugs");
   const selected = field.value ?? [];
@@ -74,7 +74,7 @@ export const PrescriptionSection = () => {
         <Divider sx={{ my: 1 }} />
 
         <Stack sx={{ mt: 2 }}>
-          <Box sx={{ maxHeight: 360, overflowY: "auto" }}>
+          <Box sx={{ maxHeight: 344, overflowY: "auto" }}>
             {selected.length === 0 ? (
               <Alert color="warning" icon={<WarningIcon />}>
                 هنوز دارویی انتخاب نشده است.

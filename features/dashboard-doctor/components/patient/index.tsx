@@ -12,11 +12,10 @@ import {
   ListItemText,
   Alert,
   Paper,
-  Stack,
   TextField,
 } from "@mui/material";
 import { Grid } from "@mui/system";
-import { PrescriptionSection } from "./prescription";
+import { Prescription } from "./prescription";
 import { Paraclinic } from "./paraclinick";
 import { useDashboardDoctorForm } from "@/features/dashboard-doctor";
 import { FormikProvider } from "formik";
@@ -134,7 +133,7 @@ export const DoctorPatient = () => {
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <PrescriptionSection />
+              <Prescription />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Paraclinic />
@@ -142,26 +141,33 @@ export const DoctorPatient = () => {
                 <CardContent>
                   <TextField
                     fullWidth
+                    id="specialDiseases"
+                    name="specialDiseases"
                     sx={{ mb: 2 }}
                     label="بیماری های خاص بیمار"
-                    // value={}
-                    // onChange={}
+                    value={formik.values.specialDiseases}
+                    onChange={formik.handleChange}
                     multiline
                   />
                   <TextField
                     fullWidth
                     sx={{ mb: 2 }}
                     label="توضیحات اضافه بیمار"
-                    // value={}
-                    // onChange={}
+                    id="extraPatientNote"
+                    name="extraPatientNote"
+                    value={formik.values.extraPatientNote}
+                    onChange={formik.handleChange}
                     multiline
                   />
                   <TextField
                     fullWidth
                     sx={{ mb: 2 }}
                     label="توضیحات اضافه ویزیت"
-                    // value={}
-                    // onChange={}
+                    id="extraVisitNote"
+                    name="extraVisitNote"
+                    value={formik.values.extraVisitNote}
+                    onChange={formik.handleChange}
+
                     multiline
                   />
 
