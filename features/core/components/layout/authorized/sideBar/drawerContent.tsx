@@ -26,16 +26,16 @@ type MenuGroup = { title: string; items: MenuItem[] };
 
 const menu: MenuGroup[] = [
   {
-    title: "عنوان آکوردین ۱",
+    title: "پذیرش",
     items: [
-      { title: "عنوان آیتم ۱", url: "/doctor" },
+      { title: "لیست پذیرش", url: "/dashboard/admision" },
       { title: "d", url: "/doctor/d" },
     ],
   },
   {
-    title: "عنوان آکوردین ۲",
+    title: "دکتر",
     items: [
-      { title: "عنوان آیتم ۳", url: "/url-3" },
+      { title: "مطب دکتر", url: "/dashboard/doctor" },
       { title: "عنوان آیتم ۴", url: "/url-4" },
     ],
   },
