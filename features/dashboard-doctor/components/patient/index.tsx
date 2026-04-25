@@ -16,8 +16,10 @@ import {
   TextField,
 } from "@mui/material";
 import { Grid } from "@mui/system";
-import PrescriptionSection from "./prescription";
-import ParaclinicPickerModal from "./paraClinick";
+import { PrescriptionSection } from "./prescription";
+import { Paraclinic } from "./paraclinick";
+import { useDashboardDoctorForm } from "@/features/dashboard-doctor";
+import { FormikProvider } from "formik";
 
 type VisitHistory = {
   date: string;
@@ -57,119 +59,123 @@ export const DoctorPatient = () => {
   const handleNextPatient = () => {
     setCurrentPatient(mockPatient);
   };
-
+  const formik = useDashboardDoctorForm((values) => console.log(values));
   return (
-    <Grid container spacing={2}>
-      {!currentPatient ? (
-        <Grid size={{ xs: 12 }}>
-          <Button fullWidth variant="contained" onClick={handleNextPatient}>
-            ورود بیمار بعدی
-          </Button>
-          <Paper sx={{ mt: 4, p: 3, textAlign: "center" }} elevation={2}>
-            <Typography variant="h6">هنوز بیماری وارد نشده است</Typography>
-            <Typography variant="body2" color="text.secondary">
-              برای شروع، روی دکمه «ورود بیمار بعدی» کلیک کنید.
-            </Typography>
-          </Paper>
-        </Grid>
-      ) : (
-        <Fragment>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent sx={{ "&>p": { mb: 2 } }}>
-                <Typography variant="h6">اطلاعات بیمار</Typography>
-                <Divider sx={{ my: 1 }} />
-
-                <Typography>
-                  نام و نام خانوادگی: {currentPatient.fullName}
-                </Typography>
-                <Typography>سال تولد: {currentPatient.birthYear}</Typography>
-                <Typography>
-                  بیماری‌های خاص: {currentPatient.specialDiseases || "ثبت نشده"}
-                </Typography>
-                <Typography>
-                  توضیحات اضافه: {currentPatient.extraNotes || "ثبت نشده"}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            {/* تاریخچه ویزیت‌ها */}
-            <Card>
-              <CardContent>
-                <Typography variant="h6">تاریخچه ویزیت‌ها</Typography>
-                <Divider sx={{ my: 1 }} />
-                <Box
-                  sx={{
-                    maxHeight: 160,
-                    overflowY: "auto",
-                  }}
-                >
-                  {currentPatient.history &&
-                  currentPatient.history.length > 0 ? (
-                    <List>
-                      {currentPatient.history.map((h, i) => (
-                        <ListItem key={i} divider>
-                          <ListItemText
-                            primary={`تاریخ: ${h.date}`}
-                            secondary={h.notes}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  ) : (
-                    <Alert severity="info">تاریخچه‌ای ثبت نشده است</Alert>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <PrescriptionSection />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <ParaclinicPickerModal />
-            <Card sx={{ mt:2, width: "100%" }}>
-              <CardContent>
-                <TextField
-                fullWidth
-                sx={{mb:2}}
-                  label="توضیحات اضافه بیمار"
-                  // value={}
-                  // onChange={}
-                  multiline
-                />
-                <TextField
-                fullWidth
-                sx={{mb:2}}
-                  label="توضیحات اضافه ویزیت"
-                  // value={}
-                  // onChange={}
-                  multiline
-                />
-                <TextField
-                fullWidth
-                sx={{mb:2}}
-                  label="بیماری های خاص بیمار"
-                  // value={}
-                  // onChange={}
-                  multiline
-                />
-                 <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-      <Button color="success" variant="contained">اتمام ویزیت</Button>
-    </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-        </Fragment>
-      )}
-
-      {/* <Grid size={{ xs: 12 }}>
+    <FormikProvider value={formik}>
+      <Grid
+        container
+        spacing={2}
+        component="form"
+        onSubmit={formik.handleSubmit}
+      >
         {!currentPatient ? (
-          
+          <Grid size={{ xs: 12 }}>
+            <Button fullWidth variant="contained" onClick={handleNextPatient}>
+              ورود بیمار بعدی
+            </Button>
+            <Paper sx={{ mt: 4, p: 3, textAlign: "center" }} elevation={2}>
+              <Typography variant="h6">هنوز بیماری وارد نشده است</Typography>
+              <Typography variant="body2" color="text.secondary">
+                برای شروع، روی دکمه «ورود بیمار بعدی» کلیک کنید.
+              </Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          <Fragment>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Card>
+                <CardContent sx={{ "&>p": { mb: 2 } }}>
+                  <Typography variant="h6">اطلاعات بیمار</Typography>
+                  <Divider sx={{ my: 1 }} />
+
+                  <Typography>
+                    نام و نام خانوادگی: {currentPatient.fullName}
+                  </Typography>
+                  <Typography>سال تولد: {currentPatient.birthYear}</Typography>
+                  <Typography>
+                    بیماری‌های خاص:{" "}
+                    {currentPatient.specialDiseases || "ثبت نشده"}
+                  </Typography>
+                  <Typography>
+                    توضیحات اضافه: {currentPatient.extraNotes || "ثبت نشده"}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              {/* تاریخچه ویزیت‌ها */}
+              <Card>
+                <CardContent>
+                  <Typography variant="h6">تاریخچه ویزیت‌ها</Typography>
+                  <Divider sx={{ my: 1 }} />
+                  <Box
+                    sx={{
+                      maxHeight: 160,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {currentPatient.history &&
+                    currentPatient.history.length > 0 ? (
+                      <List>
+                        {currentPatient.history.map((h, i) => (
+                          <ListItem key={i} divider>
+                            <ListItemText
+                              primary={`تاریخ: ${h.date}`}
+                              secondary={h.notes}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Alert severity="info">تاریخچه‌ای ثبت نشده است</Alert>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <PrescriptionSection />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paraclinic />
+              <Card sx={{ mt: 2, width: "100%" }}>
+                <CardContent>
+                  <TextField
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    label="بیماری های خاص بیمار"
+                    // value={}
+                    // onChange={}
+                    multiline
+                  />
+                  <TextField
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    label="توضیحات اضافه بیمار"
+                    // value={}
+                    // onChange={}
+                    multiline
+                  />
+                  <TextField
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    label="توضیحات اضافه ویزیت"
+                    // value={}
+                    // onChange={}
+                    multiline
+                  />
+
+                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                    <Button color="success" variant="contained" type="submit">
+                      اتمام ویزیت
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Fragment>
         )}
-      </Grid> */}
-    </Grid>
+      </Grid>
+    </FormikProvider>
   );
 };
