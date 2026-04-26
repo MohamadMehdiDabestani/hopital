@@ -33,9 +33,9 @@ const menu: MenuGroup[] = [
     ],
   },
   {
-    title: "عنوان آکوردین ۲",
+    title: "دکتر",
     items: [
-      { title: "عنوان آیتم ۳", url: "/url-3" },
+      { title: "مطب دکتر", url: "/dashboard/doctor" },
       { title: "عنوان آیتم ۴", url: "/url-4" },
     ],
   },
