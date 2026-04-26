@@ -16,7 +16,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 export const AuthorizedLayout = ({ children }: { children: ReactNode }) => {
   const { drawerWidth, open, setOpen } = useDrawerStore();
   return (
-    <Grid container>
+    <Grid container sx={{p:{xs : 2 , md : 0} , mt:{xs : 0 , md:5}}}>
       <AppBar
         position="fixed"
         sx={{
