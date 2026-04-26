@@ -1,5 +1,11 @@
-import { NewPatient } from "@/features/dasboard-admision";
+import {Fragment} from 'react'
+import { NewPatient, ReceptionTable } from "@/features/dasboard-admision";
 
 export default function DasoboardAdmisionPage() {
-    return (<NewPatient />)
+  return (
+    <Fragment>
+      <NewPatient />
+      <ReceptionTable />
+    </Fragment>
+  );
 }
