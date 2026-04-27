@@ -226,6 +226,7 @@ export const DashboardMedicineList = ({
         const ch = params.value as Charge[];
         const warnDays = params.row.warnDays as number;
         if (!ch?.length) return "—";
+        if (!baseToday) return "—";
         return (
           <Stack
             direction="row"
@@ -234,7 +235,6 @@ export const DashboardMedicineList = ({
             sx={{ flexWrap: "wrap", width: "100%", py: 0.5 }}
           >
             {ch.map((c) => {
-              if (!baseToday) return "…";
               const daysToExpire = dayjs(c.expireDate)
                 .startOf("day")
                 .diff(baseToday, "day");
