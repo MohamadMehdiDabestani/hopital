@@ -29,6 +29,6 @@ export const charges = [
   { id: 501, drugId: 5, qty: 300, expireDate: "2026/12/30", entryDate: "2026/01/10" },
 ];
 
-export default function DashboardMedicine() {
+export default function Page() {
     return(<DashboardMedicineList charges={charges} drugs={drugs} />)
 }
