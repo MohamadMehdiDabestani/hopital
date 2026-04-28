@@ -26,6 +26,12 @@ type MenuGroup = { title: string; items: MenuItem[] };
 
 const menu: MenuGroup[] = [
   {
+    title: "مدیریت",
+    items: [
+      { title: "لیست کاربران", url: "/dashboard/manager" },
+    ],
+  },
+  {
     title: "پذیرش",
     items: [
       { title: "لیست پذیرش", url: "/dashboard/admision" },
