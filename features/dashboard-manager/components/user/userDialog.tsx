@@ -14,6 +14,8 @@ import {
   FormHelperText,
   Button,
   Stack,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { useDashboardManagerAddForm } from "@/features/dashboard-manager";
 type User = {
@@ -57,6 +59,7 @@ export const UserDialog = ({ open, onClose, user }: Props) => {
         codeMeli: user.codeMeli ?? "",
         phone: user.phone ?? "",
         roleId: roleToId[user.role] ?? "",
+        suspended : false
       });
     } else if (open && !user) {
       formik.resetForm();
@@ -147,6 +150,20 @@ export const UserDialog = ({ open, onClose, user }: Props) => {
                 {formik.touched.roleId && (formik.errors.roleId as string)}
               </FormHelperText>
             </FormControl>
+            {user && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name="suspended"
+                    checked={formik.values.suspended}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                  />
+                }
+                labelPlacement="end"
+                label="تعلیق کاربر"
+              />
+            )}
           </Stack>
         </DialogContent>
 
@@ -154,9 +171,15 @@ export const UserDialog = ({ open, onClose, user }: Props) => {
           <Button onClick={onClose} color="inherit">
             انصراف
           </Button>
-          <Button type="submit" variant="contained">
-            افزودن
-          </Button>
+          {user ? (
+            <Button type="submit" color="warning" variant="contained">
+              ویرایش
+            </Button>
+          ) : (
+            <Button type="submit" variant="contained">
+              افزودن
+            </Button>
+          )}
         </DialogActions>
       </Box>
     </Dialog>

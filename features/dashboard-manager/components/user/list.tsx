@@ -211,6 +211,7 @@ export const UsersList = () => {
 
   return (
     <Box sx={{ width: "100%" }}>
+      <Button onClick={() => {setOpen(true);setUser(undefined) }} >افزودن کارمند جدید</Button>
       <UserDialog onClose={() => setOpen(false)} open={open} user={user} />
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid

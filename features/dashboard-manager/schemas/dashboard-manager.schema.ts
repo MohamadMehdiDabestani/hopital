@@ -18,6 +18,7 @@ export const dashboardManagerUserAddSchema = z.object({
       .int()
       .positive("نقش را انتخاب کنید")
   ),
+  suspended : z.boolean()
 });
 
 export type DashboardManagerSchema = z.infer<typeof dashboardManagerSchema>;
