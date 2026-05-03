@@ -6,12 +6,12 @@ import {
   GridFilterModel,
   GridSortModel,
 } from "@mui/x-data-grid";
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Typography } from "@mui/material";
 import dayjs from "@/features/core/utils/dayjs";
 import { UserDialog } from "./userDialog";
 
 type User = {
-  id: string ;
+  id: string;
   firstName: string;
   lastName: string;
   codeMeli: string;
@@ -168,8 +168,10 @@ export const UsersList = () => {
       field: "lastLoginAt",
       headerName: "آخرین ورود",
       width: 180,
-      valueFormatter: (params) =>
-        params ? dayjs(params).format("YYYY/MM/DD HH:mm") : "—",
+      valueFormatter: (value) =>
+        value
+    ? dayjs(value, "YYYY/MM/DDTHH:mm:ssZ").calendar("jalali").format("YYYY/MM/DD HH:mm")
+    : "—",
     },
     { field: "role", headerName: "نقش", width: 120 },
     {
