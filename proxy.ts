@@ -8,7 +8,7 @@ const roleAccess: Record<string, string[]> = {
   "/doctor": ["admin", "doctor"],
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
 
   if (!token) return NextResponse.redirect(new URL("/login", req.url));
@@ -23,7 +23,6 @@ export async function middleware(req: NextRequest) {
         }
       }
     }
-
     return NextResponse.next();
   } catch {
     return NextResponse.redirect(new URL("/login", req.url));
@@ -31,5 +30,10 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/manager/:path*", "/doctor/:path*"],
+  matcher: [
+    "/login/:path*",
+    "/admin/:path*",
+    "/manager/:path*",
+    "/doctor/:path*",
+  ],
 };
