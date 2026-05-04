@@ -1,0 +1,36 @@
+import {
+  pgTable,
+  pgEnum,
+  serial,
+  text,
+  varchar,
+  boolean,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+export const roleEnum = pgEnum("role", [
+  "root",
+  "manager",
+  "doctor",
+  "medicine",
+  "admision",
+]);
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  firstName: text("firstName").notNull(),
+  lastName: text("lastName").notNull(),
+  createDate: timestamp("createDate", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  lastLoginAt: timestamp("lastLoginAt", { withTimezone: true }),
+  phoneNumber: varchar("phone_number", { length: 15 }).notNull().unique(),
+  codeMeli: varchar("codeMeli", { length: 10 }).notNull().unique(),
+  hashedPassword: text("hashedPassword").notNull(),
+  hashedFirstTimePassword: text("hashedFirstTimePassword"),
+  forcedChangePassword: boolean("forcedChangePassword")
+    .default(true)
+    .notNull(),
+  rule: roleEnum("rule").notNull(),
+  suspended: boolean("suspended").default(false).notNull(),
+});
