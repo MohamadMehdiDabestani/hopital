@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyToken } from "@/features/core/utils";
+import { jwtVerify } from "jose";
+
+const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 const roleAccess: Record<string, string[]> = {
   "/admin": ["admin"],
@@ -8,32 +10,55 @@ const roleAccess: Record<string, string[]> = {
   "/doctor": ["admin", "doctor"],
 };
 
-export async function proxy(req: NextRequest) {
-  const token = req.cookies.get("token")?.value;
+async function verifyAccess(token: string) {
+  const { payload } = await jwtVerify(token, secret);
+  return payload as { sub: string; role: string };
+}
 
-  if (!token) return NextResponse.redirect(new URL("/login", req.url));
+export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith("/api/auth/refresh") || pathname.startsWith("/")) {
+    return NextResponse.next();
+  }
+
+  const access = req.cookies.get("access_token")?.value;
+  const refresh = req.cookies.get("refresh_token")?.value;
+
+  // اگر access نداریم اما refresh داریم → برو برای رفرش
+  if (!access && refresh) {
+    const url = new URL("/api/auth/refresh", req.url);
+    url.searchParams.set("next", req.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // اگر اصلا توکن نداریم → لاگین
+  if (!access) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
 
   try {
-    const payload = await verifyToken(token);
+    const payload = await verifyAccess(access);
 
+    // نقش‌ها
     for (const [path, roles] of Object.entries(roleAccess)) {
-      if (req.nextUrl.pathname.startsWith(path)) {
-        if (!roles.includes(payload.role ?? "")) {
-          return NextResponse.redirect(new URL("/403", req.url));
-        }
+      if (pathname.startsWith(path) && !roles.includes(payload.role)) {
+        return NextResponse.redirect(new URL("/403", req.url));
       }
     }
+
     return NextResponse.next();
-  } catch {
-    return NextResponse.redirect(new URL("/login", req.url));
+  } catch (err: any) {
+    // access منقضی شده → برو رفرش
+    if (refresh) {
+      const url = new URL("/api/auth/refresh", req.url);
+      url.searchParams.set("next", req.nextUrl.pathname);
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.redirect(new URL("/", req.url));
   }
 }
 
 export const config = {
-  matcher: [
-    "/login/:path*",
-    "/admin/:path*",
-    "/manager/:path*",
-    "/doctor/:path*",
-  ],
+  matcher: ["/admin/:path*", "/manager/:path*", "/doctor/:path*"],
 };
