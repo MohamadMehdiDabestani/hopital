@@ -1,9 +1,21 @@
 "use client";
-import { useAuthForm } from "@/features/auth";
+import { loginUser, useAuthForm } from "@/features/auth";
+import { useNotificationStore } from "@/features/core";
 import { TextField, Button, Box, Container } from "@mui/material";
+import {  useTransition } from "react";
 export const LoginForm = () => {
+  const [loading, startLoading] = useTransition();
+  const { show } = useNotificationStore();
   const formik = useAuthForm((values) => {
-    console.log("Submitted:", values);
+    startLoading(async () => {
+      try {
+        const res = await loginUser(values);
+        console.log(res);
+      } catch(err) {
+        console.log(err)
+        show("dd", "error");
+      }
+    });
   });
   return (
     <Box
@@ -53,7 +65,7 @@ export const LoginForm = () => {
             fullWidth
           />
 
-          <Button variant="contained" type="submit">
+          <Button variant="contained" type="submit"  loading={loading}>
             ورود
           </Button>
         </Box>
