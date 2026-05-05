@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { verifyToken } from "./features/core";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 const roleAccess: Record<string, string[]> = {
   "/dashboard": ["root"],
-  "/manager": ["admin", "manager"],
-  "/doctor": ["admin", "doctor"],
+  "/dashboard/manager": ["manager"],
+  "/dashboard/doctor": ["doctor"],
+  "/dashboard/medicine": ["medicine"],
+  "/dashboard/admision": ["admision"],
 };
-
-async function verifyAccess(token: string) {
-  const { payload } = await jwtVerify(token, secret);
-  return payload as { sub: string; role: string };
-}
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -42,11 +40,11 @@ export async function proxy(req: NextRequest) {
   }
 
   try {
-    const payload = await verifyAccess(access);
+    const payload = await verifyToken(access);
 
     // کنترل نقش‌ها
     for (const [path, roles] of Object.entries(roleAccess)) {
-      if (pathname.startsWith(path) && !roles.includes(payload.role)) {
+      if (pathname.startsWith(path) && !roles.includes(payload.role as string)) {
         return NextResponse.redirect(new URL("/403", req.url));
       }
     }
@@ -61,5 +59,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/manager/:path*", "/doctor/:path*"],
+  matcher: ["/dashboard/:path*"],
 };
