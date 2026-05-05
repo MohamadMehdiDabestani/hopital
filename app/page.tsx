@@ -104,6 +104,7 @@
 //   );
 // }
 
-export default function HomePage() {
-  return (<p>home page</p>)
+import { LoginForm } from "@/features/auth";
+export default function LoginPage() {
+  return <LoginForm />;
 }
