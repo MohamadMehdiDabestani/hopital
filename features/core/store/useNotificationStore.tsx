@@ -8,7 +8,7 @@ type NotificationState = {
   close: () => void;
 };
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
+export const useNotificationStore = create<NotificationState>((set) => ({
   open: false,
   text: "",
   severity: "success",
