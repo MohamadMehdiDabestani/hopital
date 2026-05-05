@@ -5,7 +5,7 @@ import { jwtVerify } from "jose";
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 const roleAccess: Record<string, string[]> = {
-  "/admin": ["admin"],
+  "/dashboard": ["root"],
   "/manager": ["admin", "manager"],
   "/doctor": ["admin", "doctor"],
 };
@@ -17,22 +17,26 @@ async function verifyAccess(token: string) {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  if (pathname.startsWith("/api/auth/refresh") || pathname.startsWith("/")) {
-    return NextResponse.next();
-  }
+  if (pathname.startsWith("/api/auth/refresh") || pathname === "/") return NextResponse.next();
 
   const access = req.cookies.get("access_token")?.value;
   const refresh = req.cookies.get("refresh_token")?.value;
+  if (!refresh) {
+    const res = NextResponse.redirect(new URL("/", req.url));
 
-  // اگر access نداریم اما refresh داریم → برو برای رفرش
+    res.cookies.delete("access_token");
+    res.cookies.delete("refresh_token");
+    return res;
+  }
+
+  // اگر access نداریم اما refresh داریم → رفرش
   if (!access && refresh) {
     const url = new URL("/api/auth/refresh", req.url);
     url.searchParams.set("next", req.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
-  // اگر اصلا توکن نداریم → لاگین
+  // اگر اصلا توکن نداریم → برگرد به لاگین
   if (!access) {
     return NextResponse.redirect(new URL("/", req.url));
   }
@@ -40,7 +44,7 @@ export async function proxy(req: NextRequest) {
   try {
     const payload = await verifyAccess(access);
 
-    // نقش‌ها
+    // کنترل نقش‌ها
     for (const [path, roles] of Object.entries(roleAccess)) {
       if (pathname.startsWith(path) && !roles.includes(payload.role)) {
         return NextResponse.redirect(new URL("/403", req.url));
@@ -48,17 +52,14 @@ export async function proxy(req: NextRequest) {
     }
 
     return NextResponse.next();
-  } catch (err: any) {
-    // access منقضی شده → برو رفرش
-    if (refresh) {
-      const url = new URL("/api/auth/refresh", req.url);
-      url.searchParams.set("next", req.nextUrl.pathname);
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.redirect(new URL("/", req.url));
+  } catch {
+    const res = NextResponse.redirect(new URL("/", req.url));
+    res.cookies.delete("access_token");
+    res.cookies.delete("refresh_token");
+    return res;
   }
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/manager/:path*", "/doctor/:path*"],
+  matcher: ["/dashboard/:path*", "/manager/:path*", "/doctor/:path*"],
 };
