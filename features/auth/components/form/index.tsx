@@ -1,19 +1,23 @@
 "use client";
 import { loginUser, useAuthForm } from "@/features/auth";
 import { useNotificationStore } from "@/features/core";
+import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 import { TextField, Button, Box, Container } from "@mui/material";
-import {  useTransition } from "react";
+import { redirect, useRouter } from "next/navigation";
+import { useTransition } from "react";
 export const LoginForm = () => {
   const [loading, startLoading] = useTransition();
   const { show } = useNotificationStore();
+  const router = useRouter()
   const formik = useAuthForm((values) => {
     startLoading(async () => {
       try {
         const res = await loginUser(values);
-        console.log(res);
-      } catch(err) {
+        if (!res.ok) show(res.message, "error");
+        router.push("/dashboard")
+      } catch (err: any) {
         console.log(err)
-        show("dd", "error");
+        show(ActionErrorMapping(err), "error");
       }
     });
   });
@@ -65,7 +69,7 @@ export const LoginForm = () => {
             fullWidth
           />
 
-          <Button variant="contained" type="submit"  loading={loading}>
+          <Button variant="contained" type="submit" loading={loading}>
             ورود
           </Button>
         </Box>
