@@ -10,10 +10,10 @@
     "plop": "tsx node_modules/plop/bin/plop.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "drizzle-kit generate --config ./features/core/drizzle/drizzle.config.ts",
+    "db:push": "drizzle-kit push --config ./features/core/drizzle/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config ./features/core/drizzle/drizzle.config.ts",
+    "db:studio": "drizzle-kit studi --config ./features/core/drizzle/drizzle.config.tso"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
