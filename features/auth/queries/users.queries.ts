@@ -1,5 +1,5 @@
 import { db } from "@/features/core/drizzle/client";
-import { users, refreshTokens } from "@/features/core/schema/schema.drizzle";
+import { users} from "@/features/core/schema/schema.drizzle";
 import { eq, and } from "drizzle-orm";
 import { LoginSchemaType } from "@/features/auth/schemas/auth.schema";
 import bcrypt from "bcrypt";
@@ -19,8 +19,7 @@ export const GetUserbyPhoneAndPass = async (
       hashedPassword: users.hashedPassword,
     })
     .from(users)
-    .where(and(eq(users.phoneNumber, user.phone), eq(users.suspended, false)))
-    .limit(1);
+    .where(and(eq(users.phoneNumber, user.phone), eq(users.suspended, false)));
   if (!u) return { ok: false, message: "کاربری یافت نشد" };
   const compare = bcrypt.compare(hashedPass, u.hashedPassword);
   if (!compare) return { ok: false, message: "کاربری یافت نشد" };
