@@ -3,7 +3,7 @@ import { loginUser, useAuthForm } from "@/features/auth";
 import { useNotificationStore } from "@/features/core";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 import { TextField, Button, Box, Container } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useTransition } from "react";
 export const LoginForm = () => {
   const [loading, startLoading] = useTransition();
