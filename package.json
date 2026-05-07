@@ -12,7 +12,7 @@
     "test:watch": "jest --watch",
     "db:generate": "drizzle-kit generate --config ./features/core/drizzle/drizzle.config.ts",
     "db:push": "drizzle-kit push --config ./features/core/drizzle/drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config ./features/core/drizzle/drizzle.config.ts",
+    "db:migrate": "tsx ./features/core/drizzle/migrate.ts",
     "db:studio": "drizzle-kit studio --config ./features/core/drizzle/drizzle.config.ts"
   },
   "dependencies": {
