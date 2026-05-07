@@ -21,7 +21,7 @@ export const GetUserbyPhoneAndPass = async (
     .from(users)
     .where(and(eq(users.phoneNumber, user.phone), eq(users.suspended, false)));
   if (!u) return { ok: false, message: "کاربری یافت نشد" };
-  const compare = bcrypt.compare(hashedPass, u.hashedPassword);
+  const compare = await bcrypt.compare(hashedPass, u.hashedPassword);
   if (!compare) return { ok: false, message: "کاربری یافت نشد" };
   return {
     ok: true,
