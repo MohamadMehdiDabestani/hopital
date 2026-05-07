@@ -2,6 +2,8 @@
 // import { useEffect, useState } from "react";
 // import { socket } from "@/lib/socket";
 
+import { LoginForm } from "@/features/auth";
+
 // type Patient = {
 //   id: string;
 //   fullName: string;
@@ -104,7 +106,6 @@
 //   );
 // }
 
-import { LoginForm } from "@/features/auth";
-export default function LoginPage() {
-  return <LoginForm />;
+export default function HomePage() {
+  return (<LoginForm />)
 }

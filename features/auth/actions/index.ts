@@ -17,7 +17,10 @@ export const loginUser = async (
   try {
     const user = await GetUserbyPhoneAndPass(parsed.data);
     if (!user.ok) return { ok: false, message: "کاربری یافت نشد" };
-    const access = await signAccessToken({ sub: user.data.id });
+    const access = await signAccessToken({
+      sub: String(user.data.id),
+      role: user.data.rule,
+    });
     const cookie = await cookies();
     cookie.set("access_token", access, {
       httpOnly: true,
