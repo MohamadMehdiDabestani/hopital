@@ -1,5 +1,5 @@
 {
-  "id": "2bbc1d5f-2a5f-4b91-bb66-7e6ae6a8855b",
+  "id": "a0981b6c-1de8-49d8-b87f-8de53cf1f8c3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -101,6 +101,66 @@
           "nullsNotDistinct": false,
           "columns": [
             "codeMeli"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sites": {
+      "name": "sites",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "firstName": {
+          "name": "firstName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socketId": {
+          "name": "socketId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "gen_random_uuid()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sites_userId_users_id_fk": {
+          "name": "sites_userId_users_id_fk",
+          "tableFrom": "sites",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sites_userId_unique": {
+          "name": "sites_userId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "userId"
           ]
         }
       },
