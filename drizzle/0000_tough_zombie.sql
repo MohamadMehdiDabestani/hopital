@@ -15,3 +15,13 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_phone_number_unique" UNIQUE("phone_number"),
 	CONSTRAINT "users_codeMeli_unique" UNIQUE("codeMeli")
 );
+--> statement-breakpoint
+CREATE TABLE "sites" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"firstName" text NOT NULL,
+	"socketId" uuid DEFAULT gen_random_uuid(),
+	"userId" integer NOT NULL,
+	CONSTRAINT "sites_userId_unique" UNIQUE("userId")
+);
+--> statement-breakpoint
+ALTER TABLE "sites" ADD CONSTRAINT "sites_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
