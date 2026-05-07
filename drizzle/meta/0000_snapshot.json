@@ -1,6 +1,6 @@
 {
-  "id": "07c8ec47-710b-4093-a487-96f2bb5f8994",
-  "prevId": "1b956368-0a8d-4ef9-85bf-fbd2d27fedd7",
+  "id": "a0981b6c-1de8-49d8-b87f-8de53cf1f8c3",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -108,8 +108,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.refresh_tokens": {
-      "name": "refresh_tokens",
+    "public.sites": {
+      "name": "sites",
       "schema": "",
       "columns": {
         "id": {
@@ -118,50 +118,52 @@
           "primaryKey": true,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "firstName": {
+          "name": "firstName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socketId": {
+          "name": "socketId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "gen_random_uuid()"
+        },
+        "userId": {
+          "name": "userId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
-        },
-        "token_hash": {
-          "name": "token_hash",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "refresh_tokens_user_id_users_id_fk": {
-          "name": "refresh_tokens_user_id_users_id_fk",
-          "tableFrom": "refresh_tokens",
+        "sites_userId_users_id_fk": {
+          "name": "sites_userId_users_id_fk",
+          "tableFrom": "sites",
           "tableTo": "users",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "sites_userId_unique": {
+          "name": "sites_userId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "userId"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

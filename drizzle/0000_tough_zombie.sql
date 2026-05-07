@@ -16,12 +16,12 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_codeMeli_unique" UNIQUE("codeMeli")
 );
 --> statement-breakpoint
-CREATE TABLE "refresh_tokens" (
+CREATE TABLE "sites" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
-	"token_hash" varchar(255) NOT NULL,
-	"expires_at" timestamp NOT NULL,
-	"created_at" timestamp DEFAULT now()
+	"firstName" text NOT NULL,
+	"socketId" uuid DEFAULT gen_random_uuid(),
+	"userId" integer NOT NULL,
+	CONSTRAINT "sites_userId_unique" UNIQUE("userId")
 );
 --> statement-breakpoint
-ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "sites" ADD CONSTRAINT "sites_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
