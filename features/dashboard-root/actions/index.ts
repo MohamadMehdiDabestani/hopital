@@ -1,4 +1,5 @@
 "use server";
+import { verifySession } from "@/features/auth/utils/dal";
 import { ActionResult } from "@/features/core";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 import {
@@ -15,7 +16,10 @@ export const creatOrUpdateSiteAction = async (
   const parsed = dashboardRootSchema.safeParse(data);
   if (!parsed.success)
     return { ok: false, message: "اطلاعات را کامل وارد کنید" };
+
   try {
+    const isAuth = await verifySession();
+    if (!isAuth) return { ok: false, message: "وارد حساب کاربری شوید" };
     if (parsed.data.siteId) {
       await updateSite(parsed.data);
     } else {

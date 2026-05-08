@@ -99,8 +99,8 @@ export const SiteList = () => {
         return (
           <Chip
             size="small"
-            label={params.row.user.suspended ? "فعال" : "تعلیق"}
-            color={params.row.user.suspended ? "success" : "warning"}
+            label={params.row.user.suspended ? "تعلیق" :"فعال"}
+            color={params.row.user.suspended ? "warning" : "success"}
             variant="outlined"
           />
         );
