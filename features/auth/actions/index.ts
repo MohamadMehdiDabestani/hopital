@@ -6,7 +6,6 @@ import {
 import { ActionResult, signAccessToken } from "@/features/core";
 import { GetUserbyPhoneAndPass } from "@/features/auth/queries/users.queries";
 import { cookies } from "next/headers";
-
 export const loginUser = async (
   user: LoginSchemaType,
 ): Promise<ActionResult<null>> => {
