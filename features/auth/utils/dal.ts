@@ -3,11 +3,10 @@ import "server-only";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/features/core";
 import { redirect } from "next/navigation";
-import { cache } from "react";
 import { db } from "@/features/core/drizzle/client";
 import { users } from "@/features/auth/schemas/users.drizzle";
 import { eq } from "drizzle-orm";
-export const verifyCacheToken = cache(async () => {
+export const verifySession = async () => {
   const cookie = (await cookies()).get("access_token")?.value;
   if (!cookie) redirect("/login");
 
@@ -17,10 +16,10 @@ export const verifyCacheToken = cache(async () => {
     redirect("/login");
   }
   return { isAuth: true, userId: token.sub };
-});
+};
 
-export const getUser = cache(async () => {
-  const token = await verifyCacheToken();
+export const getUser = async () => {
+  const token = await verifySession();
   if (!token) return null;
 
   try {
@@ -38,4 +37,4 @@ export const getUser = cache(async () => {
     console.log("Failed to fetch user");
     return null;
   }
-});
+};
