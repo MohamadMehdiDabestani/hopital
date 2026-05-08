@@ -1,8 +1,7 @@
-'use client'
 import { z } from "zod";
 
 export const dashboardRootSchema = z.object({
-  // TODO: define fields
+  siteId : z.number().optional(),
   firstName: z.string("نام را وارد کنید"),
   lastName: z.string("نام خانوادگی را وارد کنید"),
   siteName: z.string("نام مرکز را وارد کنید"),

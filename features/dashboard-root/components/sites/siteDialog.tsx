@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,60 +7,68 @@ import {
   DialogActions,
   Box,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
   Button,
   Stack,
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
+import { creatOrUpdateSiteAction } from "@/features/dashboard-root/actions";
 import { useDashboardRootForm } from "@/features/dashboard-root";
-type User = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  codeMeli: string;
-  phone: string;
-  lastLoginAt: string; // ISO
-  siteName: string;
-  status: "active" | "suspended";
-};
+import { useNotificationStore } from "@/features/core";
+import { useRouter } from "next/navigation";
+import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
+import { SiteRow } from "./types";
 type Props = {
   open: boolean;
   onClose: () => void;
-  user?: User;
+  row?: SiteRow;
 };
 
-export const SiteDialog = ({ open, onClose, user }: Props) => {
+export const SiteDialog = ({ open, onClose, row }: Props) => {
+  const [loading, startLoading] = useTransition();
+  const { show } = useNotificationStore();
+  const router = useRouter();
+
   const formik = useDashboardRootForm((values) => {
-    console.log("submit:", values);
-    // call add api
-    onClose();
+    startLoading(async () => {
+      try {
+        console.log("CLICK" , values)
+        const res = await creatOrUpdateSiteAction(values);
+
+        if (!res.ok) {
+          show(res.message, "error");
+          return;
+        }
+        onClose();
+      } catch (err: any) {
+        console.log(err);
+        show(ActionErrorMapping(err), "error");
+      }
+    });
   });
   const handleClose = () => {
     formik.resetForm();
     onClose();
   };
   useEffect(() => {
-    if (open && user) {
+    if (open && row) {
       formik.setValues({
-        firstName: user.firstName ?? "",
-        lastName: user.lastName ?? "",
-        codeMeli: user.codeMeli ?? "",
-        phone: user.phone ?? "",
-        suspended: false,
-        siteName: user.siteName ?? "",
+        firstName: row.user.firstName ?? "",
+        lastName: row.user.lastName ?? "",
+        codeMeli: row.user.codeMeli ?? "",
+        phone: row.user.phone ?? "",
+        suspended: row.user.suspended,
+        siteName: row.siteName ?? "",
+        siteId : row.id
       });
-    } else if (open && !user) {
+    } else if (open && !row) {
       formik.resetForm();
     }
-  }, [open, user]);
+  }, [open, row]);
+  console.log(formik.errors)
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>{user ? "ویرایش کاربر" : "افزودن کاربر"}</DialogTitle>
+      <DialogTitle>{row ? "ویرایش کاربر" : "افزودن کاربر"}</DialogTitle>
 
       <Box component="form" onSubmit={formik.handleSubmit} noValidate>
         <DialogContent>
@@ -89,7 +97,7 @@ export const SiteDialog = ({ open, onClose, user }: Props) => {
               fullWidth
             />
             <TextField
-              name="lastName"
+              name="siteName"
               label="نام مرکز"
               value={formik.values.siteName}
               onChange={formik.handleChange}
@@ -130,7 +138,7 @@ export const SiteDialog = ({ open, onClose, user }: Props) => {
               fullWidth
             />
 
-            {user && (
+            {row && (
               <FormControlLabel
                 control={
                   <Checkbox
@@ -148,15 +156,20 @@ export const SiteDialog = ({ open, onClose, user }: Props) => {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose} color="inherit">
+          <Button onClick={handleClose} color="inherit">
             انصراف
           </Button>
-          {user ? (
-            <Button type="submit" color="warning" variant="contained">
+          {row ? (
+            <Button
+              type="submit"
+              color="warning"
+              variant="contained"
+              loading={loading}
+            >
               ویرایش
             </Button>
           ) : (
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" loading={loading}>
               افزودن
             </Button>
           )}
