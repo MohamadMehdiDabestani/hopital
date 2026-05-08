@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { verifyToken } from "@/features/core";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { db } from "@/features/core";
+import { db } from "@/features/core/drizzle/client";
 import { users } from "@/features/auth/schemas/users.drizzle";
 import { eq } from "drizzle-orm";
 export const verifyCacheToken = cache(async () => {
