@@ -6,8 +6,10 @@ import {
   varchar,
   boolean,
   timestamp,
+  integer,
+  AnyPgColumn,
 } from "drizzle-orm/pg-core";
-
+import {sites} from '@/features/core/schema/schema.drizzle'
 export const roleEnum = pgEnum("role", [
   "root",
   "manager",
@@ -33,4 +35,7 @@ export const users = pgTable("users", {
     .notNull(),
   rule: roleEnum("rule").notNull(),
   suspended: boolean("suspended").default(false).notNull(),
+  siteId: integer("siteId")
+    .notNull()
+    .references(() :AnyPgColumn => sites.id, { onDelete: "cascade" }),
 });

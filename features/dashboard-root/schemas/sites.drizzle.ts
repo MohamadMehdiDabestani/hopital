@@ -4,14 +4,15 @@ import {
   text,
   uuid,
   integer,
+  AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { users } from "@/features/auth/schemas/users.drizzle";
 export const sites = pgTable("sites", {
   id: serial("id").primaryKey(),
   name: text("firstName").notNull(),
   socketId: uuid().defaultRandom(),
-  userId: integer("userId")
+  createdByUserId: integer("createByUserId")
     .notNull()
     .unique()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() :AnyPgColumn => users.id, { onDelete: "cascade" }),
 });
