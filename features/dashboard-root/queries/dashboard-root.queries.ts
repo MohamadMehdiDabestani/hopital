@@ -22,34 +22,37 @@ export const createNewSite = async (data: DashboardRootSchema) => {
       })
       .returning({ id: users.id });
 
-    await tx.insert(sites).values({
-      name: data.siteName,
-      userId: newUser.id,
-    });
-
+    const [newSite] = await tx
+      .insert(sites)
+      .values({
+        name: data.siteName,
+        createdByUserId: newUser.id,
+      })
+      .returning({ id: sites.id });
+    await tx
+      .update(users)
+      .set({ siteId: newSite.id })
+      .where(eq(users.id, newUser.id));
     return { ok: true };
   });
 };
 export const updateSite = async (data: DashboardRootSchema) => {
-  if (!data.siteId) throw new Error("siteId is required");
+  if (!data.siteId) throw new Error("اطلاعات ناقض است");
 
   await db.transaction(async (tx) => {
-    // 1) گرفتن userId از سایت
     const [site] = await tx
-      .select({ userId: sites.userId })
+      .select({ createdByUserId: sites.createdByUserId })
       .from(sites)
       .where(eq(sites.id, data.siteId as number))
       .limit(1);
 
-    if (!site?.userId) throw new Error("User not found for this site");
+    if (!site?.createdByUserId) throw new Error("کاربری یافت نشد");
 
-    // 2) آپدیت سایت
     await tx
       .update(sites)
       .set({ name: data.siteName })
       .where(eq(sites.id, data.siteId as number));
 
-    // 3) آپدیت کاربر مرتبط
     await tx
       .update(users)
       .set({
@@ -59,6 +62,6 @@ export const updateSite = async (data: DashboardRootSchema) => {
         phoneNumber: data.phone,
         suspended: data.suspended,
       })
-      .where(eq(users.id, site.userId));
+      .where(eq(users.id, site.createdByUserId));
   });
-}
+};

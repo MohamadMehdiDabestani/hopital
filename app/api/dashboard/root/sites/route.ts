@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
       users.lastName,
       users.codeMeli,
       users.phoneNumber,
-      // users.suspended,
       sites.name,
       sql`CAST(${sites.id} AS TEXT)`,
     ],
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
         id: sites.id,
         siteName: sites.name,
         user: {
-          userId: users.id,
+          createdByUserId: users.id,
           firstName: users.firstName,
           lastName: users.lastName,
           codeMeli: users.codeMeli,
@@ -50,7 +49,7 @@ export async function GET(req: NextRequest) {
         },
       })
       .from(sites)
-      .leftJoin(users, eq(sites.userId, users.id))
+      .leftJoin(users, eq(sites.createdByUserId, users.id))
       .where(where)
       .orderBy(orderBy)
       .limit(pageSize)
@@ -59,7 +58,7 @@ export async function GET(req: NextRequest) {
     db
       .select({ count: sql<number>`count(*)` })
       .from(sites)
-      .leftJoin(users, eq(sites.userId, users.id))
+      .leftJoin(users, eq(sites.createdByUserId, users.id))
       .where(where)
       .then((r) => r[0]?.count ?? 0),
   ]);
