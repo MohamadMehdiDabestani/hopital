@@ -9,73 +9,15 @@ import {
 import { Box, Button, Chip, Typography } from "@mui/material";
 import dayjs from "@/features/core/utils/dayjs";
 import { UserDialog } from "./userDialog";
+import useSWR from "swr";
+import { ActionResult } from "@/features/core";
+import { ApiResult, UserRow } from "./type";
 
-type User = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  codeMeli: string;
-  phone: string;
-  lastLoginAt: string; // ISO
-  role: string;
-  status: "active" | "suspended";
-};
-const users = [
-  {
-    id: 1,
-    firstName: "علی",
-    lastName: "رضایی",
-    codeMeli: "0012345678",
-    phone: "09121234567",
-    lastLoginAt: "2026-04-27T14:35:00+03:30",
-    role: "admin",
-    status: "active",
-  },
-  {
-    id: 2,
-    firstName: "مریم",
-    lastName: "کاظمی",
-    codeMeli: "0023456789",
-    phone: "09129876543",
-    lastLoginAt: "2026-04-28T09:10:00+03:30",
-    role: "doctor",
-    status: "active",
-  },
-  {
-    id: 3,
-    firstName: "سجاد",
-    lastName: "محمدی",
-    codeMeli: "0034567890",
-    phone: "09351234567",
-    lastLoginAt: "2026-04-26T18:20:00+03:30",
-    role: "doctor",
-    status: "suspended",
-  },
-  {
-    id: 4,
-    firstName: "زهرا",
-    lastName: "قاسمی",
-    codeMeli: "0045678901",
-    phone: "09133445566",
-    lastLoginAt: "2026-04-25T11:05:00+03:30",
-    role: "admision",
-    status: "active",
-  },
-  {
-    id: 5,
-    firstName: "حسین",
-    lastName: "یوسفی",
-    codeMeli: "0056789012",
-    phone: "09221239876",
-    lastLoginAt: "2026-04-24T22:45:00+03:30",
-    role: "medicine",
-    status: "active",
-  },
-];
+
 export const UsersList = () => {
-  // --- server state (mock) ---
-  const [open, setOpen] = useState<boolean>(false);
-  const [user, setUser] = useState<User | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [row, setRow] = useState<UserRow | undefined>(undefined);
+
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
@@ -86,72 +28,23 @@ export const UsersList = () => {
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
 
-  const handleFilterModelChange = (model: GridFilterModel) => {
-    setFilterModel(model);
+  const query = useMemo(() => {
+    const params = new URLSearchParams({
+      page: String(paginationModel.page),
+      pageSize: String(paginationModel.pageSize),
+      sort: JSON.stringify(sortModel),
+      filter: JSON.stringify(filterModel),
+    });
+    return `/api/dashboard/manager/users?${params.toString()}`;
+  }, [paginationModel, filterModel, sortModel]);
 
-    const columnFilters = model.items
-      .filter(
-        (it) => it.field && it.operator && it.value != null && it.value !== "",
-      )
-      .map((it) => ({
-        field: it.field!,
-        operator: it.operator!,
-        value: it.value!,
-      }));
-
-    const quick = (model.quickFilterValues ?? [])
-      .map((v) => String(v).trim())
-      .filter(Boolean);
-
-    console.log({ columnFilters, quick });
-  };
-
-  // --- mock server processing ---
-  const { rows, rowCount } = useMemo(() => {
-    let data = [...users];
-
-    const quick = (filterModel.quickFilterValues ?? [])
-      .map((v) => String(v).toLowerCase().trim())
-      .filter(Boolean);
-
-    if (quick.length) {
-      data = data.filter((u) =>
-        quick.every(
-          (q) =>
-            String(u.id).toLowerCase().includes(q) ||
-            `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
-            u.codeMeli.toLowerCase().includes(q) ||
-            u.phone.toLowerCase().includes(q) ||
-            u.role.toLowerCase().includes(q) ||
-            (u.status === "active" ? "فعال" : "تعلیق").includes(q),
-        ),
-      );
-    }
-
-    if (sortModel[0]) {
-      const { field, sort } = sortModel[0];
-      data.sort((a: any, b: any) => {
-        const av = a[field];
-        const bv = b[field];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-
-        if (typeof av === "number" && typeof bv === "number") {
-          return sort === "asc" ? av - bv : bv - av;
-        }
-        return sort === "asc"
-          ? String(av).localeCompare(String(bv))
-          : String(bv).localeCompare(String(av));
-      });
-    }
-
-    const count = data.length;
-    const start = paginationModel.page * paginationModel.pageSize;
-    const end = start + paginationModel.pageSize;
-
-    return { rows: data.slice(start, end), rowCount: count };
-  }, [users, filterModel, sortModel, paginationModel]);
+  const { data, isLoading, isValidating, mutate, error } = useSWR<ApiResult>(
+    query,
+    {
+      keepPreviousData: true,
+      revalidateOnFocus: false,
+    },
+  );
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "آیدی", width: 90 },
@@ -170,8 +63,8 @@ export const UsersList = () => {
       width: 180,
       valueFormatter: (value) =>
         value
-    ? dayjs(value, "YYYY/MM/DDTHH:mm:ssZ").calendar("jalali").format("YYYY/MM/DD HH:mm")
-    : "—",
+          ? dayjs(String(value)).calendar("jalali").format("YYYY/MM/DD HH:mm")
+          : "—",
     },
     { field: "role", headerName: "نقش", width: 120 },
     {
@@ -179,12 +72,11 @@ export const UsersList = () => {
       headerName: "وضعیت",
       width: 120,
       renderCell: (params) => {
-        const active = params.value === "active";
         return (
           <Chip
             size="small"
-            label={active ? "فعال" : "تعلیق"}
-            color={active ? "success" : "warning"}
+            label={params.row.suspended ?  "تعلیق" : "فعال"}
+            color={params.row.suspended ? "warning" : "success"}
             variant="outlined"
           />
         );
@@ -201,7 +93,7 @@ export const UsersList = () => {
           size="small"
           color="info"
           onClick={() => {
-            setUser(params.row as User);
+            setRow(params.row as UserRow);
             setOpen(true);
           }}
         >
@@ -210,16 +102,28 @@ export const UsersList = () => {
       ),
     },
   ];
-
   return (
     <Box sx={{ width: "100%" }}>
-      <Button onClick={() => {setOpen(true);setUser(undefined) }} >افزودن کارمند جدید</Button>
-      <UserDialog onClose={() => setOpen(false)} open={open} user={user} />
+      <Button
+        onClick={() => {
+          setOpen(true);
+          setRow(undefined);
+        }}
+      >
+        افزودن کارمند جدید
+      </Button>
+      <UserDialog
+        onSaved={() => mutate()}
+        onClose={() => setOpen(false)}
+        open={open}
+        row={row}
+      />
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
-          rows={rows}
+          rows={data?.rows ?? []}
+          rowCount={Number(data?.total ?? 0)}
+          loading={isLoading || isValidating}
           columns={columns}
-          rowCount={rowCount}
           getRowId={(row) => row.id}
           paginationMode="server"
           filterMode="server"
@@ -227,7 +131,7 @@ export const UsersList = () => {
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           filterModel={filterModel}
-          onFilterModelChange={handleFilterModelChange}
+          onFilterModelChange={setFilterModel}
           sortModel={sortModel}
           onSortModelChange={setSortModel}
           pageSizeOptions={[10, 25, 50]}

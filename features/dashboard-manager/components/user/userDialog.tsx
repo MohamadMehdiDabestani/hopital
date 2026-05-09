@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -17,55 +17,63 @@ import {
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
-import { useDashboardManagerAddForm } from "@/features/dashboard-manager";
-type User = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  codeMeli: string;
-  phone: string;
-  lastLoginAt: string; // ISO
-  role: string;
-  status: "active" | "suspended";
-};
+import {
+  createOrUpdateUserForSite,
+  useDashboardManagerAddForm,
+} from "@/features/dashboard-manager";
+import { UserRow } from "./type";
+import { useNotificationStore } from "@/features/core";
+
 type Props = {
   open: boolean;
   onClose: () => void;
-  user?: User;
+  row?: UserRow;
+  onSaved: () => void;
 };
-const roleToId: Record<User["role"], number> = {
-  admin: 1,
-  doctor: 2,
-  medicine: 3,
-  admision: 4,
-};
-export const UserDialog = ({ open, onClose, user }: Props) => {
+
+export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
+  const [loading, startLoading] = useTransition();
+  const { show } = useNotificationStore();
+
   const formik = useDashboardManagerAddForm((values) => {
-    console.log("submit:", values);
+    // console.log("submit:", values);
     // call add api
-    onClose();
+    startLoading(async () => {
+      try {
+        const data = await createOrUpdateUserForSite(values);
+        if (!data.ok) {
+          show(data.message, "error");
+          return;
+        }
+        onSaved();
+      } catch (error) {
+      } finally {
+        onClose();
+      }
+    });
   });
   const handleClose = () => {
     formik.resetForm();
     onClose();
   };
   useEffect(() => {
-    if (open && user) {
+    if (open && row) {
       formik.setValues({
-        firstName: user.firstName ?? "",
-        lastName: user.lastName ?? "",
-        codeMeli: user.codeMeli ?? "",
-        phone: user.phone ?? "",
-        roleId: roleToId[user.role] ?? "",
-        suspended : user.status == "suspended"
+        firstName: row.firstName ?? "",
+        lastName: row.lastName ?? "",
+        codeMeli: row.codeMeli ?? "",
+        phone: row.phone ?? "",
+        role: (row.role as any) ?? "",
+        suspended: row.suspended,
+        rowUserId: row.id,
       });
-    } else if (open && !user) {
+    } else if (open && !row) {
       formik.resetForm();
     }
-  }, [open, user]);
+  }, [open, row]);
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>{user ? "ویرایش کاربر" : "افزودن کاربر"}</DialogTitle>
+      <DialogTitle>{row ? "ویرایش کاربر" : "افزودن کاربر"}</DialogTitle>
 
       <Box component="form" onSubmit={formik.handleSubmit} noValidate>
         <DialogContent>
@@ -128,27 +136,27 @@ export const UserDialog = ({ open, onClose, user }: Props) => {
 
             <FormControl
               fullWidth
-              error={formik.touched.roleId && Boolean(formik.errors.roleId)}
+              error={formik.touched.role && Boolean(formik.errors.role)}
             >
-              <InputLabel id="roleId-label">نقش</InputLabel>
+              <InputLabel id="role-label">نقش</InputLabel>
               <Select
-                labelId="roleId-label"
-                name="roleId"
+                labelId="role-label"
+                name="role"
                 label="نقش"
-                value={formik.values.roleId}
+                value={formik.values.role}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
               >
-                <MenuItem value={1}>ادمین</MenuItem>
-                <MenuItem value={2}>دکتر</MenuItem>
-                <MenuItem value={3}>دارو دار</MenuItem>
-                <MenuItem value={4}>پذیرش</MenuItem>
+                <MenuItem value="manager">مدیر</MenuItem>
+                <MenuItem value="doctor">دکتر</MenuItem>
+                <MenuItem value="medicine">دارو دار</MenuItem>
+                <MenuItem value="admision">پذیرش</MenuItem>
               </Select>
               <FormHelperText>
-                {formik.touched.roleId && (formik.errors.roleId as string)}
+                {formik.touched.role && (formik.errors.role as string)}
               </FormHelperText>
             </FormControl>
-            {user && (
+            {row && (
               <FormControlLabel
                 control={
                   <Checkbox
@@ -169,12 +177,12 @@ export const UserDialog = ({ open, onClose, user }: Props) => {
           <Button onClick={onClose} color="inherit">
             انصراف
           </Button>
-          {user ? (
-            <Button type="submit" color="warning" variant="contained">
+          {row ? (
+            <Button type="submit" color="warning" variant="contained" loading={loading}>
               ویرایش
             </Button>
           ) : (
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" loading={loading}>
               افزودن
             </Button>
           )}

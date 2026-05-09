@@ -13,7 +13,7 @@ export const useDashboardManagerAddForm = (onSubmit: (values: any) => void) =>
       firstName: "",
       lastName: "",
       phone: "",
-      roleId: "",
+      role: "manager",
       suspended : false
     },
     validationSchema: toFormikValidationSchema(dashboardManagerUserAddSchema),
