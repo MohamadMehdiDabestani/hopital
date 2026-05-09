@@ -51,13 +51,15 @@ export const UserDialog = ({ open, onClose, user }: Props) => {
   };
   useEffect(() => {
     if (open && user) {
+      console.log(user.role);
+      console.log(roleToId[user.role] ?? "");
       formik.setValues({
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
         codeMeli: user.codeMeli ?? "",
         phone: user.phone ?? "",
         roleId: roleToId[user.role] ?? "",
-        suspended : user.status == "suspended"
+        suspended : false
       });
     } else if (open && !user) {
       formik.resetForm();

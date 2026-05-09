@@ -13,12 +13,11 @@ export const LoginForm = () => {
     startLoading(async () => {
       try {
         const res = await loginUser(values);
-        console.log(res)
         if (!res.ok) {
           show(res.message, "error")
           return;
         }
-        // await router.push("/dashboard")
+        await router.push("/dashboard")
       } catch (err: any) {
         console.log(err)
         show(ActionErrorMapping(err), "error");
