@@ -16,7 +16,6 @@ export const loginUser = async (
 
   try {
     const user = await GetUserbyPhoneAndPass(parsed.data);
-    console.log(user)
     if (!user.ok) return { ok: false, message: "کاربری یافت نشد" };
     const access = await signAccessToken({
       sub: String(user.data.id),
