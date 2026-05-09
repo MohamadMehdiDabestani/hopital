@@ -2,7 +2,7 @@ export type SiteRow = {
   id: number;
   siteName: string;
   user: {
-    userId?: string;
+    createdByUserId?: string;
     firstName: string;
     lastName: string;
     codeMeli: string;
@@ -10,4 +10,8 @@ export type SiteRow = {
     lastLoginAt: string;
     suspended: boolean;
   };
+};
+export type ApiResponse = {
+  rows: SiteRow[];
+  total: number;
 };

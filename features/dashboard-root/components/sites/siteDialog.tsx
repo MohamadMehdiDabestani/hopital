@@ -15,30 +15,29 @@ import {
 import { creatOrUpdateSiteAction } from "@/features/dashboard-root/actions";
 import { useDashboardRootForm } from "@/features/dashboard-root";
 import { useNotificationStore } from "@/features/core";
-import { useRouter } from "next/navigation";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 import { SiteRow } from "./types";
 type Props = {
   open: boolean;
   onClose: () => void;
   row?: SiteRow;
+  onSvaed : () => void
 };
 
-export const SiteDialog = ({ open, onClose, row }: Props) => {
+export const SiteDialog = ({ open, onClose, row , onSvaed}: Props) => {
   const [loading, startLoading] = useTransition();
   const { show } = useNotificationStore();
-  const router = useRouter();
 
   const formik = useDashboardRootForm((values) => {
     startLoading(async () => {
       try {
-        console.log("CLICK" , values)
         const res = await creatOrUpdateSiteAction(values);
 
         if (!res.ok) {
           show(res.message, "error");
           return;
         }
+        onSvaed();
         onClose();
       } catch (err: any) {
         console.log(err);

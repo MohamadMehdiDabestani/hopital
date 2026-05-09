@@ -26,7 +26,7 @@ export const creatOrUpdateSiteAction = async (
       await createNewSite(parsed.data);
     }
     return { data: null, ok: true };
-  } catch (error) {
-    return { ok: false, message: ActionErrorMapping(error as any) };
+  } catch (error : any) {
+    return { ok: false, message: error.message ?? ActionErrorMapping(error as any) };
   }
 };

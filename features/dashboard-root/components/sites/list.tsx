@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DataGrid,
   GridColDef,
@@ -9,12 +9,10 @@ import {
 import { Box, Button, Chip, Typography } from "@mui/material";
 import dayjs from "@/features/core/utils/dayjs";
 import { SiteDialog } from "./siteDialog";
-import {SiteRow} from './types'
+import {ApiResponse, SiteRow} from './types'
+import useSWR from "swr";
 
 export const SiteList = () => {
-  const [rows, setRows] = useState<SiteRow[]>([]);
-  const [rowCount, setRowCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [row, setRow] = useState<SiteRow | undefined>(undefined);
 
@@ -27,35 +25,24 @@ export const SiteList = () => {
     quickFilterValues: [],
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
-
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const load = async () => {
-      setLoading(true);
-
-      const params = new URLSearchParams({
-        page: String(paginationModel.page),
-        pageSize: String(paginationModel.pageSize),
-        sort: JSON.stringify(sortModel),
-        filter: JSON.stringify(filterModel),
-      });
-
-      const res = await fetch(`/api/dashboard/root/sites?${params}`, {
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      const json = await res.json();
-
-      setRows(json.rows);
-      setRowCount(json.total);
-      setLoading(false);
-    };
-
-    load().catch(() => setLoading(false));
-    return () => controller.abort();
+const query = useMemo(() => {
+    const params = new URLSearchParams({
+      page: String(paginationModel.page),
+      pageSize: String(paginationModel.pageSize),
+      sort: JSON.stringify(sortModel),
+      filter: JSON.stringify(filterModel),
+    });
+    return `/api/dashboard/root/sites?${params.toString()}`;
   }, [paginationModel, filterModel, sortModel]);
+
+  const { data, isLoading , isValidating , mutate} = useSWR<ApiResponse>(
+    query,
+    {
+      keepPreviousData: true,
+      revalidateOnFocus: false,
+    }
+  );
+
   const columns: GridColDef[] = [
     { field: "id", headerName: "آیدی", width: 90 },
     {
@@ -137,12 +124,12 @@ export const SiteList = () => {
       >
         افزودن کارمند جدید
       </Button>
-      <SiteDialog onClose={() => setOpen(false)} open={open} row={row} />
+      <SiteDialog onClose={() => {setOpen(false)}} onSvaed={() => mutate()}  open={open} row={row} />
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
-          rows={rows}
-          rowCount={rowCount}
-          loading={loading}
+          rows={data?.rows ?? []}
+          rowCount={data?.total ?? 0}
+          loading={isLoading || isValidating}
           columns={columns}
           getRowId={(row) => row.id}
           paginationMode="server"
