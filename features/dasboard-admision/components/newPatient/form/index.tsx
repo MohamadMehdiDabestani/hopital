@@ -37,6 +37,7 @@ export const NewPatientForm = () => {
       show(createVisit.message, "error");
       return;
     }
+    formik.resetForm();
   });
 
   return (
@@ -79,12 +80,14 @@ export const NewPatientForm = () => {
           getOptionLabel={(d) => d.name}
           onChange={(_, v) => formik.setFieldValue("doctorId", v?.id ?? "")}
           renderOption={(props, option) => {
+            const { key, ...rest } = props;
+
             const color = getQueueColor(option.queueCount);
             return (
               <Box
                 component="li"
-                {...props}
-                key={option.id}
+                key={key}
+                {...rest}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -102,7 +105,6 @@ export const NewPatientForm = () => {
                   size="small"
                   color={color}
                   label={`${option.queueCount} نفر در صف`}
-                  variant="filled"
                 />
               </Box>
             );

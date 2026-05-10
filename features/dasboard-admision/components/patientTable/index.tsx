@@ -13,15 +13,9 @@ import {
   TextField,
   TableSortLabel,
 } from "@mui/material";
-import { useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { tehranTimezone } from "@/features/core";
-type Status =
-  | "در انتظار"
-  | "داخل مطب"
-  | "اتمام ویزیت"
-  | "دریافت دارو"
-  | "خروج"
-  | "تعلیق";
+import useSWR from "swr";
 
 type ReceptionRow = {
   id: number;
@@ -30,52 +24,31 @@ type ReceptionRow = {
   receptionTime: string; // ISO
   treatTime: string | null; // ISO
   exitRoomAt: string | null;
-  status: Status;
+  status: string;
 };
 
-const initial: ReceptionRow[] = [
-  {
-    id: 1,
-    fullName: "علی رضایی",
-    codeMeli: "1234567890",
-    receptionTime: "2026-04-22T08:15:00Z",
-    treatTime: null,
-    exitRoomAt: null,
-    status: "در انتظار",
-  },
-  {
-    id: 2,
-    fullName: "زهرا کاظمی",
-    codeMeli: "0987654321",
-    receptionTime: "2026-04-22T09:05:00Z",
-    treatTime: "2026-04-22T09:05:00Z",
-    status: "داخل مطب",
-    exitRoomAt: null,
-  },
-  {
-    id: 3,
-    fullName: "مهدی احمدی",
-    codeMeli: "1122334455",
-    receptionTime: "2026-04-22T07:45:00+03:30",
-    status: "تعلیق",
-    exitRoomAt: null,
-    treatTime: null,
-  },
-];
+const statusFa: Record<string, string> = {
+  waiting: "در انتظار",
+  treat: "داخل مطب",
+  doneVisit: "اتمام ویزیت",
+  reciveMedicine: "دریافت دارو",
+  finish: "خروج",
+  suspended: "تعلیق",
+};
 
-const statusColor = (s: Status) => {
+const statusColor = (s: string) => {
   switch (s) {
-    case "در انتظار":
+    case "waiting":
       return "warning";
-    case "داخل مطب":
+    case "treat":
       return "info";
-    case "اتمام ویزیت":
+    case "doneVisit":
       return "success";
-    case "دریافت دارو":
+    case "reciveMedicine":
       return "primary";
-    case "خروج":
+    case "done":
       return "default";
-    case "تعلیق":
+    case "suspended":
       return "error";
   }
 };
@@ -91,39 +64,64 @@ type SortKey =
 type Action =
   | { type: "ADD"; payload: ReceptionRow }
   | { type: "SET"; payload: ReceptionRow[] }
-  | { type: "UPDATE"; payload: ReceptionRow }
-  | { type: "REMOVE"; payload: number };
+  | { type: "UPDATE"; payload: ReceptionRow };
+
 const rowsReducer = (state: ReceptionRow[], action: Action) => {
   switch (action.type) {
     case "ADD":
-      console.log([action.payload, ...state])
       return [action.payload, ...state];
     case "SET":
       return action.payload;
     case "UPDATE":
       return state.map((r) =>
-        r.id === action.payload.id ? action.payload : r,
+        r.id === action.payload.id ? { ...r, ...action.payload } : r,
       );
-    case "REMOVE":
-      return state.filter((r) => r.id !== action.payload);
+
     default:
       return state;
   }
 };
+const normalize = (v: string | null | number) => {
+  if (v === null) return -Infinity;
+  return typeof v === "string" ? new Date(v).getTime() : v;
+};
+
 export const ReceptionTable = () => {
   const [query, setQuery] = useState("");
   const [orderBy, setOrderBy] = useState<SortKey>("receptionTime");
   const [order, setOrder] = useState<Order>("desc");
+  const [rows, dispatch] = useReducer(rowsReducer, []);
 
-  const handleSort = (key: SortKey) => {
-    if (orderBy === key) {
-      setOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setOrderBy(key);
-      setOrder("asc");
+  const { data, isLoading } = useSWR("/api/dashboard/admision/queue");
+
+  useEffect(() => {
+    if (data) {
+      dispatch({ type: "SET", payload: data.rows });
     }
-  };
-  const [rows, dispatch] = useReducer(rowsReducer, initial);
+  }, [data]);
+
+  useEffect(() => {
+    const es = new EventSource("/api/dashboard/admision/streamQueue");
+
+    es.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        console.log(payload);
+        if (payload?.op === "UPDATE") {
+          dispatch({ type: "UPDATE", payload });
+        } else if (payload?.op === "INSERT") {
+          dispatch({ type: "ADD", payload });
+        }
+      } catch (err) {
+        console.error("SSE parse error:", err);
+      }
+    };
+
+    es.addEventListener("ping", () => {});
+
+    return () => es.close();
+  }, []);
+
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter(
@@ -131,11 +129,8 @@ export const ReceptionTable = () => {
         r.fullName.toLowerCase().includes(q) ||
         r.codeMeli.toLowerCase().includes(q),
     );
-  }, [query , rows]);
-  const normalize = (v: string | null | number) => {
-    if (v === null) return -Infinity;
-    return typeof v === "string" ? new Date(v).getTime() : v;
-  };
+  }, [query, rows]);
+
   const sortedRows = useMemo(() => {
     const sorted = [...filteredRows].sort((a, b) => {
       let aVal: string | number = normalize(a[orderBy]);
@@ -153,8 +148,16 @@ export const ReceptionTable = () => {
     return sorted;
   }, [filteredRows, orderBy, order]);
 
+  const handleSort = (key: SortKey) => {
+    if (orderBy === key) {
+      setOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setOrderBy(key);
+      setOrder("asc");
+    }
+  };
+
   const handleSuspend = (row: ReceptionRow) => {
-    // TODO: API call or state update
     console.log("Suspend:", row.id);
   };
 
@@ -225,7 +228,7 @@ export const ReceptionTable = () => {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={row.status}
+                    label={statusFa[row.status]}
                     color={statusColor(row.status)}
                     size="small"
                   />
@@ -244,7 +247,7 @@ export const ReceptionTable = () => {
               </TableRow>
             ))}
 
-            {sortedRows.length === 0 && (
+            {sortedRows.length === 0 && !isLoading && (
               <TableRow>
                 <TableCell colSpan={5} align="center">
                   نتیجه‌ای پیدا نشد
