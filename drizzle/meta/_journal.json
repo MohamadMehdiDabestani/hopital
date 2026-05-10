@@ -36,6 +36,34 @@
       "when": 1778389863203,
       "tag": "0004_bitter_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778392987568,
+      "tag": "0005_petite_kinsey_walden",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778394518127,
+      "tag": "0006_rapid_banshee",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778395987390,
+      "tag": "0007_harsh_edwin_jarvis",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778397898306,
+      "tag": "0008_chemical_eternals",
+      "breakpoints": true
     }
   ]
 }
