@@ -1,5 +1,9 @@
 "use client";
-import { useDasboardAdmisionForm } from "@/features/dasboard-admision";
+import { useNotificationStore } from "@/features/core";
+import {
+  createVisitAction,
+  useDasboardAdmisionForm,
+} from "@/features/dasboard-admision";
 import {
   Autocomplete,
   Avatar,
@@ -10,38 +14,31 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import useSWR from "swr";
 
-// Yes , I know it is not good but I can not install Prisma ...
-const selectList = [
-  {
-    id: "1",
-    name: "ALI",
-    queueCount: 2,
-
-    specialty: "sp",
-  },
-  {
-    id: "2",
-    name: "Hassan",
-    queueCount: 5,
-    specialty: "sp",
-  },
-  {
-    id: "5",
-    name: "Reza",
-    queueCount: 20,
-    specialty: "jjjghfhdks",
-  },
-];
 function getQueueColor(queueCount: number): "success" | "warning" | "error" {
   if (queueCount <= 3) return "success";
   if (queueCount <= 6) return "warning";
   return "error";
 }
+type DoctorOption = {
+  id: number;
+  name: string;
+  queueCount: number;
+};
 export const NewPatientForm = () => {
-  const formik = useDasboardAdmisionForm((values) => {
-    console.log("submited", values);
+  const { data: selectList = [], isLoading } = useSWR<DoctorOption[]>(
+    "/api/dashboard/admision/doctorSelectList",
+  );
+  const { show } = useNotificationStore();
+  const formik = useDasboardAdmisionForm(async (values) => {
+    const createVisit = await createVisitAction(values);
+    if (!createVisit.ok) {
+      show(createVisit.message, "error");
+      return;
+    }
   });
+
   return (
     <Grid container spacing={5} component="form" onSubmit={formik.handleSubmit}>
       <Grid size={{ xs: 12, sm: 4 }}>
@@ -72,15 +69,15 @@ export const NewPatientForm = () => {
           disablePortal
           clearOnEscape
           autoHighlight
+          loading={isLoading}
           options={selectList}
           value={
-            selectList.find((d) => d.id == formik.values.doctorId.toString()) ??
-            null
+            selectList.find(
+              (d) => String(d.id) === String(formik.values.doctorId),
+            ) ?? null
           }
           getOptionLabel={(d) => d.name}
-          groupBy={(d) => d.specialty}
-          
-          onChange={(_, v) => formik.setFieldValue("doctorId", v?.id)}
+          onChange={(_, v) => formik.setFieldValue("doctorId", v?.id ?? "")}
           renderOption={(props, option) => {
             const color = getQueueColor(option.queueCount);
             return (
@@ -99,9 +96,6 @@ export const NewPatientForm = () => {
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="body2" noWrap>
                     {option.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" noWrap>
-                    {option.specialty}
                   </Typography>
                 </Box>
                 <Chip
