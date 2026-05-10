@@ -11,7 +11,6 @@ type GetUserbyPhoneAndPassType = {
 export const GetUserbyPhoneAndPass = async (
   user: LoginSchemaType,
 ): Promise<ActionResult<GetUserbyPhoneAndPassType>> => {
-  const hashedPass = await bcrypt.hash(user.password, 12);
   const [u] = await db
     .select({
       id: users.id,
@@ -21,7 +20,7 @@ export const GetUserbyPhoneAndPass = async (
     .from(users)
     .where(and(eq(users.phoneNumber, user.phone), eq(users.suspended, false)));
   if (!u) return { ok: false, message: "کاربری یافت نشد" };
-  const compare = await bcrypt.compare(hashedPass, u.hashedPassword);
+  const compare = await bcrypt.compare(user.password, u.hashedPassword);
   if (!compare) return { ok: false, message: "کاربری یافت نشد" };
   return {
     ok: true,

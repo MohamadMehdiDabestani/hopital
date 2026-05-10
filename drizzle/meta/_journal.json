@@ -8,6 +8,27 @@
       "when": 1778150988288,
       "tag": "0000_tough_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778245732134,
+      "tag": "0001_little_paper_doll",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778246340899,
+      "tag": "0002_warm_malcolm_colcord",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778247886476,
+      "tag": "0003_stormy_vulture",
+      "breakpoints": true
     }
   ]
 }
