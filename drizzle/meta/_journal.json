@@ -29,6 +29,13 @@
       "when": 1778247886476,
       "tag": "0003_stormy_vulture",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778389863203,
+      "tag": "0004_bitter_sir_ram",
+      "breakpoints": true
     }
   ]
 }
