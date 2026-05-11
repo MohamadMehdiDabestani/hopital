@@ -10,5 +10,8 @@ export async function getServerTime() {
   return {
     jalaliDate: jalali.format("YYYY/MM/DD"),
     jalaliDateTime: jalali.format("YYYY/MM/DD HH:mm:ss"),
+    gregorianDate: gregorian.format("YYYY-MM-DD"),
+    gregorianDateTime: gregorian.format("YYYY-MM-DD HH:mm:ss"),
+    gregorianIso: gregorian.toISOString(),
   };
 }
