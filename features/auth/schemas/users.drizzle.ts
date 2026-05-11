@@ -9,7 +9,7 @@ import {
   integer,
   AnyPgColumn,
 } from "drizzle-orm/pg-core";
-import {sites} from '@/features/core/schema/schema.drizzle'
+import { sites } from "@/features/core/schema/schema.drizzle";
 export const roleEnum = pgEnum("role", [
   "root",
   "manager",
@@ -31,12 +31,10 @@ export const users = pgTable("users", {
   codeMeli: varchar("codeMeli", { length: 10 }).notNull().unique(),
   hashedPassword: text("hashedPassword").notNull(),
   hashedFirstTimePassword: text("hashedFirstTimePassword"),
-  forcedChangePassword: boolean("forcedChangePassword")
-    .default(true)
-    .notNull(),
+  forcedChangePassword: boolean("forcedChangePassword").default(true).notNull(),
   rule: roleEnum("rule").notNull(),
   suspended: boolean("suspended").default(false).notNull(),
-  siteId: integer("siteId")
-    .notNull()
-    .references(() :AnyPgColumn => sites.id, { onDelete: "cascade" }),
+  siteId: integer("siteId").references((): AnyPgColumn => sites.id, {
+    onDelete: "cascade",
+  }),
 });

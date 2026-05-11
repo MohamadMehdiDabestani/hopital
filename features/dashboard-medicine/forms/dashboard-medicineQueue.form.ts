@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { useFormik } from "formik";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 import {
@@ -6,7 +6,9 @@ import {
   DashboardMedicineSchema,
 } from "../schemas/dashboard-medicine.schema";
 
-export const useDashboardMedicineForm = (onSubmit: (values: any) => void) =>
+export const useDashboardMedicineQueueForm = (
+  onSubmit: (values: any) => void,
+) =>
   useFormik<DashboardMedicineSchema>({
     initialValues: {
       visitId: 0,
