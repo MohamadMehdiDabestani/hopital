@@ -29,7 +29,7 @@ type Props = {
   medicine?: Medicine;
 };
 
-export const MedicineAddDialog = ({
+export const MedicineDialog = ({
   onClose,
   onSave,
   open,

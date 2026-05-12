@@ -7,18 +7,31 @@ import {
   GridFilterModel,
   GridSortModel,
 } from "@mui/x-data-grid";
-import { Box, Button, Chip, Stack, Typography, Tooltip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Stack,
+  Typography,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import dayjs from "@/features/core/utils/dayjs";
 import { getServerTime } from "@/features/core/actions/time";
 import useSWR from "swr";
-import { MedicineAddDialog } from "./addDialog";
+import { MedicineDialog } from "./medicineDialog";
 import { useNotificationStore } from "@/features/core";
 import { Row, Charge } from "./type";
-
+import { ChargeMedicineDialog } from "./chargeMedicineDialog";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircle";
+import EditIcon from "@mui/icons-material/Edit";
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export const DashboardMedicineList = () => {
   const [open, setOpen] = useState(false);
+  const [openCharge, setOpenCharge] = useState(false);
+  const [charge, setCharge] = useState<Charge | undefined>(undefined);
+
   const [medicine, setMedicine] = useState<Row | undefined>(undefined);
 
   const [paginationModel, setPaginationModel] = useState({
@@ -62,9 +75,6 @@ export const DashboardMedicineList = () => {
     if (data && !data.ok) show(data.message, "error");
   }, [data]);
 
-  const rows: Row[] = data?.rows ?? [];
-  const rowCount: number = data?.total ?? 0;
-
   const columns: GridColDef[] = [
     { field: "id", headerName: "آیدی", width: 90 },
     { field: "name", headerName: "نام دارو", flex: 1, minWidth: 160 },
@@ -83,7 +93,6 @@ export const DashboardMedicineList = () => {
       headerAlign: "center",
       renderCell: (p) => (p.value ? "بله" : "خیر"),
     },
-
     {
       field: "stock",
       headerName: "موجودی",
@@ -116,7 +125,6 @@ export const DashboardMedicineList = () => {
 
         const warnDays = Math.min(...ch.map((c) => c.expiryAlertDays ?? 0));
         const isWarn = minDays <= warnDays;
-
         return (
           <Box
             sx={{
@@ -160,12 +168,12 @@ export const DashboardMedicineList = () => {
 
               return (
                 <Tooltip
-                  key={c.chargesId}
-                  title={
+                  key={c.medicineId}
+                  title={`${
                     c.storageLocation
                       ? `محل: ${c.storageLocation}`
                       : "محل نامشخص"
-                  }
+                  } (برای ویرایش کلیک کنید)`}
                   arrow
                 >
                   <Chip
@@ -184,14 +192,66 @@ export const DashboardMedicineList = () => {
         );
       },
     },
+    {
+      field: "actions",
+      headerName: "عملیات",
+      width: 140,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="ویرایش دارو">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setMedicine(params.row as Row);
+                setOpen(true);
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="افزودن شارژ">
+            <IconButton
+              size="small"
+              onClick={() => {
+                // setCharge({
+                //   id:params.row.charge.chargesId,
+                //   medicineId: params.row.id,
+                //   chargeCreateAt : params.row.
+                //   expiryDate:params.row.charge.expiryDate,
+                //   quantity:params.row.charge.quantity,
+                //   storageLocation:params.row.charge.storageLocation,
+                //   expiryAlertDays:params.row.charge.expiryAlertDays,
+                //   chargeCreateAt:params.row.charge.chargeCreateAt,
+                // } as Charge);
+                setCharge(undefined);
+                setOpenCharge(true);
+              }}
+            >
+              <AddCircleOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      ),
+    },
   ];
 
   return (
     <Box sx={{ width: "100%" }}>
-      <MedicineAddDialog
+      <MedicineDialog
         onClose={() => setOpen(false)}
         open={open}
         medicine={medicine}
+        onSave={() => mutate()}
+      />
+      <ChargeMedicineDialog
+        onClose={() => setOpenCharge(false)}
+        open={openCharge}
+        charge={charge}
         onSave={() => mutate()}
       />
       <Button
@@ -205,9 +265,9 @@ export const DashboardMedicineList = () => {
 
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
-          rows={rows}
+          rows={data?.rows ?? []}
           columns={columns}
-          rowCount={rowCount}
+          rowCount={data?.total ?? 0}
           getRowId={(row) => row.id}
           paginationMode="server"
           filterMode="server"
