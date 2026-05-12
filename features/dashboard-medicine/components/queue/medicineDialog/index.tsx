@@ -14,7 +14,7 @@ import {
   Stack,
 } from "@mui/material";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useDashboardMedicineForm } from "@/features/dashboard-medicine";
+import { useDashboardMedicineQueueForm } from "@/features/dashboard-medicine";
 import { getServerTime } from "@/features/core/actions/time";
 import dayjs from "@/features/core/utils/dayjs";
 type VisitData = {
@@ -91,7 +91,7 @@ export const MedicineDialog = ({
     return initialVisitData.find((v) => v.visitId == visitId) as VisitData;
   }, [visitId]);
 
-  const formik = useDashboardMedicineForm((values) => {
+  const formik = useDashboardMedicineQueueForm((values) => {
     console.log("submit payload:", values);
     setOpen(false);
   });

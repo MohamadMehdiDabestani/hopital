@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   DataGrid,
@@ -6,42 +7,20 @@ import {
   GridFilterModel,
   GridSortModel,
 } from "@mui/x-data-grid";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Stack, Typography, Tooltip } from "@mui/material";
 import dayjs from "@/features/core/utils/dayjs";
 import { getServerTime } from "@/features/core/actions/time";
+import useSWR from "swr";
+import { MedicineAddDialog } from "./addDialog";
+import { useNotificationStore } from "@/features/core";
+import { Row, Charge } from "./type";
 
-type Medicine = {
-  id: string | number;
-  name: string;
-  warnDays: number;
-  location: string;
-};
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type Charge = {
-  id: string | number;
-  drugId: string | number;
-  qty: number;
-  entryDate: string;
-  expireDate: string;
-};
+export const DashboardMedicineList = () => {
+  const [open, setOpen] = useState(false);
+  const [medicine, setMedicine] = useState<Row | undefined>(undefined);
 
-type Row = Medicine & {
-  stock: number;
-  minDaysToExpire: number | null;
-  charges?: Charge[];
-};
-
-const calcStock = (charges: Charge[]) =>
-  charges.reduce((sum, c) => sum + c.qty, 0);
-
-export const DashboardMedicineList = ({
-  drugs,
-  charges,
-}: {
-  drugs: Medicine[];
-  charges: Charge[];
-}) => {
-  // --- server state ---
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
@@ -52,149 +31,91 @@ export const DashboardMedicineList = ({
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [serverNowIso, setServerNowIso] = useState<string | null>(null);
+  const { show } = useNotificationStore();
 
   useEffect(() => {
     let mounted = true;
-    if (mounted)
-      getServerTime().then((d) => {
-        setServerNowIso(d.gregorianIso);
-      });
+    if (mounted) {
+      getServerTime().then((d) => setServerNowIso(d.gregorianIso));
+    }
     return () => {
       mounted = false;
     };
   }, []);
+
   const baseToday = useMemo(() => {
     return serverNowIso ? dayjs(serverNowIso).startOf("day") : null;
   }, [serverNowIso]);
-  const calcMinDaysToExpire = (charges: Charge[], today: dayjs.Dayjs) => {
-    if (!charges.length) return null;
-    return Math.min(
-      ...charges.map((c) =>
-        dayjs(c.expireDate).startOf("day").diff(today, "day"),
-      ),
-    );
-  };
-  // --- base rows ---
-  const baseRows: Row[] = useMemo(() => {
-    console.log("baseToday", baseToday);
-    if (!baseToday) return [];
-    const byDrug = new Map<string | number, Charge[]>();
-    charges.forEach((c) => {
-      const arr = byDrug.get(c.drugId) ?? [];
-      arr.push(c);
-      byDrug.set(c.drugId, arr);
-    });
 
-    return drugs.map((d) => {
-      const ch = byDrug.get(d.id) ?? [];
-      return {
-        ...d,
-        stock: calcStock(ch),
-        minDaysToExpire: calcMinDaysToExpire(ch, baseToday),
-        charges: ch,
-      };
-    });
-  }, [drugs, charges, baseToday]);
-  const handleFilterModelChange = (model: GridFilterModel) => {
-    setFilterModel(model);
+  const query = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(paginationModel.page));
+    params.set("pageSize", String(paginationModel.pageSize));
+    params.set("sort", JSON.stringify(sortModel));
+    params.set("filter", JSON.stringify(filterModel));
+    return `/api/dashboard/medicine/list?${params.toString()}`;
+  }, [paginationModel, sortModel, filterModel]);
 
-    // --- فیلترهای ستون ---
-    const columnFilters = model.items
-      .filter(
-        (it) => it.field && it.operator && it.value != null && it.value !== "",
-      )
-      .map((it) => ({
-        field: it.field!,
-        operator: it.operator!,
-        value: it.value!,
-      }));
+  const { data, isLoading, mutate } = useSWR(query, fetcher);
 
-    // --- Quick Filter (جستجوی سریع Toolbar) ---
-    const quick = (model.quickFilterValues ?? [])
-      .map((v) => String(v).trim())
-      .filter(Boolean);
+  useEffect(() => {
+    if (data && !data.ok) show(data.message, "error");
+  }, [data]);
 
-    // اینا را بفرست به سرور
-    console.log({ columnFilters, quick });
-  };
-  // --- mock server processing ---
-  const { rows, rowCount } = useMemo(() => {
-    let data = [...baseRows];
-
-    const quick = (filterModel.quickFilterValues ?? [])
-      .map((v) => String(v).toLowerCase().trim())
-      .filter(Boolean);
-
-    if (quick.length) {
-      data = data.filter((r) =>
-        quick.every(
-          (q) =>
-            String(r.id).toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q) ||
-            r.location.toLowerCase().includes(q) ||
-            r.charges?.some((c) =>
-              dayjs(c.entryDate).format("YYYY/MM/DD").includes(q.trim()),
-            ),
-        ),
-      );
-    }
-    // sorting
-    if (sortModel[0]) {
-      const { field, sort } = sortModel[0];
-      data.sort((a: any, b: any) => {
-        const av = a[field];
-        const bv = b[field];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-
-        if (typeof av === "number" && typeof bv === "number") {
-          return sort === "asc" ? av - bv : bv - av;
-        }
-        return sort === "asc"
-          ? String(av).localeCompare(String(bv))
-          : String(bv).localeCompare(String(av));
-      });
-    }
-
-    const count = data.length;
-    const start = paginationModel.page * paginationModel.pageSize;
-    const end = start + paginationModel.pageSize;
-
-    return {
-      rows: data.slice(start, end),
-      rowCount: count,
-    };
-  }, [baseRows, filterModel, sortModel, paginationModel]);
+  const rows: Row[] = data?.rows ?? [];
+  const rowCount: number = data?.total ?? 0;
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "آیدی", width: 90 },
     { field: "name", headerName: "نام دارو", flex: 1, minWidth: 160 },
+    { field: "form", headerName: "فرم", width: 120 },
     {
-      field: "warnDays",
-      headerName: "هشدار (روز)",
-      width: 120,
+      field: "createdAt",
+      headerName: "تاریخ ثبت",
+      width: 140,
+      valueFormatter: (v) => dayjs(v).calendar("jalali").format("YYYY/MM/DD"),
+    },
+    {
+      field: "isActive",
+      headerName: "فعال",
+      width: 90,
       align: "center",
       headerAlign: "center",
+      renderCell: (p) => (p.value ? "بله" : "خیر"),
     },
+
     {
       field: "stock",
       headerName: "موجودی",
       width: 120,
       align: "center",
       headerAlign: "center",
+      sortable: false,
+      valueGetter: (params, row) =>
+        (row.charges as Charge[]).reduce(
+          (sum, c) => sum + (c.quantity ?? 0),
+          0,
+        ),
     },
-    { field: "location", headerName: "محل ذخیره‌سازی", flex: 1, minWidth: 160 },
     {
       field: "minDaysToExpire",
       headerName: "روز تا انقضا",
       width: 140,
       align: "center",
       headerAlign: "center",
+      sortable: false,
       renderCell: (params) => {
-        const warnDays = params.row.warnDays as number;
-        const minDays = params.value as number | null;
-        const isWarn = minDays !== null && minDays <= warnDays;
+        const ch = params.row.charges as Charge[];
+        if (!ch?.length || !baseToday) return "—";
+
+        const minDays = Math.min(
+          ...ch.map((c) =>
+            dayjs(c.expiryDate).startOf("day").diff(baseToday, "day"),
+          ),
+        );
+
+        const warnDays = Math.min(...ch.map((c) => c.expiryAlertDays ?? 0));
+        const isWarn = minDays <= warnDays;
 
         return (
           <Box
@@ -209,24 +130,21 @@ export const DashboardMedicineList = ({
               textAlign: "center",
             }}
           >
-            {minDays === null ? "—" : `${minDays} روز`}
+            {minDays} روز
           </Box>
         );
       },
     },
-
     {
       field: "charges",
       headerName: "شارژها (تعداد + تاریخ ورود + تاریخ انقضا)",
       flex: 1,
       minWidth: 240,
       sortable: false,
-
       renderCell: (params) => {
         const ch = params.value as Charge[];
-        const warnDays = params.row.warnDays as number;
-        if (!ch?.length) return "—";
-        if (!baseToday) return "—";
+        if (!ch?.length || !baseToday) return "—";
+
         return (
           <Stack
             direction="row"
@@ -235,22 +153,31 @@ export const DashboardMedicineList = ({
             sx={{ flexWrap: "wrap", width: "100%", py: 0.5 }}
           >
             {ch.map((c) => {
-              const daysToExpire = dayjs(c.expireDate)
+              const daysToExpire = dayjs(c.expiryDate)
                 .startOf("day")
                 .diff(baseToday, "day");
-              const isWarn = daysToExpire <= warnDays;
+              const isWarn = daysToExpire <= c.expiryAlertDays;
 
               return (
-                <Chip
-                  key={c.id}
-                  size="small"
-                  label={`${c.qty} - ${dayjs(c.entryDate).format("YYYY/MM/DD")} - exp:${dayjs(c.expireDate).format("YYYY/MM/DD")}`}
-                  sx={{
-                    bgcolor: isWarn ? "error.main" : "default",
-                    color: isWarn ? "#fff" : "inherit",
-                    fontWeight: isWarn ? 600 : 400,
-                  }}
-                />
+                <Tooltip
+                  key={c.chargesId}
+                  title={
+                    c.storageLocation
+                      ? `محل: ${c.storageLocation}`
+                      : "محل نامشخص"
+                  }
+                  arrow
+                >
+                  <Chip
+                    size="small"
+                    label={`${c.quantity} - ${dayjs(c.chargeCreateAt).format("YYYY/MM/DD")} - exp:${dayjs(c.expiryDate).format("YYYY/MM/DD")}`}
+                    sx={{
+                      bgcolor: isWarn ? "error.main" : "default",
+                      color: isWarn ? "#fff" : "inherit",
+                      fontWeight: isWarn ? 600 : 400,
+                    }}
+                  />
+                </Tooltip>
               );
             })}
           </Stack>
@@ -258,9 +185,24 @@ export const DashboardMedicineList = ({
       },
     },
   ];
-  console.log("serverNowIso", serverNowIso);
+
   return (
     <Box sx={{ width: "100%" }}>
+      <MedicineAddDialog
+        onClose={() => setOpen(false)}
+        open={open}
+        medicine={medicine}
+        onSave={() => mutate()}
+      />
+      <Button
+        onClick={() => {
+          setOpen(true);
+          setMedicine(undefined);
+        }}
+      >
+        افزودن دارو جدید
+      </Button>
+
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
           rows={rows}
@@ -273,19 +215,19 @@ export const DashboardMedicineList = ({
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           filterModel={filterModel}
-          onFilterModelChange={handleFilterModelChange}
+          onFilterModelChange={setFilterModel}
           sortModel={sortModel}
           onSortModelChange={setSortModel}
           pageSizeOptions={[10, 25, 50]}
           showToolbar
           slotProps={{
             toolbar: {
-              showQuickFilter: true, // سرچ داخلی
+              showQuickFilter: true,
               sx: { justifyContent: "flex-start" },
-
-              quickFilterProps: { debounceMs: 400 }, // دیباونس
+              quickFilterProps: { debounceMs: 400 },
             },
           }}
+          loading={isLoading}
           getRowHeight={() => "auto"}
           getEstimatedRowHeight={() => 120}
           sx={{
@@ -304,8 +246,8 @@ export const DashboardMedicineList = ({
         />
 
         <Typography variant="caption" color="text.secondary">
-          موجودی = مجموع شارژها | هشدار = کمترین روز تا انقضا ≤ مقدار هشدار دارو
-          | تاریخ امروز میلادی:
+          موجودی = مجموع شارژها | هشدار = کمترین روز تا انقضا ≤ کمترین هشدار
+          شارژ | تاریخ امروز میلادی:
           {serverNowIso ? dayjs(serverNowIso).format("YYYY/MM/DD") : "…"}
         </Typography>
       </Box>
