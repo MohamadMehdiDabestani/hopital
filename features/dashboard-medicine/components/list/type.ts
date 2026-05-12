@@ -5,14 +5,15 @@ export type Medicine = {
   isActive: boolean;
 };
 
-
 export type Charge = {
-  chargesId: number;
+  id : number,
+  medicineId: number;
   expiryDate: string;
   quantity: number;
-  storageLocation: string | null;
+  storageLocation: string;
   expiryAlertDays: number;
   chargeCreateAt: string;
+  note?: string;
 };
 
 export type Row = Medicine & {
