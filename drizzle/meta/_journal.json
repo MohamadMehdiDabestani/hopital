@@ -71,6 +71,20 @@
       "when": 1778502439014,
       "tag": "0009_shallow_triathlon",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778559036329,
+      "tag": "0010_black_epoch",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778566259724,
+      "tag": "0011_nebulous_whiplash",
+      "breakpoints": true
     }
   ]
 }
