@@ -25,7 +25,6 @@ import { Row, Charge } from "./type";
 import { ChargeMedicineDialog } from "./chargeMedicineDialog";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircle";
 import EditIcon from "@mui/icons-material/Edit";
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export const DashboardMedicineList = () => {
   const [open, setOpen] = useState(false);
@@ -69,176 +68,183 @@ export const DashboardMedicineList = () => {
     return `/api/dashboard/medicine/list?${params.toString()}`;
   }, [paginationModel, sortModel, filterModel]);
 
-  const { data, isLoading, mutate } = useSWR(query, fetcher);
+  const { data, isLoading, mutate } = useSWR(query);
 
   useEffect(() => {
     if (data && !data.ok) show(data.message, "error");
   }, [data]);
 
-  const columns: GridColDef[] = [
-    { field: "id", headerName: "آیدی", width: 90 },
-    { field: "name", headerName: "نام دارو", flex: 1, minWidth: 160 },
-    { field: "form", headerName: "فرم", width: 120 },
-    {
-      field: "createdAt",
-      headerName: "تاریخ ثبت",
-      width: 140,
-      valueFormatter: (v) => dayjs(v).calendar("jalali").format("YYYY/MM/DD"),
-    },
-    {
-      field: "isActive",
-      headerName: "فعال",
-      width: 90,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (p) => (p.value ? "بله" : "خیر"),
-    },
-    {
-      field: "stock",
-      headerName: "موجودی",
-      width: 120,
-      align: "center",
-      headerAlign: "center",
-      sortable: false,
-      valueGetter: (params, row) =>
-        (row.charges as Charge[]).reduce(
-          (sum, c) => sum + (c.quantity ?? 0),
-          0,
-        ),
-    },
-    {
-      field: "minDaysToExpire",
-      headerName: "روز تا انقضا",
-      width: 140,
-      align: "center",
-      headerAlign: "center",
-      sortable: false,
-      renderCell: (params) => {
-        const ch = params.row.charges as Charge[];
-        if (!ch?.length || !baseToday) return "—";
-
-        const minDays = Math.min(
-          ...ch.map((c) =>
-            dayjs(c.expiryDate).startOf("day").diff(baseToday, "day"),
+  const columns: GridColDef[] = useMemo(
+    () => [
+      { field: "id", headerName: "آیدی", width: 90 },
+      { field: "name", headerName: "نام دارو", flex: 1, minWidth: 160 },
+      { field: "form", headerName: "فرم", width: 120 },
+      {
+        field: "createdAt",
+        headerName: "تاریخ ثبت",
+        width: 140,
+        valueFormatter: (v) => dayjs(v).calendar("jalali").format("YYYY/MM/DD"),
+      },
+      {
+        field: "isActive",
+        headerName: "فعال",
+        width: 90,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (p) => (p.value ? "بله" : "خیر"),
+      },
+      {
+        field: "stock",
+        headerName: "موجودی",
+        width: 120,
+        align: "center",
+        headerAlign: "center",
+        sortable: false,
+        valueGetter: (params, row) =>
+          (row.charges as Charge[]).reduce(
+            (sum, c) => sum + (c.quantity ?? 0),
+            0,
           ),
-        );
-
-        const warnDays = Math.min(...ch.map((c) => c.expiryAlertDays ?? 0));
-        const isWarn = minDays <= warnDays;
-        return (
-          <Box
-            sx={{
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              bgcolor: isWarn ? "error.main" : "transparent",
-              color: isWarn ? "#fff" : "inherit",
-              fontWeight: isWarn ? 600 : 400,
-              width: "100%",
-              textAlign: "center",
-            }}
-          >
-            {minDays} روز
-          </Box>
-        );
       },
-    },
-    {
-      field: "charges",
-      headerName: "شارژها (تعداد + تاریخ ورود + تاریخ انقضا)",
-      flex: 1,
-      minWidth: 240,
-      sortable: false,
-      renderCell: (params) => {
-        const ch = params.value as Charge[];
-        if (!ch?.length || !baseToday) return "—";
+      {
+        field: "minDaysToExpire",
+        headerName: "روز تا انقضا",
+        width: 140,
+        align: "center",
+        headerAlign: "center",
+        sortable: false,
+        renderCell: (params) => {
+          const ch = params.row.charges as Charge[];
+          if (!ch?.length || !baseToday) return "—";
 
-        return (
-          <Stack
-            direction="row"
-            spacing={0.5}
-            useFlexGap
-            sx={{ flexWrap: "wrap", width: "100%", py: 0.5 }}
-          >
-            {ch.map((c) => {
-              const daysToExpire = dayjs(c.expiryDate)
-                .startOf("day")
-                .diff(baseToday, "day");
-              const isWarn = daysToExpire <= c.expiryAlertDays;
+          const minDays = Math.min(
+            ...ch.map((c) =>
+              dayjs(c.expiryDate).startOf("day").diff(baseToday, "day"),
+            ),
+          );
 
-              return (
-                <Tooltip
-                  key={c.medicineId}
-                  title={`${
-                    c.storageLocation
-                      ? `محل: ${c.storageLocation}`
-                      : "محل نامشخص"
-                  } (برای ویرایش کلیک کنید)`}
-                  arrow
-                >
-                  <Chip
-                    size="small"
-                    label={`${c.quantity} - ${dayjs(c.chargeCreateAt).format("YYYY/MM/DD")} - exp:${dayjs(c.expiryDate).format("YYYY/MM/DD")}`}
-                    sx={{
-                      bgcolor: isWarn ? "error.main" : "default",
-                      color: isWarn ? "#fff" : "inherit",
-                      fontWeight: isWarn ? 600 : 400,
-                    }}
-                  />
-                </Tooltip>
-              );
-            })}
+          const warnDays = Math.min(...ch.map((c) => c.expiryAlertDays ?? 0));
+          const isWarn = minDays <= warnDays;
+          return (
+            <Box
+              sx={{
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                bgcolor: isWarn ? "error.main" : "transparent",
+                color: isWarn ? "#fff" : "inherit",
+                fontWeight: isWarn ? 600 : 400,
+                width: "100%",
+                textAlign: "center",
+              }}
+            >
+              {minDays} روز
+            </Box>
+          );
+        },
+      },
+      {
+        field: "charges",
+        headerName: "شارژها (تعداد + تاریخ ورود + تاریخ انقضا)",
+        flex: 1,
+        minWidth: 240,
+        sortable: false,
+        renderCell: (params) => {
+          const ch = params.value as Charge[];
+          if (!ch?.length || !baseToday) return "—";
+
+          return (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              sx={{ flexWrap: "wrap", width: "100%", py: 0.5 }}
+            >
+              {ch.map((c) => {
+                const daysToExpire = dayjs(c.expiryDate)
+                  .startOf("day")
+                  .diff(baseToday, "day");
+                const isWarn = daysToExpire <= c.expiryAlertDays;
+
+                return (
+                  <Tooltip
+                    key={c.medicineId}
+                    title={`${
+                      c.storageLocation
+                        ? `محل: ${c.storageLocation}`
+                        : "محل نامشخص"
+                    } (برای ویرایش کلیک کنید)`}
+                    arrow
+                    placement="left-start"
+                  >
+                    <Chip
+                      size="small"
+                      label={`${c.quantity} - ${dayjs(c.chargeCreateAt).format("YYYY/MM/DD")} - exp:${dayjs(c.expiryDate).format("YYYY/MM/DD")}`}
+                      sx={{
+                        cursor: "pointer",
+                        bgcolor: isWarn ? "error.main" : "default",
+                        color: isWarn ? "#fff" : "inherit",
+                        fontWeight: isWarn ? 600 : 400,
+                      }}
+                      slotProps={{
+                        root: {
+                          onClick: () => {
+                            setCharge(c as Charge);
+                            setOpenCharge(true);
+                            setMedicine(params.row);
+                          },
+                        },
+                      }}
+                    />
+                  </Tooltip>
+                );
+              })}
+            </Stack>
+          );
+        },
+      },
+      {
+        field: "actions",
+        headerName: "عملیات",
+        width: 140,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="ویرایش دارو">
+              <IconButton
+                color="warning"
+                size="small"
+                onClick={() => {
+                  setMedicine(params.row as Row);
+                  setOpen(true);
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="افزودن شارژ">
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => {
+                  setCharge(undefined);
+                  setOpenCharge(true);
+                  setMedicine(params.row);
+                }}
+              >
+                <AddCircleOutlineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Stack>
-        );
+        ),
       },
-    },
-    {
-      field: "actions",
-      headerName: "عملیات",
-      width: 140,
-      sortable: false,
-      filterable: false,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <Tooltip title="ویرایش دارو">
-            <IconButton
-              size="small"
-              onClick={() => {
-                setMedicine(params.row as Row);
-                setOpen(true);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="افزودن شارژ">
-            <IconButton
-              size="small"
-              onClick={() => {
-                // setCharge({
-                //   id:params.row.charge.chargesId,
-                //   medicineId: params.row.id,
-                //   chargeCreateAt : params.row.
-                //   expiryDate:params.row.charge.expiryDate,
-                //   quantity:params.row.charge.quantity,
-                //   storageLocation:params.row.charge.storageLocation,
-                //   expiryAlertDays:params.row.charge.expiryAlertDays,
-                //   chargeCreateAt:params.row.charge.chargeCreateAt,
-                // } as Charge);
-                setCharge(undefined);
-                setOpenCharge(true);
-              }}
-            >
-              <AddCircleOutlineIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+    ],
+    [baseToday],
+  );
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -252,6 +258,7 @@ export const DashboardMedicineList = () => {
         onClose={() => setOpenCharge(false)}
         open={openCharge}
         charge={charge}
+        medicineId={medicine?.id ?? undefined}
         onSave={() => mutate()}
       />
       <Button

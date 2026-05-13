@@ -6,7 +6,7 @@ export type Medicine = {
 };
 
 export type Charge = {
-  id : number,
+  id : number | undefined,
   medicineId: number;
   expiryDate: string;
   quantity: number;
