@@ -35,7 +35,7 @@ const drugSchema = z
 
     if (!hasAny) {
       ctx.addIssue({
-        code: "custom", // ✅ Zod v4
+        code: "custom", 
         message: "باید حداقل یکی از ساعت، روز یا توضیحات وارد شود",
         path: ["intervalHours"],
       });
@@ -50,9 +50,7 @@ export const dashboardDoctorPatientSchema = z.object({
 
   tests: z.array(dashboardDoctorPatientTestSchema).optional(),
 
-  specialDiseases: z.string().optional(),
-  extraPatientNote: z.string().optional(),
-  extraVisitNote: z.string().optional(),
+  extraNotes: z.string().optional(),
 });
 
 export type DashboardDoctorPatientSchema = z.infer<

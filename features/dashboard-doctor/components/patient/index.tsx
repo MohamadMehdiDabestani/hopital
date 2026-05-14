@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useTransition } from "react";
 import {
   Box,
   Button,
@@ -17,48 +17,47 @@ import {
 import { Grid } from "@mui/system";
 import { Prescription } from "./prescription";
 import { Paraclinic } from "./paraclinick";
-import { useDashboardDoctorForm } from "@/features/dashboard-doctor";
+import {
+  getNextPatientAction,
+  useDashboardDoctorForm,
+} from "@/features/dashboard-doctor";
 import { FormikProvider } from "formik";
-
-type VisitHistory = {
-  date: string;
-  notes: string;
-};
-
-type Patient = {
-  id: number;
-  fullName: string;
-  birthYear: number;
-  specialDiseases?: string;
-  extraNotes?: string;
-  history?: VisitHistory[];
-};
-
-const mockPatient: Patient = {
-  id: 1,
-  fullName: "علی رضایی",
-  birthYear: 1368,
-  specialDiseases: "دیابت نوع ۲",
-  extraNotes: "",
-  history: [
-    { date: "1403/11/20", notes: "ویزیت اولیه، تجویز دارو" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-    { date: "1404/01/05", notes: "بهبود علائم، ادامه درمان" },
-  ],
-};
+import { ActionResult, useNotificationStore } from "@/features/core";
+import { DoctorPatientSkeleton } from "./skeletonLoading";
+import { VisitHistory } from "@/features/dashboard-doctor/type";
 
 export const DoctorPatient = () => {
-  const [currentPatient, setCurrentPatient] = useState<Patient | null>(null);
+  const [currentPatient, setCurrentPatient] = useState<VisitHistory | null>(
+    null,
+  );
+  const [history, setHistory] = useState<VisitHistory[]>([]);
+  const [loading, startTransition] = useTransition();
+  const { show } = useNotificationStore();
+  const formik = useDashboardDoctorForm((values) => console.log(values));
 
   const handleNextPatient = () => {
-    setCurrentPatient(mockPatient);
+    startTransition(() => {
+      (async () => {
+        try {
+          const res = await getNextPatientAction();
+
+          if (!res.ok) {
+            show("مشکلی پیش آمده", "error");
+            return;
+          }
+
+          const list = res.data ?? [];
+          setCurrentPatient(list[0] ?? null);
+          setHistory(list.slice(1));
+          formik.resetForm();
+        } catch (err) {
+          setCurrentPatient(null);
+        }
+      })();
+    });
   };
-  const formik = useDashboardDoctorForm((values) => console.log(values));
+  console.log(history, currentPatient);
+  // ADD SKELETON LOADING
   return (
     <FormikProvider value={formik}>
       <Grid
@@ -79,6 +78,8 @@ export const DoctorPatient = () => {
               </Typography>
             </Paper>
           </Grid>
+        ) : loading ? (
+          <DoctorPatientSkeleton />
         ) : (
           <Fragment>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -88,13 +89,10 @@ export const DoctorPatient = () => {
                   <Divider sx={{ my: 1 }} />
 
                   <Typography>
-                    نام و نام خانوادگی: {currentPatient.fullName}
+                    نام و نام خانوادگی:{" "}
+                    {currentPatient.firstName + currentPatient.lastName}
                   </Typography>
-                  <Typography>سال تولد: {currentPatient.birthYear}</Typography>
-                  <Typography>
-                    بیماری‌های خاص:{" "}
-                    {currentPatient.specialDiseases || "ثبت نشده"}
-                  </Typography>
+
                   <Typography>
                     توضیحات اضافه: {currentPatient.extraNotes || "ثبت نشده"}
                   </Typography>
@@ -113,14 +111,13 @@ export const DoctorPatient = () => {
                       overflowY: "auto",
                     }}
                   >
-                    {currentPatient.history &&
-                    currentPatient.history.length > 0 ? (
+                    {history && history.length > 0 ? (
                       <List>
-                        {currentPatient.history.map((h, i) => (
+                        {history.map((h, i) => (
                           <ListItem key={i} divider>
                             <ListItemText
-                              primary={`تاریخ: ${h.date}`}
-                              secondary={h.notes}
+                              primary={`تاریخ: ${h?.treatTime}`}
+                              secondary={h.extraNotes?.substring(0, 100)}
                             />
                           </ListItem>
                         ))}
@@ -141,33 +138,12 @@ export const DoctorPatient = () => {
                 <CardContent>
                   <TextField
                     fullWidth
-                    id="specialDiseases"
-                    name="specialDiseases"
-                    sx={{ mb: 2 }}
-                    label="بیماری های خاص بیمار"
-                    value={formik.values.specialDiseases}
-                    onChange={formik.handleChange}
-                    multiline
-                  />
-                  <TextField
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    label="توضیحات اضافه بیمار"
-                    id="extraPatientNote"
-                    name="extraPatientNote"
-                    value={formik.values.extraPatientNote}
-                    onChange={formik.handleChange}
-                    multiline
-                  />
-                  <TextField
-                    fullWidth
                     sx={{ mb: 2 }}
                     label="توضیحات اضافه ویزیت"
-                    id="extraVisitNote"
-                    name="extraVisitNote"
-                    value={formik.values.extraVisitNote}
+                    id="extraNotes"
+                    name="extraNotes"
+                    value={formik.values.extraNotes}
                     onChange={formik.handleChange}
-
                     multiline
                   />
 
