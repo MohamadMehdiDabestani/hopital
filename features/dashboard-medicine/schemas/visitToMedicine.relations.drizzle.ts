@@ -20,11 +20,10 @@ export const visitToMedicine = pgTable(
   },
   (table) => [
     check(
-      "services_medicine_charge_together",
-      sql`(
-        (${table.medicineId} IS NULL AND ${table.chargeId} IS NULL)
-        OR
-        (${table.medicineId} IS NOT NULL AND ${table.chargeId} IS NOT NULL)
+      "medicineOrTest",
+       sql`(
+        (${table.medicineId} IS NOT NULL AND ${table.testId} IS NULL) OR
+        (${table.medicineId} IS NULL AND ${table.testId} IS NOT NULL)
       )`
     ),
   ],
