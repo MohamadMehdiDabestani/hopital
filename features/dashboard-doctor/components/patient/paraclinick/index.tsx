@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Box,
@@ -10,11 +10,12 @@ import {
   Typography,
 } from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
-import { PARACLINIC_ITEMS } from "@/features/dashboard-doctor";
+
 import { DashboardDoctorPatientTestSchema } from "@/features/dashboard-doctor/schemas/dashboard-doctor.schema";
 import { useField } from "formik";
 import { DialogList } from "../dialogList";
-export const Paraclinic = () => {
+import { TestList } from "@/features/dashboard-doctor/type";
+export const Paraclinic = (props: TestList) => {
   const [field, , helpers] =
     useField<DashboardDoctorPatientTestSchema[]>("tests");
   const selected = field.value ?? [];
@@ -39,7 +40,7 @@ export const Paraclinic = () => {
   return (
     <Card>
       <DialogList
-        list={PARACLINIC_ITEMS}
+        list={props.list}
         toggle={toggleSelect}
         open={open}
         setOpen={setOpen}

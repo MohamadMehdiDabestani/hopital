@@ -24,12 +24,14 @@ import {
 import { FormikProvider } from "formik";
 import { useNotificationStore } from "@/features/core";
 import { DoctorPatientSkeleton } from "./skeletonLoading";
-import { MedicineItem, VisitHistory } from "@/features/dashboard-doctor/type";
+import { MedicineItem, Item, VisitHistory } from "@/features/dashboard-doctor/type";
 
 export const DoctorPatient = ({
   medicineList,
+  testList
 }: {
   medicineList: MedicineItem[];
+  testList : Item[]
 }) => {
   const [currentPatient, setCurrentPatient] = useState<VisitHistory | null>(
     null,
@@ -139,7 +141,7 @@ export const DoctorPatient = ({
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Paraclinic />
+              <Paraclinic list={testList} />
               <Card sx={{ mt: 2, width: "100%" }}>
                 <CardContent>
                   <TextField

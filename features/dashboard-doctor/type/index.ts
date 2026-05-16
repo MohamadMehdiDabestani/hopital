@@ -9,9 +9,12 @@ export type VisitHistory = {
   firstName: string;
   lastName: string;
 };
-export type MedicineItem = {
+export type Item = {
   id: number;
   name: string;
+}
+export type MedicineItem = Item& {
   form: string | null;
 };
 export type MedicineList = { list: MedicineItem[] };
+export type TestList = {list : Item[]}
