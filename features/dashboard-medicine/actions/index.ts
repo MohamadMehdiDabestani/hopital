@@ -40,8 +40,11 @@ export const addOrUpdateMedicineAction = async (
       await addMedicineQuery(parsedData.data, siteId);
     else {
       const res = await updateMedicineQuery(parsedData.data, siteId);
+      updateTag(`medicines-site-${user.siteId}`);
       return res;
     }
+    updateTag(`medicines-site-${user.siteId}`);
+
     return { ok: true, data: undefined };
   } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };
@@ -81,7 +84,6 @@ export const addOrUpdateMedicineTestAction = async (
         ...parsedData.data,
       });
     }
-    updateTag(`medicines-site-${user.siteId}`);
     return { ok: true, data: undefined };
   } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };
