@@ -1,9 +1,10 @@
-
-import { db } from "@/features/core/drizzle/client";
-import {DashboardTestsList} from "@/features/dashboard-medicine";
-import { tests } from "@/features/dashboard-medicine/schemas/tests.drizzle";
+import { getUser } from "@/features/auth/utils/dal";
+import { DashboardTestsList } from "@/features/dashboard-medicine";
+import { getTestQuery } from "@/features/dashboard-medicine/queries/tests.queries";
 
 export default async function TestsPage() {
-  const data = await db.select().from(tests).orderBy(tests.id);
+  const user = await getUser();
+
+  const data = await getTestQuery(user?.siteId as number);
   return <DashboardTestsList initialData={data} />;
 }

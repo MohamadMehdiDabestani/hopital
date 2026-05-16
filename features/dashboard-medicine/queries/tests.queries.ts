@@ -4,6 +4,10 @@ import { db } from "@/features/core/drizzle/client";
 import { tests } from "@/features/dashboard-medicine/schemas/tests.drizzle";
 import { eq } from "drizzle-orm";
 
+export async function getTestQuery(siteId: number) {
+  const res = await db.select().from(tests).where(eq(tests.siteId, siteId)).orderBy(tests.createdAt);
+  return res;
+}
 export async function addTestQuery(data: {
   siteId: number;
   name: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   Button,
   Dialog,
@@ -20,8 +20,7 @@ import {
 
 import { useDashboardMedicineAddTestForm } from "../../forms/dashboard-medicineAddTests";
 import { addOrUpdateMedicineTestAction } from "../../actions";
-// import { testSchema, TestFormValues } from "./schema";
-// import { addTestAction, updateTestAction } from "./actions";
+import useSWR from "swr";
 
 type TestRow = {
   id: number;
@@ -34,15 +33,20 @@ export const DashboardTestsList = ({
 }: {
   initialData: TestRow[];
 }) => {
-  const [rows, setRows] = useState<TestRow[]>(initialData);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TestRow | null>(null);
   const [isPending, startTransition] = useTransition();
-
+  const { data, mutate } = useSWR("/api/dashboard/medicine/tests", {
+    fallbackData: initialData,
+    revalidateOnMount: false, // جلوگیری از ری‌فچ اولیه
+    revalidateIfStale: false, // اگر stale بود هم ری‌فچ نکن
+    revalidateOnFocus: false, // با فوکوس پنجره ری‌فچ نکن
+    revalidateOnReconnect: false,
+  });
   const formik = useDashboardMedicineAddTestForm((values) => {
     startTransition(async () => {
       await addOrUpdateMedicineTestAction(values);
-      location.reload();
+      mutate();
       handleClose();
     });
   });
@@ -61,7 +65,15 @@ export const DashboardTestsList = ({
     setOpen(false);
     formik.resetForm();
   };
-
+  useEffect(() => {
+    if (editing?.id !== undefined)
+      formik.setValues({
+        name: editing.name as string,
+        suspended: editing.suspended as boolean,
+        id: editing.id,
+      });
+    else formik.resetForm()
+  }, [editing]);
   return (
     <Box sx={{ p: 3 }}>
       <Button variant="contained" onClick={handleOpenAdd} sx={{ mb: 2 }}>
@@ -79,7 +91,7 @@ export const DashboardTestsList = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
+            {data.map((row: TestRow) => (
               <TableRow key={row.id}>
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.name}</TableCell>
