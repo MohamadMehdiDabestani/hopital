@@ -24,9 +24,13 @@ import {
 import { FormikProvider } from "formik";
 import { useNotificationStore } from "@/features/core";
 import { DoctorPatientSkeleton } from "./skeletonLoading";
-import { VisitHistory } from "@/features/dashboard-doctor/type";
+import { MedicineItem, VisitHistory } from "@/features/dashboard-doctor/type";
 
-export const DoctorPatient = () => {
+export const DoctorPatient = ({
+  medicineList,
+}: {
+  medicineList: MedicineItem[];
+}) => {
   const [currentPatient, setCurrentPatient] = useState<VisitHistory | null>(
     null,
   );
@@ -49,8 +53,7 @@ export const DoctorPatient = () => {
           const list = res.data ?? [];
           setCurrentPatient(list[0] ?? null);
           setHistory(list.slice(1));
-          if(list.length == 0)
-            show("فعلا بیماری وجود ندارد" , "warning")
+          if (list.length == 0) show("فعلا بیماری وجود ندارد", "warning");
           formik.resetForm();
         } catch (err) {
           setCurrentPatient(null);
@@ -125,7 +128,15 @@ export const DoctorPatient = () => {
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Prescription />
+              <Card>
+                <CardContent>
+                  {medicineList.length == 0 ? (
+                    <Alert>دارویی ثبت نشده</Alert>
+                  ) : (
+                    <Prescription list={medicineList} />
+                  )}
+                </CardContent>
+              </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Paraclinic />

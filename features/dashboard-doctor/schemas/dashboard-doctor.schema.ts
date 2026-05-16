@@ -11,7 +11,7 @@ const trimToUndef = (v: unknown) => {
   return t === "" ? undefined : t;
 };
 
-const drugSchema = z
+const medicineSchema = z
   .object({
     id: z.number().min(1, "id الزامی است"),
     name : z.string(),
@@ -46,7 +46,7 @@ const dashboardDoctorPatientTestSchema = z.object({
   name : z.string(),
 });
 export const dashboardDoctorPatientSchema = z.object({
-  drugs: z.array(drugSchema).optional(),
+  medicines: z.array(medicineSchema).optional(),
 
   tests: z.array(dashboardDoctorPatientTestSchema).optional(),
 
@@ -57,4 +57,4 @@ export type DashboardDoctorPatientSchema = z.infer<
   typeof dashboardDoctorPatientSchema
 >;
 export type DashboardDoctorPatientTestSchema = z.infer<typeof dashboardDoctorPatientTestSchema>;
-export type DashboardDoctorPatientDrugSchema = z.infer<typeof drugSchema>;
+export type DashboardDoctorPatientMedicineSchema = z.infer<typeof medicineSchema>;
