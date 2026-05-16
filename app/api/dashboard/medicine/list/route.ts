@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
 
       if (r.chargeId) {
         map.get(r.id).charges.push({
-          chargesId: r.chargeId,
+          id: r.chargeId,
           expiryDate: r.expiryDate,
           quantity: r.quantity,
           storageLocation: r.storageLocation,
