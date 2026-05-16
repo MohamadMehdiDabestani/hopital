@@ -5,3 +5,5 @@ export * from '@/features/dasboard-admision/schemas/visits.drizzle'
 export * from '@/features/dashboard-medicine/schemas/charges.drizzle'
 export * from '@/features/dashboard-medicine/schemas/medicine.drizzle'
 export * from '@/features/dashboard-medicine/schemas/tests.drizzle'
+export * from "@/features/dashboard-doctor/schemas/recipe.drizzle"
+export * from '@/features/dashboard-doctor/schemas/recipe.relationes.drizzle' 

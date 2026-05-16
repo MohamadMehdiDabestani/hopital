@@ -99,6 +99,13 @@
       "when": 1778904503488,
       "tag": "0013_wide_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778938298018,
+      "tag": "0014_misty_kingpin",
+      "breakpoints": true
     }
   ]
 }
