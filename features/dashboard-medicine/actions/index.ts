@@ -84,6 +84,7 @@ export const addOrUpdateMedicineTestAction = async (
         ...parsedData.data,
       });
     }
+    updateTag(`test-site-${user.siteId}`)
     return { ok: true, data: undefined };
   } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };
