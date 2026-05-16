@@ -99,6 +99,13 @@
       "when": 1778904503488,
       "tag": "0013_wide_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778940604713,
+      "tag": "0014_stale_speed",
+      "breakpoints": true
     }
   ]
 }
