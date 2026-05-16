@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, useTransition } from "react";
+import { Fragment, useEffect, useState, useTransition } from "react";
 import {
   Box,
   Button,
@@ -18,20 +18,25 @@ import { Grid } from "@mui/system";
 import { Prescription } from "./prescription";
 import { Paraclinic } from "./paraclinick";
 import {
+  doneTreatAction,
   getNextPatientAction,
   useDashboardDoctorForm,
 } from "@/features/dashboard-doctor";
 import { FormikProvider } from "formik";
 import { useNotificationStore } from "@/features/core";
 import { DoctorPatientSkeleton } from "./skeletonLoading";
-import { MedicineItem, Item, VisitHistory } from "@/features/dashboard-doctor/type";
+import {
+  MedicineItem,
+  Item,
+  VisitHistory,
+} from "@/features/dashboard-doctor/type";
 
 export const DoctorPatient = ({
   medicineList,
-  testList
+  testList,
 }: {
   medicineList: MedicineItem[];
-  testList : Item[]
+  testList: Item[];
 }) => {
   const [currentPatient, setCurrentPatient] = useState<VisitHistory | null>(
     null,
@@ -39,7 +44,15 @@ export const DoctorPatient = ({
   const [history, setHistory] = useState<VisitHistory[]>([]);
   const [loading, startTransition] = useTransition();
   const { show } = useNotificationStore();
-  const formik = useDashboardDoctorForm((values) => console.log(values));
+  const formik = useDashboardDoctorForm(async (values) => {
+    const res = await doneTreatAction(values);
+    if (res.ok) {
+      handleNextPatient();
+      show("ویزیت با موفقیت انجام شد" , "success")
+    }else {
+      show(res.message , "error")
+    }
+  });
 
   const handleNextPatient = () => {
     startTransition(() => {
@@ -63,6 +76,10 @@ export const DoctorPatient = ({
       })();
     });
   };
+  useEffect(() => {
+    if (currentPatient == null) return;
+    formik.setFieldValue("visitId", currentPatient.id);
+  }, [currentPatient]);
   return (
     <FormikProvider value={formik}>
       <Grid
