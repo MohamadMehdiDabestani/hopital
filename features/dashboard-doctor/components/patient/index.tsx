@@ -22,7 +22,7 @@ import {
   useDashboardDoctorForm,
 } from "@/features/dashboard-doctor";
 import { FormikProvider } from "formik";
-import { ActionResult, useNotificationStore } from "@/features/core";
+import { useNotificationStore } from "@/features/core";
 import { DoctorPatientSkeleton } from "./skeletonLoading";
 import { VisitHistory } from "@/features/dashboard-doctor/type";
 
@@ -49,6 +49,8 @@ export const DoctorPatient = () => {
           const list = res.data ?? [];
           setCurrentPatient(list[0] ?? null);
           setHistory(list.slice(1));
+          if(list.length == 0)
+            show("فعلا بیماری وجود ندارد" , "warning")
           formik.resetForm();
         } catch (err) {
           setCurrentPatient(null);
@@ -56,8 +58,6 @@ export const DoctorPatient = () => {
       })();
     });
   };
-  console.log(history, currentPatient);
-  // ADD SKELETON LOADING
   return (
     <FormikProvider value={formik}>
       <Grid
@@ -66,7 +66,7 @@ export const DoctorPatient = () => {
         component="form"
         onSubmit={formik.handleSubmit}
       >
-        {!currentPatient ? (
+        {!currentPatient && !loading ? (
           <Grid size={{ xs: 12 }}>
             <Button fullWidth variant="contained" onClick={handleNextPatient}>
               ورود بیمار بعدی
@@ -90,17 +90,12 @@ export const DoctorPatient = () => {
 
                   <Typography>
                     نام و نام خانوادگی:{" "}
-                    {currentPatient.firstName + currentPatient.lastName}
-                  </Typography>
-
-                  <Typography>
-                    توضیحات اضافه: {currentPatient.extraNotes || "ثبت نشده"}
+                    {`${currentPatient?.firstName ?? ""} ${currentPatient?.lastName ?? ""}`}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              {/* تاریخچه ویزیت‌ها */}
               <Card>
                 <CardContent>
                   <Typography variant="h6">تاریخچه ویزیت‌ها</Typography>
