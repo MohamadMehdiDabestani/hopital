@@ -10,6 +10,10 @@ import {
   dashboardMedicineAddCharges,
 } from "../schemas/dashboard-medicineAddCharges.schema";
 import {
+  DashboardMedicineTestSchema,
+  dashboardMedicineTestSchema,
+} from "../schemas/dashboard-medicineTests.schema";
+import {
   addMedicineChargeQuery,
   addMedicineQuery,
   updateChargeMedicineQuery,
@@ -18,6 +22,8 @@ import {
 
 import { getUser } from "@/features/auth/utils/dal";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
+import { redirect } from "next/navigation";
+import { addTestQuery, updateTestQuery } from "../queries/tests.queries";
 
 export const addOrUpdateMedicineAction = async (
   data: MedicineAddFormValues,
@@ -47,8 +53,34 @@ export const addOrUpdateMedicineChargeAction = async (
   if (!parsedData.success)
     return { ok: false, message: "اطلاعات وارد شده اشتباه است" };
   try {
-    if (parsedData.data.chargeId) await updateChargeMedicineQuery(parsedData.data);
+    if (parsedData.data.chargeId)
+      await updateChargeMedicineQuery(parsedData.data);
     else await addMedicineChargeQuery(parsedData.data);
+    return { ok: true, data: undefined };
+  } catch (error: any) {
+    return { ok: false, message: ActionErrorMapping(error) };
+  }
+};
+export const addOrUpdateMedicineTestAction = async (
+  data: DashboardMedicineTestSchema,
+): Promise<ActionResult<undefined>> => {
+  const parsedData = dashboardMedicineTestSchema.safeParse(data);
+  if (!parsedData.success)
+    return { ok: false, message: "اطلاعات وارد شده ناقص میباشد" };
+
+  try {
+    const user = await getUser();
+    if (!user) redirect("/");
+    if (parsedData.data.id === undefined) {
+      await addTestQuery({ siteId: user.siteId as number, ...parsedData.data });
+    } else {
+      await updateTestQuery({
+        id: parsedData.data.id,
+        siteId: user.siteId as number,
+        ...parsedData.data,
+      });
+    }
+
     return { ok: true, data: undefined };
   } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };
