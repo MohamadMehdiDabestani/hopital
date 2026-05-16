@@ -92,6 +92,13 @@
       "when": 1778762590767,
       "tag": "0012_salty_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778904503488,
+      "tag": "0013_wide_lady_mastermind",
+      "breakpoints": true
     }
   ]
 }

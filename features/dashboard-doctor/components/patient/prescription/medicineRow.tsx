@@ -17,17 +17,17 @@ const readyNotes = [
   "در صورت درد",
   "روزانه ۲ بار",
 ];
-type DrugRowProps = {
+type MedicineRowProps = {
   index: number;
-  drugName: string;
+  medicineName: string;
   onRemove: () => void;
 };
-export const DrugRow = ({ drugName, index, onRemove }: DrugRowProps) => {
+export const MedicineRow = ({ medicineName, index, onRemove }: MedicineRowProps) => {
   const [intervalField, intervalMeta] = useField(
-    `drugs.${index}.intervalHours`,
+    `medicines.${index}.intervalHours`,
   );
-  const [daysField, daysMeta] = useField(`drugs.${index}.daysPerWeek`);
-  const [noteField, noteMeta] = useField(`drugs.${index}.note`);
+  const [daysField, daysMeta] = useField(`medicines.${index}.daysPerWeek`);
+  const [noteField, noteMeta] = useField(`medicines.${index}.note`);
 
   const addNote = (text: string) => {
     const current = noteField.value ?? "";
@@ -47,7 +47,7 @@ export const DrugRow = ({ drugName, index, onRemove }: DrugRowProps) => {
           direction="row"
           sx={{ mb: 1, alignItems: "center", justifyContent: "center" }}
         >
-          <Typography variant="subtitle1">{drugName}</Typography>
+          <Typography variant="subtitle1">{medicineName}</Typography>
           <IconButton onClick={onRemove} color="error" sx={{ ml: 1 }}>
             <DeleteIcon />
           </IconButton>

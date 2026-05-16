@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   Box,
   Card,
@@ -12,32 +12,32 @@ import {
 } from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
 import { useField } from "formik";
-import { DashboardDoctorPatientDrugSchema } from "@/features/dashboard-doctor/schemas/dashboard-doctor.schema";
-import { DrugRow } from "./drugRow";
-import { DRUGS } from "@/features/dashboard-doctor";
+import { DashboardDoctorPatientMedicineSchema } from "@/features/dashboard-doctor/schemas/dashboard-doctor.schema";
+import { MedicineRow } from "./medicineRow";
+import { MedicineList } from "@/features/dashboard-doctor/type";
 import { DialogList } from "../dialogList";
 
-export const Prescription = () => {
+export const Prescription = (props: MedicineList) => {
   const [field, , helpers] =
-    useField<DashboardDoctorPatientDrugSchema[]>("drugs");
+    useField<DashboardDoctorPatientMedicineSchema[]>("medicines");
   const selected = field.value ?? [];
   const [open, setOpen] = useState(false);
 
-  const isSelected = (drugId: number) =>
-    selected.some((d: any) => d.id === drugId);
+  const isSelected = (medicineId: number) =>
+    selected.some((d: any) => d.id === medicineId);
 
-  const toggleSelect = (drug : DashboardDoctorPatientDrugSchema) => {
-    if (isSelected(drug.id)) {
-      helpers.setValue(selected.filter((d: any) => d.id !== drug.id));
+  const toggleSelect = (medicine: DashboardDoctorPatientMedicineSchema) => {
+    if (isSelected(medicine.id)) {
+      helpers.setValue(selected.filter((d: any) => d.id !== medicine.id));
     } else {
       helpers.setValue([
         ...selected,
         {
-          id: drug.id,
+          id: medicine.id,
           intervalHours: undefined,
           daysPerWeek: undefined,
           note: undefined,
-          name: drug.name,
+          name: medicine.name,
         },
       ]);
     }
@@ -48,52 +48,48 @@ export const Prescription = () => {
   };
 
   return (
-    <Card>
+    <Fragment>
       <DialogList
         setOpen={setOpen}
         toggle={toggleSelect}
-        list={DRUGS}
+        list={props.list}
         open={open}
         selected={field.value ?? []}
       />
 
-      <CardContent>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography variant="h6">داروها</Typography>
-          <Button color="info" variant="outlined" onClick={() => setOpen(true)}>
-            نمایش دارو ها
-          </Button>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Typography variant="h6">داروها</Typography>
+        <Button color="info" variant="outlined" onClick={() => setOpen(true)}>
+          نمایش دارو ها
+        </Button>
+      </Box>
+
+      <Divider sx={{ my: 1 }} />
+
+      <Stack sx={{ mt: 2 }}>
+        <Box sx={{ maxHeight: 344, overflowY: "auto" }}>
+          {selected.length === 0 ? (
+            <Alert color="warning" icon={<WarningIcon />}>
+              هنوز دارویی انتخاب نشده است.
+            </Alert>
+          ) : (
+            selected.map((p, idx: number) => (
+              <MedicineRow
+                key={p.id}
+                index={idx}
+                medicineName={p.name}
+                onRemove={() => handleRemove(p.id)}
+              />
+            ))
+          )}
         </Box>
-
-        <Divider sx={{ my: 1 }} />
-
-        <Stack sx={{ mt: 2 }}>
-          <Box sx={{ maxHeight: 344, overflowY: "auto" }}>
-            {selected.length === 0 ? (
-              <Alert color="warning" icon={<WarningIcon />}>
-                هنوز دارویی انتخاب نشده است.
-              </Alert>
-            ) : (
-              selected.map((p, idx: number) => {
-                return (
-                  <DrugRow
-                    key={p.id}
-                    index={idx}
-                    drugName={p.name}
-                    onRemove={() => handleRemove(p.id)}
-                  />
-                );
-              })
-            )}
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </Fragment>
   );
 };

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-const numRequired = z.coerce.number().positive("باید عدد مثبت باشد");
-
 export const dashboardMedicineAddCharges = z.object({
-  medicineId: numRequired,
+  chargeId : z.number().optional(),
+  medicineId: z.coerce.number().positive("باید عدد مثبت باشد"),
+
   quantity: z.coerce
     .number("عددی را وارد کنید")
     .positive("نمیتواند کمتر از یک باشد")

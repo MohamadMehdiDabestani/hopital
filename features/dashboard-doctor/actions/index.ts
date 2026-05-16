@@ -18,6 +18,7 @@ export const getNextPatientAction = async (): Promise<
     const data = await getNextPatientQuery(user.userId, user.siteId as number);
     return { ok: true, data : data};
   } catch (error: any) {
+    console.log(error)
     return { ok: false, message: ActionErrorMapping(error) };
   }
 };
