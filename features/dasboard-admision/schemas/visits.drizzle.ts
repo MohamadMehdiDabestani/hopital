@@ -4,6 +4,7 @@ import {
   pgTable,
   serial,
   timestamp,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { people, sites, users } from "@/features/core/schema/schema.drizzle";
 export const statusEnum = pgEnum("statusEnum", [
@@ -24,8 +25,11 @@ export const visits = pgTable("visits", {
   siteId: integer("siteId")
     .notNull()
     .references(() => sites.id),
-  doctorId: integer("doctorId").notNull().references(() => users.id),
+  doctorId: integer("doctorId")
+    .notNull()
+    .references(() => users.id),
   status: statusEnum("status").notNull(),
+  extraNotes: varchar("extraNotes", { length: 100 }),
   receptionTime: timestamp("receptionTime", { withTimezone: true })
     .defaultNow()
     .notNull(),
