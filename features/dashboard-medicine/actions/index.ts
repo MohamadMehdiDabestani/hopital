@@ -24,6 +24,7 @@ import { getUser } from "@/features/auth/utils/dal";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 import { redirect } from "next/navigation";
 import { addTestQuery, updateTestQuery } from "../queries/tests.queries";
+import { updateTag } from "next/cache";
 
 export const addOrUpdateMedicineAction = async (
   data: MedicineAddFormValues,
@@ -80,7 +81,7 @@ export const addOrUpdateMedicineTestAction = async (
         ...parsedData.data,
       });
     }
-
+    updateTag(`medicines-site-${user.siteId}`);
     return { ok: true, data: undefined };
   } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };
