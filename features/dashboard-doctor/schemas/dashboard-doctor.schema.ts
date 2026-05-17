@@ -14,7 +14,7 @@ const trimToUndef = (v: unknown) => {
 const medicineSchema = z
   .object({
     id: z.number().min(1, "id الزامی است"),
-    name : z.string(),
+    name: z.string(),
     intervalHours: z.preprocess(
       toNumberOrUndef,
       z.number().positive().optional(),
@@ -35,7 +35,7 @@ const medicineSchema = z
 
     if (!hasAny) {
       ctx.addIssue({
-        code: "custom", 
+        code: "custom",
         message: "باید حداقل یکی از ساعت، روز یا توضیحات وارد شود",
         path: ["intervalHours"],
       });
@@ -43,18 +43,21 @@ const medicineSchema = z
   });
 const dashboardDoctorPatientTestSchema = z.object({
   id: z.number(),
-  name : z.string(),
+  name: z.string(),
 });
 export const dashboardDoctorPatientSchema = z.object({
+  visitId: z.number(),
   medicines: z.array(medicineSchema).optional(),
-
   tests: z.array(dashboardDoctorPatientTestSchema).optional(),
-
   extraNotes: z.string().optional(),
 });
 
 export type DashboardDoctorPatientSchema = z.infer<
   typeof dashboardDoctorPatientSchema
 >;
-export type DashboardDoctorPatientTestSchema = z.infer<typeof dashboardDoctorPatientTestSchema>;
-export type DashboardDoctorPatientMedicineSchema = z.infer<typeof medicineSchema>;
+export type DashboardDoctorPatientTestSchema = z.infer<
+  typeof dashboardDoctorPatientTestSchema
+>;
+export type DashboardDoctorPatientMedicineSchema = z.infer<
+  typeof medicineSchema
+>;

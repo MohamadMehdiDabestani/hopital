@@ -1,16 +1,21 @@
 import "server-only";
 
 import { db } from "@/features/core/drizzle/client";
-import { visits } from "@/features/dasboard-admision/schemas/visits.drizzle";
+import {
+  Status,
+  visits,
+} from "@/features/dasboard-admision/schemas/visits.drizzle";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { people } from "@/features/dashboard-manager/schemas/people.drizzle";
 import { VisitHistory } from "../type";
+import { visitToMedicine } from "@/features/dashboard-medicine/schemas/visitToMedicine.relations.drizzle";
+import { DashboardDoctorPatientSchema } from "../schemas/dashboard-doctor.schema";
 
 export const getNextPatientQuery = async (
   doctorId: number,
   siteId: number,
 ): Promise<VisitHistory[]> => {
-  const data  = await db.transaction(async (tx) => {
+  const data = await db.transaction(async (tx) => {
     const [currentTreat] = await tx
       .select({
         personId: visits.personId,
@@ -106,4 +111,40 @@ export const getNextPatientQuery = async (
   });
 
   return data;
+};
+export const doneTreatQuery = async (data: DashboardDoctorPatientSchema) => {
+  await db.transaction(async (tx) => {
+    const { visitId, extraNotes, medicines, tests } = data;
+
+    let status: Status = "finish";
+
+    if (tests?.length) {
+      const testList = tests.map((t) => ({
+        testId: t.id,
+        visitId,
+      }));
+      await tx.insert(visitToMedicine).values(testList);
+      status = "finish";
+    }
+    if (medicines?.length) {
+      const medicineList = medicines.map((m) => ({
+        medicineId: m.id,
+        visitId,
+        intervalMeta: m.intervalHours,
+        daysPerWeekMeta: m.daysPerWeek,
+        noteMeta: m.note,
+      }));
+      await tx.insert(visitToMedicine).values(medicineList);
+      status = "reciveMedicine";
+    }
+
+    await tx
+      .update(visits)
+      .set({
+        exitRoomAt: sql`now()`,
+        extraNotes,
+        status,
+      })
+      .where(eq(visits.id, visitId));
+  });
 };

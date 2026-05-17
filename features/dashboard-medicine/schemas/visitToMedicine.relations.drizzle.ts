@@ -47,4 +47,3 @@ export const medicineRelations = relations(medicines, ({ many }) => ({
 export const chargeRelations = relations(medicineCharges, ({ many }) => ({
   visits: many(visits),
 }));
-

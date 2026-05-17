@@ -10,6 +10,7 @@ export const useDashboardDoctorForm = (onSubmit: (values: any) => void) =>
   useFormik<DashboardDoctorPatientSchema>({
     initialValues: {
       medicines: [],
+      visitId : 0,
       extraNotes: "",
       tests: [],
     },
