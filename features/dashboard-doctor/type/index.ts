@@ -5,7 +5,7 @@ export type VisitHistory = {
   doctorId: number;
   status: any;
   extraNotes: string | null;
-  treatTime: Date | null;
+  treatTime: string | null;
   firstName: string;
   lastName: string;
 };
