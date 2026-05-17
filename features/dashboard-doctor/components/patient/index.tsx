@@ -72,7 +72,6 @@ export const DoctorPatient = ({
           historyRef.current.length === 0 &&
           payload.status === "treat"
         ) {
-          
           setShowWarning(true);
         }
       } catch (err) {
@@ -128,17 +127,19 @@ export const DoctorPatient = ({
                 برای شروع، روی دکمه «ورود بیمار بعدی» کلیک کنید.
               </Typography>
             </Paper>
-            <Alert variant="filled" severity="warning" sx={{ mt: 3 }}>
-              یک بیمار جدید وارد شده در صورت آماده بودن{" "}
-              <Typography
-                sx={{ fontWeight: "bold", cursor: "pointer" }}
-                component="span"
-                onClick={handleNextPatient}
-              >
-                اینجا
-              </Typography>{" "}
-              کلیک کنید
-            </Alert>
+            {showWarning && (
+              <Alert variant="filled" severity="warning" sx={{ mt: 3 }}>
+                یک بیمار جدید وارد شده در صورت آماده بودن{" "}
+                <Typography
+                  sx={{ fontWeight: "bold", cursor: "pointer" }}
+                  component="span"
+                  onClick={handleNextPatient}
+                >
+                  اینجا
+                </Typography>{" "}
+                کلیک کنید
+              </Alert>
+            )}
           </Grid>
         ) : loading ? (
           <DoctorPatientSkeleton />
