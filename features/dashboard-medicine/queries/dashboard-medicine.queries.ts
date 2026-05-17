@@ -2,10 +2,14 @@ import "server-only";
 import { MedicineAddFormValues } from "../schemas/dashboard-medicineAdd.schema";
 import { db } from "@/features/core/drizzle/client";
 import { medicines } from "../schemas/medicine.drizzle";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { ActionResult } from "@/features/core";
 import { DashboardMedicineAddCharges } from "../schemas/dashboard-medicineAddCharges.schema";
 import { medicineCharges } from "../schemas/charges.drizzle";
+import { visits } from "@/features/dasboard-admision/schemas/visits.drizzle";
+import { people } from "@/features/dashboard-manager/schemas/people.drizzle";
+import { visitToMedicine } from "../schemas/visitToMedicine.relations.drizzle";
+import { DashboardMedicineSchema } from "../schemas/dashboard-medicine.schema";
 
 export const addMedicineQuery = async (
   data: MedicineAddFormValues,
@@ -37,22 +41,86 @@ export const addMedicineChargeQuery = async (
   data: DashboardMedicineAddCharges,
 ) => {
   await db.insert(medicineCharges).values({
-    expiryDate : data.expiryDate,
-    medicineId : data.medicineId,
-    quantity : data.quantity,
-    expiryAlertDays : data.expiryAlertDays,
-    storageLocation : data.storageLocation,
-    notes : data.notes,
-  })
+    expiryDate: data.expiryDate,
+    medicineId: data.medicineId,
+    quantity: data.quantity,
+    expiryAlertDays: data.expiryAlertDays,
+    storageLocation: data.storageLocation,
+    notes: data.notes,
+  });
 };
 export const updateChargeMedicineQuery = async (
   data: DashboardMedicineAddCharges,
 ) => {
-  await db.update(medicineCharges).set({
-    expiryDate : data.expiryDate,
-    quantity : data.quantity,
-    expiryAlertDays : data.expiryAlertDays,
-    storageLocation : data.storageLocation,
-    notes : data.notes,
-  }).where(eq(medicineCharges.id , data.chargeId as number))
-}
+  await db
+    .update(medicineCharges)
+    .set({
+      expiryDate: data.expiryDate,
+      quantity: data.quantity,
+      expiryAlertDays: data.expiryAlertDays,
+      storageLocation: data.storageLocation,
+      notes: data.notes,
+    })
+    .where(eq(medicineCharges.id, data.chargeId as number));
+};
+
+export const getMedicineQueueQuery = async (siteId: number) => {
+  const data = await db
+    .select({
+      id: visits.id,
+      fullName: sql<string>`concat(${people.firstName}, ' ', ${people.lastName})`,
+      codeMeli: people.codeMeli,
+      receptionTime: visits.receptionTime,
+      treatTime: visits.treatTime,
+      exitRoomAt: visits.exitRoomAt,
+      status: visits.status,
+    })
+    .from(visits)
+    .innerJoin(people, eq(people.id, visits.personId))
+    .where(and(eq(visits.status, "reciveMedicine"), eq(visits.siteId, siteId)));
+  return data;
+};
+
+export const updateVisitToMedicine = async (data: DashboardMedicineSchema) => {
+  await db.transaction(async (tx) => {
+    for (const med of data.medicines) {
+      await tx
+        .update(visitToMedicine)
+        .set({
+          chargeId: med.chargeId,
+          count: med.count,
+        })
+        .where(
+          and(
+            eq(visitToMedicine.visitId, data.visitId),
+            eq(visitToMedicine.medicineId, med.medicineId),
+          ),
+        );
+    }
+  });
+};
+
+export const getVisitMedicinesQuery = async (visitId: number) => {
+  const data = await db
+    .select({
+      visitId: visitToMedicine.visitId,
+      medicineId: visitToMedicine.medicineId,
+      medicineName : medicines.name,
+      charges: sql`
+      json_agg(
+        json_build_object(
+          'id', ${medicineCharges.id},
+          'expiryDate', ${medicineCharges.expiryDate},
+          'quantity', ${medicineCharges.quantity},
+          'storageLocation', ${medicineCharges.storageLocation}
+        )
+      )
+    `.as("charges"),
+    })
+    .from(visitToMedicine)
+    .leftJoin(medicines, eq(visitToMedicine.medicineId, medicines.id))
+    .leftJoin(medicineCharges, eq(medicineCharges.medicineId, medicines.id))
+    .where(eq(visitToMedicine.visitId, visitId))
+    .groupBy(visitToMedicine.visitId, visitToMedicine.medicineId,medicines.name);
+  return data;
+};

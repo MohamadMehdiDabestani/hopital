@@ -18,6 +18,7 @@ import {
   addMedicineQuery,
   updateChargeMedicineQuery,
   updateMedicineQuery,
+  updateVisitToMedicine,
 } from "../queries/dashboard-medicine.queries";
 
 import { getUser } from "@/features/auth/utils/dal";
@@ -25,6 +26,10 @@ import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 import { redirect } from "next/navigation";
 import { addTestQuery, updateTestQuery } from "../queries/tests.queries";
 import { updateTag } from "next/cache";
+import {
+  dashboardMedicineSchema,
+  DashboardMedicineSchema,
+} from "../schemas/dashboard-medicine.schema";
 
 export const addOrUpdateMedicineAction = async (
   data: MedicineAddFormValues,
@@ -84,7 +89,20 @@ export const addOrUpdateMedicineTestAction = async (
         ...parsedData.data,
       });
     }
-    updateTag(`test-site-${user.siteId}`)
+    updateTag(`test-site-${user.siteId}`);
+    return { ok: true, data: undefined };
+  } catch (error: any) {
+    return { ok: false, message: ActionErrorMapping(error) };
+  }
+};
+
+export const updateVisitMedicinesAction = async (
+  data: DashboardMedicineSchema,
+): Promise<ActionResult<undefined>> => {
+  const parsedData = dashboardMedicineSchema.safeParse(data);
+  if (!parsedData.success) return { ok: false, message: "اطلاعات ناقض میباشد" };
+  try {
+    await updateVisitToMedicine(data);
     return { ok: true, data: undefined };
   } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };

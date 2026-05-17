@@ -12,26 +12,17 @@ import {
   Typography,
   Divider,
   Stack,
+  Skeleton,
 } from "@mui/material";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useDashboardMedicineQueueForm } from "@/features/dashboard-medicine";
+import {
+  updateVisitMedicinesAction,
+  useDashboardMedicineQueueForm,
+} from "@/features/dashboard-medicine";
 import { getServerTime } from "@/features/core/actions/time";
 import dayjs from "@/features/core/utils/dayjs";
-type VisitData = {
-  visitId: number;
-  medicines: {
-    medicineId: number;
-    name: string;
-    intervalHours?: number;
-    daysPerWeek?: number;
-    note?: string;
-    charges: {
-      chargeId: number;
-      count: number;
-      expireDate: string;
-    }[];
-  }[];
-};
+import useSWR from "swr";
+import { ActionResult, useNotificationStore } from "@/features/core";
 
 type MedicineDialogProps = {
   visitId: number;
@@ -39,61 +30,34 @@ type MedicineDialogProps = {
   setOpen: (open: boolean) => void;
 };
 
-const initialVisitData: VisitData[] = [
-  {
-    visitId: 1,
-    medicines: [
-      {
-        medicineId: 1,
-        charges: [{ chargeId: 3, count: 1000, expireDate: "2026/05/24" }],
-        name: "ویتامین C",
-        intervalHours: 8,
-      },
-      {
-        medicineId: 2,
-        charges: [{ chargeId: 7, count: 5, expireDate: "2026/06/10" }],
-        name: "آموکسی‌سیلین",
-        daysPerWeek: 3,
-      },
-    ],
-  },
-  {
-    visitId: 2,
-    medicines: [
-      {
-        medicineId: 1,
-        charges: [
-          { chargeId: 2, count: 20, expireDate: "2026/07/24" },
-          { chargeId: 3, count: 10, expireDate: "2026/05/24" },
-        ],
-        name: "آمپول",
-        intervalHours: 8,
-      },
-      {
-        medicineId: 2,
-        charges: [{ chargeId: 7, count: 5, expireDate: "2026/06/10" }],
-        name: "ضد سرطان",
-        daysPerWeek: 3,
-      },
-    ],
-  },
-];
-
+type ApiResult = {
+  visitId: number;
+  medicineId: number;
+  medicineName: string;
+  charges: {
+    id: number;
+    expiryDate: string;
+    quantity: number;
+    storageLocation: string;
+  }[];
+};
 export const MedicineDialog = ({
   visitId,
   open,
   setOpen,
 }: MedicineDialogProps) => {
-  const visitData: VisitData = useMemo(() => {
-    // TODO: API call
+  const query = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("visitId", String(visitId));
 
-    console.log("CALL");
-    return initialVisitData.find((v) => v.visitId == visitId) as VisitData;
+    return `/api/dashboard/medicine/visitMedicines?${params.toString()}`;
   }, [visitId]);
-
-  const formik = useDashboardMedicineQueueForm((values) => {
-    console.log("submit payload:", values);
-    setOpen(false);
+  const { data, isLoading, mutate } = useSWR<ActionResult<ApiResult[]>>(query);
+  const { show } = useNotificationStore();
+  const formik = useDashboardMedicineQueueForm(async (values) => {
+    const res = await updateVisitMedicinesAction(values);
+    if (res.ok) setOpen(false);
+    else show(res.message, "error");
   });
   const [serverNowIso, setServerNowIso] = useState<string | null>(null);
   useEffect(() => {
@@ -107,18 +71,20 @@ export const MedicineDialog = ({
     };
   }, []);
   useEffect(() => {
-    if (!open || !visitData) return;
-    formik.setFieldValue(
-      "medicines",
-      visitData.medicines.map((m) => ({
-        medicineId: m.medicineId,
-        chargeId: m.charges[0].chargeId,
-        count: 1,
-      })),
-    );
-    formik.setFieldValue("visitId", visitId);
-  }, [visitData, open]);
-
+    if (!open || !data) return;
+    if (data.ok) {
+      formik.setFieldValue(
+        "medicines",
+        data.data.map((m) => ({
+          medicineId: m.medicineId,
+          chargeId: m.charges[0]?.id ?? 0,
+          count: 1,
+        })),
+      );
+      formik.setFieldValue("visitId", visitId);
+    }
+  }, [data, open]);
+  console.log(data);
   return (
     <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
       <Box component="form" onSubmit={formik.handleSubmit}>
@@ -130,68 +96,90 @@ export const MedicineDialog = ({
 
             <Typography variant="subtitle1">اقلام دارویی</Typography>
 
-            {visitData?.medicines?.map((med, i) => {
-              const row = formik.values.medicines?.[i] ?? {
-                medicineId: med.medicineId,
-                chargeId: 0,
-                count: 0,
-              };
+            {isLoading ? (
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <Skeleton variant="text" width={140} height={32} />
 
-              const chargeTouched = (formik.touched.medicines?.[i] as any)
-                ?.chargeId;
-              const chargeError = (formik.errors.medicines?.[i] as any)
-                ?.chargeId;
+                <Skeleton
+                  variant="rounded"
+                  height={56}
+                  sx={{ minWidth: 200 }}
+                />
 
-              const countTouched = (formik.touched.medicines?.[i] as any)
-                ?.count;
-              const countError = (formik.errors.medicines?.[i] as any)?.count;
+                <Skeleton variant="rounded" height={56} width={120} />
+              </Stack>
+            ) : data?.ok ? (
+              data?.data.map((med, i) => {
+                const row = formik.values.medicines?.[i] ?? {
+                  medicineId: med.medicineId,
+                  chargeId: 0,
+                  count: 1,
+                };
+                console.log(row, "+=");
+                const chargeTouched = (formik.touched.medicines?.[i] as any)
+                  ?.chargeId;
+                const chargeError = (formik.errors.medicines?.[i] as any)
+                  ?.chargeId;
 
-              return (
-                <Fragment key={med.medicineId}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <Typography variant="subtitle1">{med.name}:</Typography>
-                    <TextField
-                      select
-                      label="شارژ"
-                      name={`medicines[${i}].chargeId`}
-                      value={row.chargeId}
-                      onChange={(e) => {
-                        const chargeId = Number(e.target.value);
-                        formik.setFieldValue(
-                          `medicines[${i}].chargeId`,
-                          chargeId,
-                        );
-                      }}
-                      onBlur={formik.handleBlur}
-                      error={Boolean(chargeTouched && chargeError)}
-                      helperText={
-                        chargeTouched && chargeError ? String(chargeError) : " "
-                      }
-                    >
-                      {med.charges.map((c) => (
-                        <MenuItem key={c.chargeId} value={c.chargeId}>
-                          {c.count} - exp: {c.expireDate}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                const countTouched = (formik.touched.medicines?.[i] as any)
+                  ?.count;
+                const countError = (formik.errors.medicines?.[i] as any)?.count;
 
-                    <TextField
-                      type="number"
-                      label="تعداد"
-                      name={`medicines[${i}].count`}
-                      value={row.count}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      error={Boolean(countTouched && countError)}
-                      helperText={
-                        countTouched && countError ? String(countError) : " "
-                      }
-                      slotProps={{ htmlInput: { min: 1 } }}
-                    />
-                  </Stack>
-                </Fragment>
-              );
-            })}
+                return (
+                  <Fragment key={med.medicineId}>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                      <Typography variant="subtitle1">
+                        {med.medicineName}
+                      </Typography>
+
+                      <TextField
+                        select
+                        label="شارژ"
+                        name={`medicines[${i}].chargeId`}
+                        value={row.chargeId}
+                        onChange={(e) =>
+                          formik.setFieldValue(
+                            `medicines[${i}].chargeId`,
+                            Number(e.target.value),
+                          )
+                        }
+                        onBlur={formik.handleBlur}
+                        error={Boolean(chargeTouched && chargeError)}
+                        helperText={
+                          chargeTouched && chargeError
+                            ? String(chargeError)
+                            : " "
+                        }
+                      >
+                        {med.charges.map((c) => (
+                          <MenuItem key={c.id} value={c.id}>
+                            {c.quantity} - exp: {c.expiryDate}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+
+                      <TextField
+                        type="number"
+                        label="تعداد"
+                        name={`medicines[${i}].count`}
+                        value={row.count}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={Boolean(countTouched && countError)}
+                        helperText={
+                          countTouched && countError ? String(countError) : " "
+                        }
+                        slotProps={{ htmlInput: { min: 1 } }}
+                      />
+                    </Stack>
+                  </Fragment>
+                );
+              })
+            ) : (
+              <Typography color="error">
+                {data?.message ?? "خطا در دریافت اطلاعات"}
+              </Typography>
+            )}
           </Box>
           <Typography variant="caption" color="text.secondary">
             تاریخ میلادی :
