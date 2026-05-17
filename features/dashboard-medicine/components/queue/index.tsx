@@ -21,9 +21,9 @@ type ReceptionRow = {
   id: number;
   fullName: string;
   codeMeli: string;
-  receptionTime: Date;
-  treatTime: Date | null;
-  exitRoomAt: Date | null;
+  receptionTime: string;
+  treatTime: string | null;
+  exitRoomAt: string | null;
   status: string;
 };
 
@@ -63,15 +63,21 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
 
         setRowMap((prev) => {
           const next = new Map(prev);
-
+          if (payload.status !== "reciveMedicine") {
+            next.delete(payload.id);
+            return next;
+          }
           if (payload.op === "INSERT") {
             next.set(payload.id, payload);
+            console.log("INSERT");
           }
-
           if (payload.op === "UPDATE") {
             const existing = next.get(payload.id);
+
             if (existing) {
               next.set(payload.id, { ...existing, ...payload });
+            } else {
+              next.set(payload.id, payload);
             }
           }
 
@@ -139,11 +145,7 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
   return (
     <Paper sx={{ mt: 2, p: 2, display: "grid", gap: 2 }}>
       {selectedVisit && (
-        <MedicineDialog
-          visitId={selectedVisit}
-          open={open}
-          setOpen={setOpen}
-        />
+        <MedicineDialog visitId={selectedVisit} open={open} setOpen={setOpen} />
       )}
 
       <TextField
@@ -180,20 +182,14 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
                   <TableCell>{row.fullName}</TableCell>
                   <TableCell>{row.codeMeli}</TableCell>
 
+                  <TableCell>{tehranTimezone(row.receptionTime)}</TableCell>
+
                   <TableCell>
-                    {tehranTimezone(row.receptionTime.toISOString())}
+                    {row.treatTime ? tehranTimezone(row.treatTime) : "--"}
                   </TableCell>
 
                   <TableCell>
-                    {row.treatTime
-                      ? tehranTimezone(row.treatTime.toISOString())
-                      : "--"}
-                  </TableCell>
-
-                  <TableCell>
-                    {row.exitRoomAt
-                      ? tehranTimezone(row.exitRoomAt.toISOString())
-                      : "--"}
+                    {row.exitRoomAt ? tehranTimezone(row.exitRoomAt) : "--"}
                   </TableCell>
 
                   <TableCell>

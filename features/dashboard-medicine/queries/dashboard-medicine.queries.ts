@@ -70,9 +70,9 @@ export const getMedicineQueueQuery = async (siteId: number) => {
       id: visits.id,
       fullName: sql<string>`concat(${people.firstName}, ' ', ${people.lastName})`,
       codeMeli: people.codeMeli,
-      receptionTime: visits.receptionTime,
-      treatTime: visits.treatTime,
-      exitRoomAt: visits.exitRoomAt,
+      receptionTime: sql<string>`${visits.receptionTime}::text`,
+      treatTime: sql<string>`${visits.treatTime}::text`,
+      exitRoomAt: sql<string>`${visits.exitRoomAt}::text`,
       status: visits.status,
     })
     .from(visits)
