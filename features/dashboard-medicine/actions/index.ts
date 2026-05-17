@@ -18,7 +18,7 @@ import {
   addMedicineQuery,
   updateChargeMedicineQuery,
   updateMedicineQuery,
-  updateVisitToMedicine,
+  updateVisitToMedicineQuery,
 } from "../queries/dashboard-medicine.queries";
 
 import { getUser } from "@/features/auth/utils/dal";
@@ -102,9 +102,12 @@ export const updateVisitMedicinesAction = async (
   const parsedData = dashboardMedicineSchema.safeParse(data);
   if (!parsedData.success) return { ok: false, message: "اطلاعات ناقض میباشد" };
   try {
-    await updateVisitToMedicine(data);
+    await updateVisitToMedicineQuery(data);
     return { ok: true, data: undefined };
   } catch (error: any) {
-    return { ok: false, message: ActionErrorMapping(error) };
+    return {
+      ok: false,
+      message: typeof error == "string" ? error : ActionErrorMapping(error),
+    };
   }
 };

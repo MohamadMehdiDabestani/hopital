@@ -17,6 +17,7 @@ export const useDashboardMedicineQueueForm = (
           chargeId: 0,
           count: 0,
           medicineId: 0,
+          quantity : 0,
         },
       ],
     },

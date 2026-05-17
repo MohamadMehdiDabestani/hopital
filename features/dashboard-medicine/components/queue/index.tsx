@@ -13,7 +13,7 @@ import {
   TableSortLabel,
 } from "@mui/material";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { tehranTimezone } from "@/features/core";
 import { MedicineDialog } from "./medicineDialog";
 
@@ -28,7 +28,6 @@ type ReceptionRow = {
 };
 
 type Order = "asc" | "desc";
-
 type SortKey =
   | "fullName"
   | "codeMeli"
@@ -41,57 +40,101 @@ type Props = {
 };
 
 export const DashboardMedicineQueue = ({ list }: Props) => {
+  const [rowMap, setRowMap] = useState<Map<number, ReceptionRow>>(
+    () => new Map(list.map((r) => [r.id, r])),
+  );
+
   const [query, setQuery] = useState("");
   const [orderBy, setOrderBy] = useState<SortKey>("receptionTime");
   const [order, setOrder] = useState<Order>("desc");
   const [open, setOpen] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<number | null>(null);
 
-  const handleSort = (key: SortKey) => {
-    if (orderBy === key) {
-      setOrder((o) => (o === "asc" ? "desc" : "asc"));
-    } else {
-      setOrderBy(key);
-      setOrder("asc");
-    }
-  };
+  useEffect(() => {
+    setRowMap(new Map(list.map((r) => [r.id, r])));
+  }, [list]);
 
-  const comparator = (a: ReceptionRow, b: ReceptionRow) => {
+  useEffect(() => {
+    const es = new EventSource("/api/dashboard/admision/streamQueue");
+
+    es.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+
+        setRowMap((prev) => {
+          const next = new Map(prev);
+
+          if (payload.op === "INSERT") {
+            next.set(payload.id, payload);
+          }
+
+          if (payload.op === "UPDATE") {
+            const existing = next.get(payload.id);
+            if (existing) {
+              next.set(payload.id, { ...existing, ...payload });
+            }
+          }
+
+          return next;
+        });
+      } catch (err) {
+        console.error("SSE parse error:", err);
+      }
+    };
+
+    return () => es.close();
+  }, []);
+
+  const compare = (a: ReceptionRow, b: ReceptionRow) => {
     const aVal = a[orderBy];
     const bVal = b[orderBy];
 
-    if (aVal === null) return 1;
-    if (bVal === null) return -1;
+    if (!aVal) return 1;
+    if (!bVal) return -1;
 
-    if (typeof aVal === "string" && typeof bVal === "string") {
-      const res = aVal.localeCompare(bVal);
+    if (typeof aVal === "string") {
+      const res = aVal.localeCompare(bVal as string);
       return order === "asc" ? res : -res;
     }
 
-    const aTime = new Date(aVal as Date).getTime();
-    const bTime = new Date(bVal as Date).getTime();
+    const aTime = new Date(aVal).getTime();
+    const bTime = new Date(bVal).getTime();
 
-    if (aTime < bTime) return order === "asc" ? -1 : 1;
-    if (aTime > bTime) return order === "asc" ? 1 : -1;
-
-    return 0;
+    return order === "asc" ? aTime - bTime : bTime - aTime;
   };
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    return list
-      .filter(
-        (r) =>
-          r.fullName.toLowerCase().includes(q) ||
-          r.codeMeli.toLowerCase().includes(q),
-      )
-      .sort(comparator);
-  }, [list, query, orderBy, order]);
-  
-  const handleSuspend = (row: ReceptionRow) => {
-    console.log("Suspend:", row.id);
-  };
+    const arr = Array.from(rowMap.values()).filter(
+      (r) =>
+        r.fullName.toLowerCase().includes(q) ||
+        r.codeMeli.toLowerCase().includes(q),
+    );
+
+    return arr.sort(compare);
+  }, [rowMap, query, orderBy, order]);
+
+  const renderSort = (key: SortKey, label: string) => (
+    <TableCell sortDirection={orderBy === key ? order : false}>
+      <TableSortLabel
+        active={orderBy === key}
+        direction={orderBy === key ? order : "asc"}
+        onClick={() =>
+          setOrderBy((prev) => {
+            if (prev === key) {
+              setOrder((o) => (o === "asc" ? "desc" : "asc"));
+              return prev;
+            }
+            setOrder("asc");
+            return key;
+          })
+        }
+      >
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
 
   return (
     <Paper sx={{ mt: 2, p: 2, display: "grid", gap: 2 }}>
@@ -110,43 +153,14 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
       />
 
       <TableContainer
-        sx={(t) => ({ border: `1px solid ${t.palette.grey["A200"]}` })}
+        sx={(t) => ({ border: `1px solid ${t.palette.grey.A200}` })}
       >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sortDirection={orderBy === "fullName" ? order : false}>
-                <TableSortLabel
-                  active={orderBy === "fullName"}
-                  direction={orderBy === "fullName" ? order : "asc"}
-                  onClick={() => handleSort("fullName")}
-                >
-                  نام و نام خانوادگی
-                </TableSortLabel>
-              </TableCell>
-
-              <TableCell sortDirection={orderBy === "codeMeli" ? order : false}>
-                <TableSortLabel
-                  active={orderBy === "codeMeli"}
-                  direction={orderBy === "codeMeli" ? order : "asc"}
-                  onClick={() => handleSort("codeMeli")}
-                >
-                  کد ملی
-                </TableSortLabel>
-              </TableCell>
-
-              <TableCell
-                sortDirection={orderBy === "receptionTime" ? order : false}
-              >
-                <TableSortLabel
-                  active={orderBy === "receptionTime"}
-                  direction={orderBy === "receptionTime" ? order : "asc"}
-                  onClick={() => handleSort("receptionTime")}
-                >
-                  تاریخ ورود
-                </TableSortLabel>
-              </TableCell>
-
+              {renderSort("fullName", "نام و نام خانوادگی")}
+              {renderSort("codeMeli", "کد ملی")}
+              {renderSort("receptionTime", "تاریخ ورود")}
               <TableCell>ورود به مطب</TableCell>
               <TableCell>خروج از مطب</TableCell>
               <TableCell>عملیات</TableCell>
@@ -154,56 +168,49 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
           </TableHead>
 
           <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.fullName}</TableCell>
-                <TableCell>{row.codeMeli}</TableCell>
-
-                <TableCell>
-                  {tehranTimezone(row.receptionTime.toISOString())}
-                </TableCell>
-
-                <TableCell>
-                  {row.treatTime ? tehranTimezone(row.treatTime.toISOString()) : "--"}
-                </TableCell>
-
-                <TableCell>
-                  {row.exitRoomAt ? tehranTimezone(row.exitRoomAt.toISOString()) : "--"}
-                </TableCell>
-
-                <TableCell>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => {
-                      setSelectedVisit(row.id);
-                      setOpen(true);
-                    }}
-                    disabled={row.status === "suspend"}
-                    sx={{ mr: 1 }}
-                  >
-                    دارو ها
-                  </Button>
-
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                    onClick={() => handleSuspend(row)}
-                    disabled={row.status === "suspend"}
-                  >
-                    تعلیق
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-
-            {rows.length === 0 && (
+            {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
                   نتیجه‌ای پیدا نشد
                 </TableCell>
               </TableRow>
+            ) : (
+              rows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.fullName}</TableCell>
+                  <TableCell>{row.codeMeli}</TableCell>
+
+                  <TableCell>
+                    {tehranTimezone(row.receptionTime.toISOString())}
+                  </TableCell>
+
+                  <TableCell>
+                    {row.treatTime
+                      ? tehranTimezone(row.treatTime.toISOString())
+                      : "--"}
+                  </TableCell>
+
+                  <TableCell>
+                    {row.exitRoomAt
+                      ? tehranTimezone(row.exitRoomAt.toISOString())
+                      : "--"}
+                  </TableCell>
+
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={row.status === "suspend"}
+                      onClick={() => {
+                        setSelectedVisit(row.id);
+                        setOpen(true);
+                      }}
+                    >
+                      دارو ها
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
