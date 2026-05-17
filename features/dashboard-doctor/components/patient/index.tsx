@@ -46,7 +46,7 @@ export const DoctorPatient = ({
   const { show } = useNotificationStore();
   const currentPatientRef = useRef<VisitHistory | null>(null);
   const historyRef = useRef<VisitHistory[]>([]);
-
+  const [showWarning, setShowWarning] = useState(false);
   const formik = useDashboardDoctorForm(async (values) => {
     const res = await doneTreatAction(values);
     if (res.ok) {
@@ -72,7 +72,8 @@ export const DoctorPatient = ({
           historyRef.current.length === 0 &&
           payload.status === "treat"
         ) {
-          handleNextPatient();
+          
+          setShowWarning(true);
         }
       } catch (err) {
         console.error("SSE parse error:", err);
@@ -96,6 +97,7 @@ export const DoctorPatient = ({
           setCurrentPatient(list[0] ?? null);
           setHistory(list.slice(1));
           if (list.length == 0) show("فعلا بیماری وجود ندارد", "warning");
+          setShowWarning(false);
           formik.resetForm();
         } catch (err) {
           setCurrentPatient(null);
@@ -126,6 +128,17 @@ export const DoctorPatient = ({
                 برای شروع، روی دکمه «ورود بیمار بعدی» کلیک کنید.
               </Typography>
             </Paper>
+            <Alert variant="filled" severity="warning" sx={{ mt: 3 }}>
+              یک بیمار جدید وارد شده در صورت آماده بودن{" "}
+              <Typography
+                sx={{ fontWeight: "bold", cursor: "pointer" }}
+                component="span"
+                onClick={handleNextPatient}
+              >
+                اینجا
+              </Typography>{" "}
+              کلیک کنید
+            </Alert>
           </Grid>
         ) : loading ? (
           <DoctorPatientSkeleton />
