@@ -29,12 +29,7 @@ type Props = {
   medicine?: Medicine;
 };
 
-export const MedicineDialog = ({
-  onClose,
-  onSave,
-  open,
-  medicine,
-}: Props) => {
+export const MedicineDialog = ({ onClose, onSave, open, medicine }: Props) => {
   const [isLoading, startTransition] = useTransition();
   const { show } = useNotificationStore();
   const formik = useDashboardMedicineAddForm(async (values) => {
@@ -50,13 +45,18 @@ export const MedicineDialog = ({
     });
   });
   useEffect(() => {
-    if (open && medicine)
+    if (!open) return;
+
+    if (medicine) {
       formik.setValues({
         name: medicine.name,
         form: medicine.form,
         medicineId: medicine.id,
         isActive: medicine.isActive,
       });
+    } else {
+      formik.resetForm();
+    }
   }, [open, medicine]);
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -82,7 +82,7 @@ export const MedicineDialog = ({
               fullWidth
               error={formik.touched.form && Boolean(formik.errors.form)}
             >
-              <InputLabel id="form-label">نقش</InputLabel>
+              <InputLabel id="form-label">فرم دارو</InputLabel>
               <Select
                 labelId="form-label"
                 name="form"
