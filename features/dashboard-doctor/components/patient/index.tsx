@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import {
   Box,
   Button,
@@ -44,15 +44,42 @@ export const DoctorPatient = ({
   const [history, setHistory] = useState<VisitHistory[]>([]);
   const [loading, startTransition] = useTransition();
   const { show } = useNotificationStore();
+  const currentPatientRef = useRef<VisitHistory | null>(null);
+  const historyRef = useRef<VisitHistory[]>([]);
+
   const formik = useDashboardDoctorForm(async (values) => {
     const res = await doneTreatAction(values);
     if (res.ok) {
       handleNextPatient();
-      show("ویزیت با موفقیت انجام شد" , "success")
-    }else {
-      show(res.message , "error")
+      show("ویزیت با موفقیت انجام شد", "success");
+    } else {
+      show(res.message, "error");
     }
   });
+
+  useEffect(() => {
+    currentPatientRef.current = currentPatient;
+    historyRef.current = history;
+  }, [currentPatient, history]);
+  // for auto change if list is empty
+  useEffect(() => {
+    const es = new EventSource("/api/dashboard/admision/streamQueue");
+    es.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        if (
+          !currentPatientRef.current &&
+          historyRef.current.length === 0 &&
+          payload.status === "treat"
+        ) {
+          handleNextPatient();
+        }
+      } catch (err) {
+        console.error("SSE parse error:", err);
+      }
+    };
+    return () => es.close();
+  }, []);
 
   const handleNextPatient = () => {
     startTransition(() => {
