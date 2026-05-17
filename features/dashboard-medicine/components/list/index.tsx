@@ -263,8 +263,8 @@ export const DashboardMedicineList = () => {
       />
       <Button
         onClick={() => {
-          setOpen(true);
           setMedicine(undefined);
+          setOpen(true);
         }}
       >
         افزودن دارو جدید
