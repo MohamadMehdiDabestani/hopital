@@ -23,7 +23,7 @@ import {
   useDashboardDoctorForm,
 } from "@/features/dashboard-doctor";
 import { FormikProvider } from "formik";
-import { useNotificationStore } from "@/features/core";
+import { tehranTimezone, useNotificationStore } from "@/features/core";
 import { DoctorPatientSkeleton } from "./skeletonLoading";
 import {
   MedicineItem,
@@ -133,7 +133,7 @@ export const DoctorPatient = ({
                         {history.map((h, i) => (
                           <ListItem key={i} divider>
                             <ListItemText
-                              primary={`تاریخ: ${h?.treatTime}`}
+                              primary={`تاریخ: ${tehranTimezone(h?.treatTime ?? "")}`}
                               secondary={h.extraNotes?.substring(0, 100)}
                             />
                           </ListItem>

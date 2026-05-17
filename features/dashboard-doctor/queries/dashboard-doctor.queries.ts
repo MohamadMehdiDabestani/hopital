@@ -42,7 +42,7 @@ export const getNextPatientQuery = async (
           doctorId: visits.doctorId,
           status: visits.status,
           extraNotes: visits.extraNotes,
-          treatTime: visits.treatTime,
+          treatTime: sql<string>`${visits.receptionTime}::text`,
           firstName: people.firstName,
           lastName: people.lastName,
         })
@@ -93,7 +93,7 @@ export const getNextPatientQuery = async (
         doctorId: visits.doctorId,
         status: visits.status,
         extraNotes: visits.extraNotes,
-        treatTime: visits.treatTime,
+        treatTime: sql<string>`${visits.receptionTime}::text`,
         firstName: people.firstName,
         lastName: people.lastName,
       })
