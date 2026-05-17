@@ -2,7 +2,7 @@ import "server-only";
 import { MedicineAddFormValues } from "../schemas/dashboard-medicineAdd.schema";
 import { db } from "@/features/core/drizzle/client";
 import { medicines } from "../schemas/medicine.drizzle";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { ActionResult } from "@/features/core";
 import { DashboardMedicineAddCharges } from "../schemas/dashboard-medicineAddCharges.schema";
 import { medicineCharges } from "../schemas/charges.drizzle";
@@ -81,9 +81,35 @@ export const getMedicineQueueQuery = async (siteId: number) => {
   return data;
 };
 
-export const updateVisitToMedicine = async (data: DashboardMedicineSchema) => {
+export const updateVisitToMedicineQuery = async (
+  data: DashboardMedicineSchema,
+) => {
   await db.transaction(async (tx) => {
+    await tx
+      .update(visits)
+      .set({
+        status: "finish",
+        reciveMedicineTime: sql`now()`,
+      })
+      .where(eq(visits.id, data.visitId));
+
     for (const med of data.medicines) {
+      const res = await tx
+        .update(medicineCharges)
+        .set({
+          quantity: sql`${medicineCharges.quantity} - ${med.count}`,
+        })
+        .where(
+          and(
+            eq(medicineCharges.id, med.chargeId),
+            gte(medicineCharges.quantity, med.count),
+          ),
+        )
+        .returning({ id: medicineCharges.id });
+
+      if (res.length === 0) {
+        throw new Error("موجودی دارو کافی نیست");
+      }
       await tx
         .update(visitToMedicine)
         .set({
@@ -105,7 +131,7 @@ export const getVisitMedicinesQuery = async (visitId: number) => {
     .select({
       visitId: visitToMedicine.visitId,
       medicineId: visitToMedicine.medicineId,
-      medicineName : medicines.name,
+      medicineName: medicines.name,
       charges: sql`
       json_agg(
         json_build_object(
@@ -121,6 +147,10 @@ export const getVisitMedicinesQuery = async (visitId: number) => {
     .leftJoin(medicines, eq(visitToMedicine.medicineId, medicines.id))
     .leftJoin(medicineCharges, eq(medicineCharges.medicineId, medicines.id))
     .where(eq(visitToMedicine.visitId, visitId))
-    .groupBy(visitToMedicine.visitId, visitToMedicine.medicineId,medicines.name);
+    .groupBy(
+      visitToMedicine.visitId,
+      visitToMedicine.medicineId,
+      medicines.name,
+    );
   return data;
 };

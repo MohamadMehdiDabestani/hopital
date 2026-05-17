@@ -14,7 +14,7 @@ import {
   Stack,
   Skeleton,
 } from "@mui/material";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
 import {
   updateVisitMedicinesAction,
   useDashboardMedicineQueueForm,
@@ -46,18 +46,21 @@ export const MedicineDialog = ({
   open,
   setOpen,
 }: MedicineDialogProps) => {
+  const [loadingT, startTransition] = useTransition();
   const query = useMemo(() => {
     const params = new URLSearchParams();
     params.set("visitId", String(visitId));
 
     return `/api/dashboard/medicine/visitMedicines?${params.toString()}`;
   }, [visitId]);
-  const { data, isLoading, mutate } = useSWR<ActionResult<ApiResult[]>>(query);
+  const { data, isLoading } = useSWR<ActionResult<ApiResult[]>>(query);
   const { show } = useNotificationStore();
   const formik = useDashboardMedicineQueueForm(async (values) => {
-    const res = await updateVisitMedicinesAction(values);
-    if (res.ok) setOpen(false);
-    else show(res.message, "error");
+    startTransition(async () => {
+      const res = await updateVisitMedicinesAction(values);
+      if (res.ok) setOpen(false);
+      else show(res.message, "error");
+    });
   });
   const [serverNowIso, setServerNowIso] = useState<string | null>(null);
   useEffect(() => {
@@ -79,6 +82,7 @@ export const MedicineDialog = ({
           medicineId: m.medicineId,
           chargeId: m.charges[0]?.id ?? 0,
           count: 1,
+          quantity: m.charges[0]?.quantity ?? 0,
         })),
       );
       formik.setFieldValue("visitId", visitId);
@@ -115,7 +119,6 @@ export const MedicineDialog = ({
                   chargeId: 0,
                   count: 1,
                 };
-                console.log(row, "+=");
                 const chargeTouched = (formik.touched.medicines?.[i] as any)
                   ?.chargeId;
                 const chargeError = (formik.errors.medicines?.[i] as any)
@@ -137,12 +140,13 @@ export const MedicineDialog = ({
                         label="شارژ"
                         name={`medicines[${i}].chargeId`}
                         value={row.chargeId}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           formik.setFieldValue(
                             `medicines[${i}].chargeId`,
                             Number(e.target.value),
-                          )
-                        }
+                          );
+                            formik.setFieldValue(`medicines[${i}].quantity`, row.quantity)
+                        }}
                         onBlur={formik.handleBlur}
                         error={Boolean(chargeTouched && chargeError)}
                         helperText={
@@ -188,10 +192,14 @@ export const MedicineDialog = ({
         </DialogContent>
 
         <DialogActions>
-          <Button color="error" onClick={() => setOpen(false)}>
+          <Button
+            color="error"
+            onClick={() => setOpen(false)}
+            disabled={loadingT}
+          >
             بستن
           </Button>
-          <Button variant="contained" type="submit">
+          <Button variant="contained" type="submit" loading={loadingT}>
             تحویل دارو
           </Button>
         </DialogActions>
