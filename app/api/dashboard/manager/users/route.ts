@@ -29,39 +29,36 @@ export async function GET(req: NextRequest) {
       users.lastName,
       users.codeMeli,
       users.phoneNumber,
-      // users.lastLoginAt,
       users.rule,
     ]);
 
     const orderBy = buildOrderBy(columnMap, sortModel, users.id);
-
-    const [rows, total] = await Promise.all([
-      db
+    const {rows , total} = await db.transaction(async (tx) => {
+      const rows = await tx
         .select({
-          id : users.id,
-          // createdByUserId: users.id,
+          id: users.id,
           firstName: users.firstName,
           lastName: users.lastName,
           codeMeli: users.codeMeli,
           phone: users.phoneNumber,
           lastLoginAt: users.lastLoginAt,
           suspended: users.suspended,
-          role : users.rule
+          role: users.rule,
         })
-        .from(sites)
-        .innerJoin(users, eq(users.siteId, sites.id))
-        .where(and(eq(sites.createdByUserId, Number(currentUser?.userId)), where))
+        .from(users)
+        .where(and(eq(users.siteId, Number(currentUser?.userId)), where))
         .orderBy(orderBy)
         .limit(pageSize)
-        .offset(page * pageSize),
-
-      db
+        .offset(page * pageSize);
+      const total = tx
         .select({ count: sql<number>`count(*)` })
         .from(sites)
         .innerJoin(users, eq(users.siteId, sites.id))
-        .where(and(eq(sites.createdByUserId, Number(currentUser?.userId)), where))
-        .then((r) => r[0]?.count ?? 0),
-    ]);
+        .where(and(eq(users.siteId, Number(currentUser?.userId)), where))
+        .then((r) => r[0]?.count ?? 0);
+
+      return { rows, total };
+    });
 
     return NextResponse.json({ ok: true, rows, total });
   } catch (error) {
