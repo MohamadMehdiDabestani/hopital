@@ -15,6 +15,8 @@ import {
   Typography,
   Tooltip,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import dayjs from "@/features/core/utils/dayjs";
 import { getServerTime } from "@/features/core/actions/time";
@@ -27,7 +29,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircle";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-import { GridToolbar, GridToolbarDivider, GridToolbarProps } from "@mui/x-data-grid/internals";
+import { GridToolbar, GridToolbarProps } from "@mui/x-data-grid/internals";
 const formMapper = {
   pill: "قرص",
   cyrup: "شربت",
@@ -51,6 +53,7 @@ export const DashboardMedicineList = () => {
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [serverNowIso, setServerNowIso] = useState<string | null>(null);
+  const [showExpired, setShowExpired] = useState(false);
   const { show } = useNotificationStore();
 
   useEffect(() => {
@@ -73,8 +76,11 @@ export const DashboardMedicineList = () => {
     params.set("pageSize", String(paginationModel.pageSize));
     params.set("sort", JSON.stringify(sortModel));
     params.set("filter", JSON.stringify(filterModel));
+
+    if (showExpired) params.set("expired", "true");
+
     return `/api/dashboard/medicine/list?${params.toString()}`;
-  }, [paginationModel, sortModel, filterModel]);
+  }, [paginationModel, sortModel, filterModel, showExpired]);
 
   const { data, isLoading, mutate } = useSWR(query);
 
@@ -264,22 +270,33 @@ export const DashboardMedicineList = () => {
     ],
     [baseToday],
   );
-  const EnhancedToolbar = (props : GridToolbarProps) => {
+  const EnhancedToolbar = (props: GridToolbarProps) => {
     return (
       <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-        <GridToolbar {...props}  />
+        <GridToolbar {...props} />
+        <FormControlLabel
+          sx={{ ml: 2 }}
+          control={
+            <Checkbox
+              checked={showExpired}
+              onChange={(e) => setShowExpired(e.target.checked)}
+              color="error"
+            />
+          }
+          label="فقط داروهای منقضی"
+        />
         <Button
-        variant="contained"
-        sx={{
-          ml : 2
-        }}
-        onClick={() => {
-          setMedicine(undefined);
-          setOpen(true);
-        }}
-      >
-        افزودن دارو جدید
-      </Button>
+          variant="contained"
+          sx={{
+            ml: 2,
+          }}
+          onClick={() => {
+            setMedicine(undefined);
+            setOpen(true);
+          }}
+        >
+          افزودن دارو جدید
+        </Button>
       </Box>
     );
   };
@@ -298,7 +315,6 @@ export const DashboardMedicineList = () => {
         medicineId={medicine?.id ?? undefined}
         onSave={() => mutate()}
       />
-      
 
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid

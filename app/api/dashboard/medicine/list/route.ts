@@ -28,7 +28,6 @@ const columnMap = {
 
 export async function GET(req: NextRequest) {
   try {
-    const { page, pageSize, sortModel, filterModel } = parseGridParams(req.url);
     const currentUser = await getUser();
     if (!currentUser) {
       return NextResponse.json(
@@ -36,12 +35,24 @@ export async function GET(req: NextRequest) {
         { status: 401 },
       );
     }
+    const { page, pageSize, sortModel, filterModel } = parseGridParams(req.url);
+    const { searchParams } = new URL(req.url);
+    const expiredOnly = searchParams.get("expired") === "true";
 
     const where = buildWhere(columnMap, filterModel, [
       medicines.name,
       medicineCharges.storageLocation,
     ]);
-
+    const baseConditions = [
+      eq(medicines.siteId, Number(currentUser.siteId)),
+      where,
+    ];
+    if (expiredOnly) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayIso = today.toISOString()
+      baseConditions.push(sql`${medicineCharges.expiryDate} <= ${todayIso}`);
+    }
     const orderBy = buildOrderBy(columnMap, sortModel, medicines.id);
 
     const { flatRows, total, idList } = await db.transaction(async (tx) => {
@@ -49,7 +60,7 @@ export async function GET(req: NextRequest) {
         .selectDistinct({ id: medicines.id })
         .from(medicines)
         .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
-        .where(and(eq(medicines.siteId, Number(currentUser.siteId)), where))
+        .where(and(...baseConditions))
         .orderBy(orderBy)
         .limit(pageSize)
         .offset(page * pageSize);
@@ -58,7 +69,7 @@ export async function GET(req: NextRequest) {
         .select({ count: sql<number>`count(*)` })
         .from(medicines)
         .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
-        .where(and(eq(medicines.siteId, Number(currentUser.siteId)), where))
+        .where(and(...baseConditions))
         .then((r) => r[0]?.count ?? 0);
 
       const idList = ids.map((x) => x.id);
