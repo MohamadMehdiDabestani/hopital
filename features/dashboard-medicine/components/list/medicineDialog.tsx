@@ -20,7 +20,7 @@ import { useDashboardMedicineAddForm } from "@/features/dashboard-medicine/forms
 import { useEffect, useTransition } from "react";
 import { addOrUpdateMedicineAction } from "@/features/dashboard-medicine/actions";
 import { useNotificationStore } from "@/features/core";
-import { Medicine } from "./type";
+import { Medicine } from "@/features/dashboard-medicine/type";
 
 type Props = {
   open: boolean;

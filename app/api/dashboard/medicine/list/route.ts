@@ -48,10 +48,16 @@ export async function GET(req: NextRequest) {
       where,
     ];
     if (expiredOnly) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayIso = today.toISOString()
-      baseConditions.push(sql`${medicineCharges.expiryDate} <= ${todayIso}`);
+      baseConditions.push(sql`
+  exists (
+    select 1
+    from ${medicineCharges} c
+    where c."medicineId" = ${medicines.id}
+      and c."expiryDate" is not null
+      and c."expiryAlertDays" is not null
+      and (c."expiryDate"::date - current_date) <= c."expiryAlertDays"
+  )
+`);
     }
     const orderBy = buildOrderBy(columnMap, sortModel, medicines.id);
 
@@ -128,7 +134,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // حفظ ترتیب صفحه (اختیاری ولی بهتر)
     const rows = idList.map((id) => map.get(id)).filter(Boolean);
 
     return NextResponse.json({ ok: true, rows, total });
