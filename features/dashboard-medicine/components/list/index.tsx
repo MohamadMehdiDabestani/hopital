@@ -72,7 +72,7 @@ export const DashboardMedicineList = () => {
         onSave={() => mutate()}
       />
 
-      <Box sx={{ height: 520, width: "100%" }}>
+      <Box sx={{ height: 750, width: "100%" }}>
         <DataGrid
           rows={data?.rows ?? []}
           columns={columns}
