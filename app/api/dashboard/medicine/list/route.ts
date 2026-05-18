@@ -30,7 +30,6 @@ export async function GET(req: NextRequest) {
   try {
     const { page, pageSize, sortModel, filterModel } = parseGridParams(req.url);
     const currentUser = await getUser();
-    console.log(sortModel)
     if (!currentUser) {
       return NextResponse.json(
         { ok: false, message: "مشکلی پیش آمده" },
@@ -47,8 +46,9 @@ export async function GET(req: NextRequest) {
 
     const { flatRows, total, idList } = await db.transaction(async (tx) => {
       const ids = await tx
-        .select({ id: medicines.id })
+        .selectDistinct({ id: medicines.id })
         .from(medicines)
+        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
         .where(and(eq(medicines.siteId, Number(currentUser.siteId)), where))
         .orderBy(orderBy)
         .limit(pageSize)
@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
       const total = await tx
         .select({ count: sql<number>`count(*)` })
         .from(medicines)
+        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
         .where(and(eq(medicines.siteId, Number(currentUser.siteId)), where))
         .then((r) => r[0]?.count ?? 0);
 

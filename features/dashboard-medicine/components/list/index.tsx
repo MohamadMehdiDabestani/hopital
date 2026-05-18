@@ -25,8 +25,9 @@ import { Row, Charge } from "./type";
 import { ChargeMedicineDialog } from "./chargeMedicineDialog";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircle";
 import EditIcon from "@mui/icons-material/Edit";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import { GridToolbar, GridToolbarDivider, GridToolbarProps } from "@mui/x-data-grid/internals";
 const formMapper = {
   pill: "قرص",
   cyrup: "شربت",
@@ -104,7 +105,12 @@ export const DashboardMedicineList = () => {
         width: 90,
         align: "center",
         headerAlign: "center",
-        renderCell: (p) => (p.value ?<CheckCircleIcon color="success" />: <CancelIcon color="error" />),
+        renderCell: (p) =>
+          p.value ? (
+            <CheckCircleIcon color="success" />
+          ) : (
+            <CancelIcon color="error" />
+          ),
       },
       {
         field: "stock",
@@ -258,7 +264,25 @@ export const DashboardMedicineList = () => {
     ],
     [baseToday],
   );
-
+  const EnhancedToolbar = (props : GridToolbarProps) => {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
+        <GridToolbar {...props}  />
+        <Button
+        variant="contained"
+        sx={{
+          ml : 2
+        }}
+        onClick={() => {
+          setMedicine(undefined);
+          setOpen(true);
+        }}
+      >
+        افزودن دارو جدید
+      </Button>
+      </Box>
+    );
+  };
   return (
     <Box sx={{ width: "100%" }}>
       <MedicineDialog
@@ -274,14 +298,7 @@ export const DashboardMedicineList = () => {
         medicineId={medicine?.id ?? undefined}
         onSave={() => mutate()}
       />
-      <Button
-        onClick={() => {
-          setMedicine(undefined);
-          setOpen(true);
-        }}
-      >
-        افزودن دارو جدید
-      </Button>
+      
 
       <Box sx={{ height: 520, width: "100%" }}>
         <DataGrid
@@ -300,6 +317,9 @@ export const DashboardMedicineList = () => {
           onSortModelChange={setSortModel}
           pageSizeOptions={[10, 25, 50]}
           showToolbar
+          slots={{
+            toolbar: EnhancedToolbar,
+          }}
           slotProps={{
             toolbar: {
               showQuickFilter: true,
