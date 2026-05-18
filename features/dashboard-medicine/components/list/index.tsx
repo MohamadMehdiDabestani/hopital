@@ -16,7 +16,7 @@ export const DashboardMedicineList = () => {
   const [openCharge, setOpenCharge] = useState(false);
   const [medicine, setMedicine] = useState<Row | undefined>(undefined);
   const [charge, setCharge] = useState<Charge | undefined>(undefined);
- 
+
   const {
     data,
     isLoading,
@@ -93,7 +93,12 @@ export const DashboardMedicineList = () => {
             toolbar: () => (
               <MedicineListToolbar
                 showQuickFilter
-                quickFilterProps={{ debounceMs: 400 }}
+                quickFilterProps={{
+                  debounceMs: 400,
+                  slotProps: {
+                    root: { placeholder: "نام دارو | محل ذخیره سازی" },
+                  },
+                }}
                 sx={{ justifyContent: "flex-start" }}
                 showExpired={showExpired}
                 onToggleExpired={setShowExpired}
