@@ -6,6 +6,7 @@ import {
   integer,
   date,
   timestamp,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { medicines } from "./medicine.drizzle";
 
@@ -19,5 +20,6 @@ export const medicineCharges = pgTable("medicine_charges", {
   storageLocation: varchar("storageLocation", { length: 100 }),
   expiryAlertDays: integer("expiryAlertDays").default(30).notNull(),
   notes: text("notes"),
+  suspended : boolean("suspended"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
