@@ -3,9 +3,8 @@ import { db } from "@/features/core/drizzle/client";
 import {
   medicineCharges,
   medicines,
-  sites,
 } from "@/features/core/schema/schema.drizzle";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, inArray } from "drizzle-orm";
 import {
   parseGridParams,
   buildWhere,
@@ -17,7 +16,7 @@ const columnMap = {
   id: medicines.id,
   name: medicines.name,
   form: medicines.form,
-  createAt: medicines.createdAt,
+  createdAt: medicines.createdAt,
   siteId: medicines.siteId,
   isActive: medicines.isActive,
   expiryDate: medicineCharges.expiryDate,
@@ -31,11 +30,13 @@ export async function GET(req: NextRequest) {
   try {
     const { page, pageSize, sortModel, filterModel } = parseGridParams(req.url);
     const currentUser = await getUser();
-    if (!currentUser)
+    if (!currentUser) {
       return NextResponse.json(
         { ok: false, message: "مشکلی پیش آمده" },
         { status: 401 },
       );
+    }
+
     const where = buildWhere(columnMap, filterModel, [
       medicines.name,
       medicineCharges.storageLocation,
@@ -43,8 +44,30 @@ export async function GET(req: NextRequest) {
 
     const orderBy = buildOrderBy(columnMap, sortModel, medicines.id);
 
-    const [flatRows, total] = await Promise.all([
-      db
+    const { flatRows, total, idList } = await db.transaction(async (tx) => {
+      const ids = await tx
+        .selectDistinct({ id: medicines.id })
+        .from(medicines)
+        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
+        .where(and(eq(medicines.siteId, Number(currentUser.siteId)), where))
+        .orderBy(orderBy)
+        .limit(pageSize)
+        .offset(page * pageSize);
+
+      const total = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(medicines)
+        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
+        .where(and(eq(medicines.siteId, Number(currentUser.siteId)), where))
+        .then((r) => r[0]?.count ?? 0);
+
+      const idList = ids.map((x) => x.id);
+
+      if (!idList.length) {
+        return { flatRows: [], total, idList };
+      }
+
+      const flatRows = await tx
         .select({
           id: medicines.id,
           name: medicines.name,
@@ -52,7 +75,6 @@ export async function GET(req: NextRequest) {
           createdAt: medicines.createdAt,
           siteId: medicines.siteId,
           isActive: medicines.isActive,
-
           chargeId: medicineCharges.id,
           expiryDate: medicineCharges.expiryDate,
           quantity: medicineCharges.quantity,
@@ -62,18 +84,11 @@ export async function GET(req: NextRequest) {
         })
         .from(medicines)
         .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
-        .where(and(eq(medicines.siteId, Number(currentUser?.siteId)), where))
         .orderBy(orderBy)
-        .limit(pageSize)
-        .offset(page * pageSize),
+        .where(inArray(medicines.id, idList));
 
-      db
-        .select({ count: sql<number>`count(distinct ${medicines.id})` })
-        .from(medicines)
-        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
-        .where(and(eq(medicines.siteId, Number(currentUser?.siteId)), where))
-        .then((r) => r[0]?.count ?? 0),
-    ]);
+      return { flatRows, total, idList };
+    });
 
     const map = new Map<number, any>();
 
@@ -102,7 +117,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const rows = Array.from(map.values());
+    // حفظ ترتیب صفحه (اختیاری ولی بهتر)
+    const rows = idList.map((id) => map.get(id)).filter(Boolean);
 
     return NextResponse.json({ ok: true, rows, total });
   } catch (error) {
