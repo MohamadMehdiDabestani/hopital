@@ -63,9 +63,10 @@ export async function GET(req: NextRequest) {
 
     const { flatRows, total, idList } = await db.transaction(async (tx) => {
       const ids = await tx
-        .selectDistinct({ id: medicines.id })
+        .select({
+          id: medicines.id,
+        })
         .from(medicines)
-        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
         .where(and(...baseConditions))
         .orderBy(orderBy)
         .limit(pageSize)
@@ -74,7 +75,6 @@ export async function GET(req: NextRequest) {
       const total = await tx
         .select({ count: sql<number>`count(*)` })
         .from(medicines)
-        .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
         .where(and(...baseConditions))
         .then((r) => r[0]?.count ?? 0);
 
