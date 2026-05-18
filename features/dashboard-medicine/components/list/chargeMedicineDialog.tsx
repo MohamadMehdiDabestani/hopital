@@ -54,6 +54,7 @@ export const ChargeMedicineDialog = ({
       if (res.ok) {
         onSave();
         onClose();
+        formik.resetForm();
         return;
       }
       show(res.message, "error");
@@ -71,7 +72,6 @@ export const ChargeMedicineDialog = ({
   }, [isJalali]);
 
   useEffect(() => {
-    console.log("CHARGE" , charge)
     if (!medicineId || !open) return;
     if (charge)
       formik.setValues({
@@ -83,7 +83,14 @@ export const ChargeMedicineDialog = ({
         medicineId: medicineId,
         chargeId: charge.id,
       });
-    else formik.setFieldValue("medicineId", medicineId);
+    else {
+      formik.resetForm({
+        values: {
+          ...formik.initialValues, 
+          medicineId: medicineId,
+        },
+      });
+    }
   }, [open, charge, medicineId]);
   console.log(formik.errors);
   return (
