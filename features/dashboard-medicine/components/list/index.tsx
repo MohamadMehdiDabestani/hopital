@@ -25,7 +25,14 @@ import { Row, Charge } from "./type";
 import { ChargeMedicineDialog } from "./chargeMedicineDialog";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircle";
 import EditIcon from "@mui/icons-material/Edit";
-
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+const formMapper = {
+  pill: "قرص",
+  cyrup: "شربت",
+  oitment: "پماد",
+  injection: "تزریقی",
+};
 export const DashboardMedicineList = () => {
   const [open, setOpen] = useState(false);
   const [openCharge, setOpenCharge] = useState(false);
@@ -78,7 +85,13 @@ export const DashboardMedicineList = () => {
     () => [
       { field: "id", headerName: "آیدی", width: 90 },
       { field: "name", headerName: "نام دارو", flex: 1, minWidth: 160 },
-      { field: "form", headerName: "فرم", width: 120 },
+      {
+        field: "form",
+        headerName: "فرم",
+        width: 120,
+        renderCell: (params) =>
+          formMapper[params.value as keyof typeof formMapper],
+      },
       {
         field: "createdAt",
         headerName: "تاریخ ثبت",
@@ -91,7 +104,7 @@ export const DashboardMedicineList = () => {
         width: 90,
         align: "center",
         headerAlign: "center",
-        renderCell: (p) => (p.value ? "بله" : "خیر"),
+        renderCell: (p) => (p.value ?<CheckCircleIcon color="success" />: <CancelIcon color="error" />),
       },
       {
         field: "stock",

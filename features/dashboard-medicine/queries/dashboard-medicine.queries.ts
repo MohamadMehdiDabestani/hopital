@@ -32,6 +32,7 @@ export const updateMedicineQuery = async (
     .set({
       name: data.name,
       form: data.form,
+      isActive : data.isActive,
       siteId,
     })
     .where(eq(medicines.id, data.medicineId));
