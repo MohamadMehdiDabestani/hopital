@@ -15,7 +15,7 @@ export const medicineCharges = pgTable("medicine_charges", {
   medicineId: integer("medicineId")
     .notNull()
     .references(() => medicines.id),
-  expiryDate: date("expiryDate").notNull(),
+  expiryDate: timestamp("expiryDate").notNull(),
   quantity: integer("quantity").notNull(),
   storageLocation: varchar("storageLocation", { length: 100 }),
   expiryAlertDays: integer("expiryAlertDays").default(30).notNull(),
