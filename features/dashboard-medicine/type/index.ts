@@ -22,3 +22,17 @@ export type Row = Medicine & {
   isActive: boolean;
   charges: Charge[];
 };
+
+// import excel
+export type ImportExcelParsedRow = {
+  id: string;
+  selected: boolean;
+  data: Record<string, any>;
+  validationError: string;
+  isValid: boolean;
+};
+
+export type ImportExcelFilterState = {
+  showOnlyEmpty: boolean;
+  showOnlyErrors: boolean;
+};
