@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Box,
-  Chip,
-  IconButton,
-  Stack,
-  Tooltip,
-} from "@mui/material";
+import { Box, Chip, IconButton, Stack, Tooltip } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import dayjs from "@/features/core/utils/dayjs";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircle";
@@ -123,7 +117,6 @@ export const createMedicineColumns = ({
     renderCell: (params) => {
       const charges = params.value as Charge[];
       if (!charges?.length || !baseToday) return "—";
-
       return (
         <Stack
           direction="row"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "@/features/core/utils/dayjs";
 import { Charge, Row } from "@/features/dashboard-medicine/type";
@@ -11,12 +11,13 @@ import { useMedicineList } from "@/features/dashboard-medicine/hooks/useMedicine
 import { createMedicineColumns } from "./medicineColumn";
 import { MedicineListToolbar } from "./medicineToolbar";
 
+
 export const DashboardMedicineList = () => {
   const [open, setOpen] = useState(false);
   const [openCharge, setOpenCharge] = useState(false);
   const [medicine, setMedicine] = useState<Row | undefined>(undefined);
   const [charge, setCharge] = useState<Charge | undefined>(undefined);
- 
+
   const {
     data,
     isLoading,
@@ -71,7 +72,7 @@ export const DashboardMedicineList = () => {
         onClose={() => setOpenCharge(false)}
         onSave={() => mutate()}
       />
-
+      
       <Box sx={{ height: 750, width: "100%" }}>
         <DataGrid
           rows={data?.rows ?? []}
@@ -89,11 +90,20 @@ export const DashboardMedicineList = () => {
           onSortModelChange={setSortModel}
           pageSizeOptions={[10, 25, 50]}
           showToolbar
+          disableColumnFilter
+          columnVisibilityModel={{ id: false }}
           slots={{
             toolbar: () => (
               <MedicineListToolbar
                 showQuickFilter
-                quickFilterProps={{ debounceMs: 400 }}
+                quickFilterProps={{
+                  debounceMs: 400,
+                  slotProps: {
+                    root: { placeholder: "نام دارو | محل ذخیره سازی" },
+                  },
+                }}
+                baseToday={baseToday}
+                rows={data?.rows ?? []}
                 sx={{ justifyContent: "flex-start" }}
                 showExpired={showExpired}
                 onToggleExpired={setShowExpired}
