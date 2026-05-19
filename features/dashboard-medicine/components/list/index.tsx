@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "@/features/core/utils/dayjs";
 import { Charge, Row } from "@/features/dashboard-medicine/type";
@@ -10,6 +10,7 @@ import { ChargeMedicineDialog } from "./chargeMedicineDialog";
 import { useMedicineList } from "@/features/dashboard-medicine/hooks/useMedicineList";
 import { createMedicineColumns } from "./medicineColumn";
 import { MedicineListToolbar } from "./medicineToolbar";
+
 
 export const DashboardMedicineList = () => {
   const [open, setOpen] = useState(false);
@@ -71,7 +72,7 @@ export const DashboardMedicineList = () => {
         onClose={() => setOpenCharge(false)}
         onSave={() => mutate()}
       />
-
+      
       <Box sx={{ height: 750, width: "100%" }}>
         <DataGrid
           rows={data?.rows ?? []}
@@ -89,6 +90,8 @@ export const DashboardMedicineList = () => {
           onSortModelChange={setSortModel}
           pageSizeOptions={[10, 25, 50]}
           showToolbar
+          disableColumnFilter
+          columnVisibilityModel={{ id: false }}
           slots={{
             toolbar: () => (
               <MedicineListToolbar
@@ -99,6 +102,8 @@ export const DashboardMedicineList = () => {
                     root: { placeholder: "نام دارو | محل ذخیره سازی" },
                   },
                 }}
+                baseToday={baseToday}
+                rows={data?.rows ?? []}
                 sx={{ justifyContent: "flex-start" }}
                 showExpired={showExpired}
                 onToggleExpired={setShowExpired}
