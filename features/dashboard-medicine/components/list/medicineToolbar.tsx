@@ -2,7 +2,7 @@
 
 import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { GridToolbar, GridToolbarProps } from "@mui/x-data-grid/internals";
-import { exportGridToExcel } from "../../utils/xl";
+import { exportGridToExcel } from "@/features/core/utils/gridToExcel";
 import { medicineExcelColumns } from "../../utils/flattenColumn";
 import { flattenMedicineRowsForExcel } from "../../utils/flattendRow";
 import { Row } from "../../type";
