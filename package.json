@@ -41,6 +41,7 @@
     "stylis": "^4.3.6",
     "stylis-plugin-rtl": "^2.1.1",
     "swr": "^2.4.1",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6",
     "zod-formik-adapter": "^2.0.0",
     "zustand": "^5.0.12"
