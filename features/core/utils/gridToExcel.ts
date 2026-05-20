@@ -1,3 +1,4 @@
+'use client'
 import * as XLSX from "xlsx";
 import { GridColDef, GridValidRowModel } from "@mui/x-data-grid";
 
