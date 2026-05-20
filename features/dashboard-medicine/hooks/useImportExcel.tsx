@@ -5,7 +5,6 @@ import type { ImportExcelParsedRow } from "@/features/dashboard-medicine/type";
 export const useImportMedicines = () => {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const importRows = async (rows: ImportExcelParsedRow[]) => {
     const selectedRows = rows.filter((row) => row.selected && row.isValid);
 
@@ -18,7 +17,7 @@ export const useImportMedicines = () => {
     setError(null);
 
     try {
-      const response = await fetch("/api/medicines/import", {
+      const response = await fetch("/api/dashboard/medicine/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -34,6 +33,7 @@ export const useImportMedicines = () => {
       const result = await response.json();
       return { success: true, imported: result.imported };
     } catch (err) {
+      console.log(err)
       setError(err instanceof Error ? err.message : "خطا در ایمپورت");
       return { success: false };
     } finally {

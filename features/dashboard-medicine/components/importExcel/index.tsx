@@ -1,13 +1,20 @@
-// MedicineImportExcel.tsx
 "use client";
 
-import { Box, Typography, Alert, Button, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Alert,
+  Button,
+  CircularProgress,
+} from "@mui/material";
 import { FileUploader } from "./fileUpload";
 import { FilterControls } from "./filterControls";
 import { MedicineTable } from "./medicineTable";
 import { useExcelParser } from "@/features/dashboard-medicine/hooks/useExcelParser";
 import { useRowFilters } from "@/features/dashboard-medicine/hooks/useRowFilter";
 import { useImportMedicines } from "@/features/dashboard-medicine/hooks/useImportExcel";
+import { useNotificationStore } from "@/features/core";
+import { useRouter } from "next/navigation";
 
 export const MedicineImportExcel = () => {
   const {
@@ -18,7 +25,6 @@ export const MedicineImportExcel = () => {
     updateRow,
     toggleRowSelection,
     toggleSelectAll,
-    clearData,
   } = useExcelParser();
 
   const {
@@ -30,12 +36,13 @@ export const MedicineImportExcel = () => {
   } = useRowFilters(parsedData);
 
   const { importing, error: importError, importRows } = useImportMedicines();
-
+  const {show} = useNotificationStore()
+  const router = useRouter()
   const handleImport = async () => {
     const result = await importRows(parsedData);
     if (result.success) {
-      alert(`${result.imported} دارو با موفقیت ایمپورت شد`);
-      clearData();
+      show("دارو ها با موفقیت اضافه شدند" , "success")
+      router.push("/dashboard/medicine")
     }
   };
 
@@ -47,10 +54,6 @@ export const MedicineImportExcel = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        ایمپورت داروها از اکسل
-      </Typography>
-
       <FileUploader loading={loading} onFileSelect={parseFile} />
 
       {(parseError || importError) && (
@@ -68,7 +71,7 @@ export const MedicineImportExcel = () => {
             onToggleErrors={setShowOnlyErrors}
           />
 
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
             {parsedData.length} ردیف خوانده شد (
             {parsedData.filter((r) => r.isValid).length} معتبر)
           </Typography>

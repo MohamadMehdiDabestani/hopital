@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
 import { db } from "@/features/core/drizzle/client";
 import { and, eq, sql } from "drizzle-orm";
 import { excelRowImportSchema } from "@/features/dashboard-medicine/schemas/dashboard-medicineAdd.schema";
@@ -8,78 +7,61 @@ import { getUser } from "@/features/auth/utils/dal";
 import { redirect } from "next/navigation";
 import { medicineCharges } from "@/features/dashboard-medicine/schemas/charges.drizzle";
 import dayjs from "@/features/core/utils/dayjs";
-
-const HEADER_MAP: Record<string, string> = {
-  "نام دارو": "name",
-  فرم: "form",
-  وضعیت: "isActive",
-  "وضعیت شارژ": "chargeIsActive",
-  "تاریخ ثبت": "createdAt",
-  "تعداد شارژ": "chargeQuantity",
-  "تاریخ انقضاشارژ": "chargeExpiryDate",
-  "تاریخ ورود شارژ": "chargeCreateAt",
-  "روزهای هشدار": "chargeWarningDays",
-  "توضیحات اضافه شارژ": "chargeNotes",
-  "محل نگهداری": "chargeStorageLocation",
-};
+import { z } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
     const user = await getUser();
     if (!user) redirect("/");
     const siteId = Number(user.siteId);
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
 
-    if (!file) {
-      return NextResponse.json({ error: "فایل ارسال نشده" }, { status: 400 });
+    const body = await req.json();
+    const { rows } = body;
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return NextResponse.json(
+        { error: "داده‌های ورودی نامعتبر است" },
+        { status: 400 }
+      );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rawData = XLSX.utils.sheet_to_json(sheet);
+    const validRows: z.infer<typeof excelRowImportSchema>[] = [];
+    const invalidRows: Array<{ row: number; errors: string[] }> = [];
 
-    const validRows: any[] = [];
-    const invalidRows: any[] = [];
-
-    for (const [index, row] of (rawData as any[]).entries()) {
-      const mappedData: any = {};
-      Object.keys(row).forEach((key) => {
-        const englishKey = HEADER_MAP[key.trim()];
-        if (englishKey) {
-          mappedData[englishKey] = row[key];
-        }
-      });
-      const validation = excelRowImportSchema.safeParse(mappedData);
-
-      if (!validation.success) {
-        invalidRows.push({
-          rowNumber: index + 2,
-          errors: validation.error,
-          data: row,
-        });
+    rows.forEach((row, index) => {
+      const parsed = excelRowImportSchema.safeParse(row);
+      if (parsed.success) {
+        validRows.push(parsed.data);
       } else {
-        validRows.push(validation.data);
+        invalidRows.push({
+          row: index + 1,
+          errors: parsed.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`),
+        });
       }
+    });
+
+    if (validRows.length === 0) {
+      return NextResponse.json(
+        {
+          error: "هیچ ردیف معتبری برای ایمپورت وجود ندارد",
+          invalidRows,
+        },
+        { status: 400 }
+      );
     }
 
-    if (!validRows.length) {
-      return NextResponse.json({
-        message: "هیچ ردیف معتبری یافت نشد",
-        invalidRows,
-      });
-    }
-
-    const grouped = new Map<string, any[]>();
-
+    const grouped = new Map<string, typeof validRows>();
     for (const row of validRows) {
-      if (!grouped.has(row.name)) grouped.set(row.name, []);
-      grouped.get(row.name)?.push(row);
+      if (!grouped.has(row.name)) {
+        grouped.set(row.name, []);
+      }
+      grouped.get(row.name)!.push(row);
     }
+
     await db.transaction(async (tx) => {
       for (const [name, rows] of grouped.entries()) {
         const base = rows[0];
+
         const existing = await tx
           .select({
             id: medicines.id,
@@ -87,7 +69,9 @@ export async function POST(req: NextRequest) {
           .from(medicines)
           .where(and(eq(medicines.name, name), eq(medicines.siteId, siteId)))
           .limit(1);
+
         let medicineId: number;
+
         if (existing.length) {
           medicineId = existing[0].id;
         } else {
@@ -111,6 +95,11 @@ export async function POST(req: NextRequest) {
         for (const r of rows) {
           if (!r.chargeQuantity) continue;
 
+          // تبدیل expiryDate - اگر وجود نداشت، 30 روز بعد
+          const expiryDate = r.chargeExpiryDate
+            ? dayjs(r.chargeExpiryDate, { jalali: true }).toDate()
+            : dayjs().add(30, "days").toDate();
+
           const existingCharge = await tx
             .select({
               quantity: medicineCharges.quantity,
@@ -120,24 +109,25 @@ export async function POST(req: NextRequest) {
             .where(
               and(
                 eq(medicineCharges.medicineId, medicineId),
-                eq(medicineCharges.expiryDate, r.chargeExpiryDate ?? null),
-                eq(medicineCharges.storageLocation, r.chargeStorageLocation),
-              ),
+                eq(medicineCharges.expiryDate, expiryDate),
+                eq(medicineCharges.storageLocation, r.chargeStorageLocation ?? "وارد نشده")
+              )
             )
             .limit(1);
+
           const chargeData = {
-            medicineId: medicineId,
-            quantity: r.chargeQuantity,
-            createdAt: r.chargeCreateAt ? r.chargeCreateAt : sql`now()`,
-
-            expiryDate: r.chargeExpiryDate ?? sql`now() + interval '30 days'`,
-
+            medicineId,
+            quantity: Number(r.chargeQuantity), // تبدیل به number
+            createdAt: r.chargeCreateAt
+              ? dayjs(r.chargeCreateAt, { jalali: true }).toDate()
+              : sql`now()`,
+            expiryDate: expiryDate, // حتما Date است
             storageLocation: r.chargeStorageLocation ?? "وارد نشده",
-            expiryAlertDays: r.chargeWarningDays ?? 10,
-
-            suspended: r.chargeIsActive,
-            notes: r.chargeNotes,
+            expiryAlertDays: Number(r.chargeWarningDays ?? 10), // تبدیل به number
+            suspended: r.chargeIsActive ?? false,
+            notes: r.chargeNotes ?? null,
           };
+
           if (existingCharge.length) {
             await tx
               .update(medicineCharges)
@@ -149,13 +139,17 @@ export async function POST(req: NextRequest) {
         }
       }
     });
+
     return NextResponse.json({
       message: "ایمپورت با موفقیت انجام شد",
       importedCount: validRows.length,
-      invalidRows,
+      invalidRows: invalidRows.length > 0 ? invalidRows : undefined,
     });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "خطای سرور" }, { status: 500 });
+    console.error("خطا در ایمپورت داروها:", err);
+    return NextResponse.json(
+      { error: "خطای سرور در هنگام ایمپورت" },
+      { status: 500 }
+    );
   }
 }

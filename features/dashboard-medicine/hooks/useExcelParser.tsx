@@ -127,10 +127,6 @@ export const useExcelParser = () => {
     );
   };
 
-  const clearData = () => {
-    setParsedData([]);
-  };
-
   return {
     parsedData,
     loading,
@@ -139,7 +135,6 @@ export const useExcelParser = () => {
     updateRow,
     toggleRowSelection,
     toggleSelectAll,
-    clearData,
     setError,
   };
 };
