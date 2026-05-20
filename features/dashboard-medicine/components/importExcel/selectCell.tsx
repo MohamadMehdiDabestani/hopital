@@ -1,7 +1,8 @@
+// src/components/SelectCell.tsx
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 type SelectOption = {
-  value: string;
+  value: string | number; // ✅ اضافه کردن number
   label: string;
 };
 
@@ -9,7 +10,7 @@ type SelectCellProps = {
   label: string;
   value: any;
   options: SelectOption[];
-  onChange: (value: string) => void;
+  onChange: (value: string | number) => void; // ✅ اضافه کردن number
 };
 
 export const SelectCell = ({
@@ -23,7 +24,7 @@ export const SelectCell = ({
       <InputLabel>{label}</InputLabel>
       <Select
         label={label}
-        value={value || ""}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map((option) => (

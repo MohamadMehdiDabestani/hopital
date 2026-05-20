@@ -44,7 +44,7 @@ export const addOrUpdateMedicineAction = async (
     if (!parsedData.data.medicineId)
       await addMedicineQuery(parsedData.data, siteId);
     else {
-      const res = await updateMedicineQuery(parsedData.data, siteId);
+      const res = await updateMedicineQuery(parsedData.data);
       updateTag(`medicines-site-${user.siteId}`);
       return res;
     }

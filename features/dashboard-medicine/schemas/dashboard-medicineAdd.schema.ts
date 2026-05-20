@@ -1,66 +1,90 @@
 import { z } from "zod";
 import dayjs from "@/features/core/utils/dayjs";
-
+import { formEnum } from "./medicine.drizzle";
+import { persianToEnglishForm } from "../const";
+export type MedicineForm = (typeof formEnum.enumValues)[number];
 export const medicineAddFormSchema = z.object({
   medicineId: z.number().optional(),
   name: z.string().min(2, "نام دارو حداقل ۲ کاراکتر"),
-  form: z.string().optional(),
-  isActive: z.boolean().default(true),
-});
-
-const isActiveSchema = z
-  .string()
-  .transform((val) => val.replace(/\s+/g, ""))
-  .refine((val) => val === "فعال" || val === "غیرفعال", {
-    message: 'فقط مقادیر "فعال" یا "غیرفعال" مجاز هستند',
-  })
-  .transform((val) => val === "فعال");
-export const excelRowImportSchema = z.object({
-  name: z.string().min(2, "نام دارو حداقل ۲ کاراکتر"),
-
-  form: z.enum(["قرص", "شربت", "تزریقی", "پماد"], {
+  form: z.enum(formEnum.enumValues, {
     error: () => ({
       message: "نوع دارو باید یکی از موارد: قرص، شربت، تزریقی، پماد باشد",
     }),
   }),
+  isActive: z.boolean().default(true),
+});
+
+export const excelRowImportSchema = z.object({
+  name: z.string().min(2, "نام دارو حداقل ۲ کاراکتر"),
+
+  form: z
+    .string()
+    .transform((val) => persianToEnglishForm[val] || val) // ✅ تبدیل فارسی به انگلیسی
+    .pipe(
+      z.enum(formEnum.enumValues, {
+        error: () => ({
+          message: "نوع دارو باید یکی از موارد: قرص، شربت، تزریقی، پماد باشد",
+        }),
+      }),
+    ),
 
   createdAt: z.string().optional(),
 
-  isActive: isActiveSchema,
-  chargeIsActive: isActiveSchema,
+  isActive: z.boolean("مقدار وضعیت را تعیین کنید"),
+  // chargeIsActive: isActiveSchema,
 
   chargeWarningDays: z.union([z.string(), z.number()]).optional(),
 
   chargeQuantity: z.union([z.string(), z.number()]).optional(),
 
+  // در schema
   chargeCreateAt: z
     .union([z.number(), z.string(), z.date(), z.null(), z.undefined()])
     .transform((val) => {
-      if (!val) return null;
+      if (!val) return undefined;
 
+      // تبدیل Excel serial number
       if (typeof val === "number") {
-        return new Date((val - 25569) * 86400 * 1000);
+        return new Date((val - 25569) * 86400 * 1000).toISOString();
       }
 
+      // نگه داشتن string برای پردازش بعدی
       if (typeof val === "string") {
-        return dayjs(val, { jalali: true }).toDate();
+        return val;
       }
 
-      return val;
+      // تبدیل Date به ISO string
+      if (val instanceof Date) {
+        return val.toISOString();
+      }
+
+      return undefined;
     })
-    .pipe(z.date().nullable())
     .optional(),
 
   chargeExpiryDate: z
-    .union([z.number(), z.string(), z.date()])
+    .union([z.number(), z.string(), z.date(), z.null(), z.undefined()])
     .transform((val) => {
+      if (!val) return undefined;
+
+      // تبدیل Excel serial number
       if (typeof val === "number") {
-        return new Date((val - 25569) * 86400 * 1000);
+        return new Date((val - 25569) * 86400 * 1000).toISOString();
       }
-      return new Date(val);
+
+      // نگه داشتن string برای پردازش بعدی
+      if (typeof val === "string") {
+        return val;
+      }
+
+      // تبدیل Date به ISO string
+      if (val instanceof Date) {
+        return val.toISOString();
+      }
+
+      return undefined;
     })
-    .optional()
-    .nullable(),
+    .optional(),
 
   chargeStorageLocation: z.string().optional().nullable(),
 

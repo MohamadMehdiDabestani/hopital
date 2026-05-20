@@ -24,7 +24,6 @@ export const addMedicineQuery = async (
 
 export const updateMedicineQuery = async (
   data: MedicineAddFormValues,
-  siteId: number,
 ): Promise<ActionResult<undefined>> => {
   if (!data.medicineId) return { ok: false, message: "دارویی انتخاب نشده" };
   await db
@@ -33,7 +32,6 @@ export const updateMedicineQuery = async (
       name: data.name,
       form: data.form,
       isActive : data.isActive,
-      siteId,
     })
     .where(eq(medicines.id, data.medicineId));
   return { ok: true, data: undefined };
@@ -42,7 +40,7 @@ export const addMedicineChargeQuery = async (
   data: DashboardMedicineAddCharges,
 ) => {
   await db.insert(medicineCharges).values({
-    expiryDate: data.expiryDate,
+    expiryDate: new Date(data.expiryDate),
     medicineId: data.medicineId,
     quantity: data.quantity,
     expiryAlertDays: data.expiryAlertDays,
@@ -56,7 +54,7 @@ export const updateChargeMedicineQuery = async (
   await db
     .update(medicineCharges)
     .set({
-      expiryDate: data.expiryDate,
+      expiryDate: new Date(data.expiryDate),
       quantity: data.quantity,
       expiryAlertDays: data.expiryAlertDays,
       storageLocation: data.storageLocation,

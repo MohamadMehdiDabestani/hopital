@@ -152,6 +152,7 @@ export async function GET(req: NextRequest) {
           storageLocation: medicineCharges.storageLocation,
           expiryAlertDays: medicineCharges.expiryAlertDays,
           chargeCreateAt: medicineCharges.createdAt,
+          notes: medicineCharges.notes,
         })
         .from(medicines)
         .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
@@ -161,7 +162,6 @@ export async function GET(req: NextRequest) {
       return { flatRows, total, idList };
     });
 
-    // همان map قبلی
     const map = new Map<number, any>();
     for (const r of flatRows) {
       if (!map.has(r.id)) {
@@ -183,6 +183,7 @@ export async function GET(req: NextRequest) {
           storageLocation: r.storageLocation,
           expiryAlertDays: r.expiryAlertDays,
           chargeCreateAt: r.chargeCreateAt,
+          notes : r.notes
         });
       }
     }

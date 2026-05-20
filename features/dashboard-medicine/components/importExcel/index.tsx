@@ -6,6 +6,8 @@ import {
   Alert,
   Button,
   CircularProgress,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import { FileUploader } from "./fileUpload";
 import { FilterControls } from "./filterControls";
@@ -35,14 +37,20 @@ export const MedicineImportExcel = () => {
     setShowOnlyErrors,
   } = useRowFilters(parsedData);
 
-  const { importing, error: importError, importRows } = useImportMedicines();
-  const {show} = useNotificationStore()
-  const router = useRouter()
+  const {
+    importing,
+    error: importError,
+    importRows,
+    dateTimeTrigger,
+    setDateTimeTrigger,
+  } = useImportMedicines();
+  const { show } = useNotificationStore();
+  const router = useRouter();
   const handleImport = async () => {
     const result = await importRows(parsedData);
     if (result.success) {
-      show("دارو ها با موفقیت اضافه شدند" , "success")
-      router.push("/dashboard/medicine")
+      show("دارو ها با موفقیت اضافه شدند", "success");
+      router.push("/dashboard/medicine");
     }
   };
 
@@ -70,7 +78,21 @@ export const MedicineImportExcel = () => {
             onToggleEmpty={setShowOnlyEmpty}
             onToggleErrors={setShowOnlyErrors}
           />
-
+          <ToggleButtonGroup
+            value={dateTimeTrigger}
+            color="info"
+            exclusive
+            onChange={(_, value) => {
+              if (value !== null) {
+                setDateTimeTrigger(value);
+              }
+            }}
+            size="small"
+            sx={{ ml: 2 }}
+          >
+            <ToggleButton value="shamsi">شمسی</ToggleButton>
+            <ToggleButton value="miladi">میلادی</ToggleButton>
+          </ToggleButtonGroup>
           <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
             {parsedData.length} ردیف خوانده شد (
             {parsedData.filter((r) => r.isValid).length} معتبر)

@@ -1,9 +1,10 @@
-// hooks/useExcelParser.ts
 import { useState } from "react";
 import * as XLSX from "xlsx";
-import { z } from "zod";
 import { excelRowImportSchema } from "@/features/dashboard-medicine/schemas/dashboard-medicineAdd.schema";
-import { ImportExcelHeaderMap } from "@/features/dashboard-medicine/const";
+import {
+  ImportExcelHeaderMap,
+  persianToEnglishForm,
+} from "@/features/dashboard-medicine/const";
 import type { ImportExcelParsedRow } from "@/features/dashboard-medicine/type";
 
 export const useExcelParser = () => {
@@ -45,7 +46,7 @@ export const useExcelParser = () => {
 
       const rows: ImportExcelParsedRow[] = dataRows.map((row, index) => {
         const rowData: Record<string, any> = {};
-
+        console.log(mappedHeaders);
         mappedHeaders.forEach((header, i) => {
           if (header) {
             rowData[header] = row[i] ?? "";
@@ -54,20 +55,31 @@ export const useExcelParser = () => {
 
         let isValid = true;
         let validationError = "";
+        console.log(rowData);
+        let transformedData = {
+          ...rowData,
+          form: persianToEnglishForm[rowData.form] || rowData.form,
+          isActive: (() => {
+            const val = String(rowData.isActive || "").replace(/\s+/g, "");
+            if (val === "فعال") return true;
+            if (val === "غیرفعال") return false;
+            return rowData.isActive; // مقدار اصلی رو برگردون اگه فارسی نبود
+          })(),
+        };
+        const result = excelRowImportSchema.safeParse(transformedData); // ✅ استفاده از safeParse
 
-        try {
-          excelRowImportSchema.parse(rowData);
-        } catch (error) {
+        if (result.success) {
+          transformedData = result.data; // ✅ مقدار transform شده رو ذخیره کن
+        } else {
           isValid = false;
-          if (error instanceof z.ZodError) {
-            validationError = error.issues.map((e) => e.message).join(" | ");
-          }
+          validationError = result.error.issues
+            .map((e) => e.message)
+            .join(" | ");
         }
-
         return {
           id: `row-${index}`,
           selected: isValid,
-          data: rowData,
+          data: transformedData, // ✅ استفاده از مقدار transform شده
           validationError,
           isValid,
         };
@@ -90,19 +102,23 @@ export const useExcelParser = () => {
 
           let isValid = true;
           let validationError = "";
+          let transformedData = newData;
 
-          try {
-            excelRowImportSchema.parse(newData);
-          } catch (error) {
+          const result = excelRowImportSchema.safeParse(newData);
+
+          if (result.success) {
+            transformedData = result.data;
+          } else {
             isValid = false;
-            if (error instanceof z.ZodError) {
-              validationError = error.issues.map((e) => e.message).join(" | ");
-            }
+            validationError = result.error.issues
+              .map((e) => e.message)
+              .join(" | ");
           }
 
           return {
             ...row,
-            data: newData,
+            data: transformedData,
+            selected: result.success,
             isValid,
             validationError,
           };

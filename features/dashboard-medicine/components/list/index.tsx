@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "@/features/core/utils/dayjs";
-import { Charge, Row } from "@/features/dashboard-medicine/type";
+import { Charge, DateTimeTrigger, Row } from "@/features/dashboard-medicine/type";
 import { MedicineDialog } from "./medicineDialog";
 import { ChargeMedicineDialog } from "./chargeMedicineDialog";
 import { useMedicineList } from "@/features/dashboard-medicine/hooks/useMedicineList";
@@ -17,6 +17,7 @@ export const DashboardMedicineList = () => {
   const [openCharge, setOpenCharge] = useState(false);
   const [medicine, setMedicine] = useState<Row | undefined>(undefined);
   const [charge, setCharge] = useState<Charge | undefined>(undefined);
+  const [dateTimeTrigger , setDateTimeTrigger] = useState<DateTimeTrigger>('shamsi')
 
   const {
     data,
@@ -52,8 +53,9 @@ export const DashboardMedicineList = () => {
           setCharge(selectedCharge);
           setOpenCharge(true);
         },
+        dateTimeTrigger
       }),
-    [baseToday],
+    [baseToday , dateTimeTrigger],
   );
 
   return (
@@ -96,6 +98,8 @@ export const DashboardMedicineList = () => {
             toolbar: () => (
               <MedicineListToolbar
                 showQuickFilter
+                dateTimeTrigger={dateTimeTrigger}
+                onChangeDateTime={(value) => setDateTimeTrigger(value)}
                 quickFilterProps={{
                   debounceMs: 400,
                   slotProps: {

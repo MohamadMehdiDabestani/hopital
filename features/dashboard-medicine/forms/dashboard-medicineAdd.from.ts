@@ -13,7 +13,7 @@ export const useDashboardMedicineAddForm = (
     initialValues: {
       isActive: true,
       name: "",
-      form: "",
+      form: "pill",
     },
     validationSchema: toFormikValidationSchema(medicineAddFormSchema),
     onSubmit,

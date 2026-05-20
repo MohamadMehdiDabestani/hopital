@@ -21,7 +21,7 @@ import { useEffect, useTransition } from "react";
 import { addOrUpdateMedicineAction } from "@/features/dashboard-medicine/actions";
 import { useNotificationStore } from "@/features/core";
 import { Medicine } from "@/features/dashboard-medicine/type";
-
+import { MedicineForm } from "@/features/dashboard-medicine/schemas/dashboard-medicineAdd.schema";
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -50,7 +50,7 @@ export const MedicineDialog = ({ onClose, onSave, open, medicine }: Props) => {
     if (medicine) {
       formik.setValues({
         name: medicine.name,
-        form: medicine.form,
+        form: medicine.form as MedicineForm,
         medicineId: medicine.id,
         isActive: medicine.isActive,
       });

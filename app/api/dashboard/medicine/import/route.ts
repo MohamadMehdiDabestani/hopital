@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { medicineCharges } from "@/features/dashboard-medicine/schemas/charges.drizzle";
 import dayjs from "@/features/core/utils/dayjs";
 import { z } from "zod";
+import { parseDate } from "@/features/core";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,12 +17,12 @@ export async function POST(req: NextRequest) {
     const siteId = Number(user.siteId);
 
     const body = await req.json();
-    const { rows } = body;
+    const { rows, isGregorian = false } = body;
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json(
         { error: "داده‌های ورودی نامعتبر است" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
       } else {
         invalidRows.push({
           row: index + 1,
-          errors: parsed.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`),
+          errors: parsed.error.issues.map((e) => e.message),
         });
       }
     });
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
           error: "هیچ ردیف معتبری برای ایمپورت وجود ندارد",
           invalidRows,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     await db.transaction(async (tx) => {
       for (const [name, rows] of grouped.entries()) {
         const base = rows[0];
-
+        
         const existing = await tx
           .select({
             id: medicines.id,
@@ -75,13 +76,14 @@ export async function POST(req: NextRequest) {
         if (existing.length) {
           medicineId = existing[0].id;
         } else {
+          console.log("UPADTING" , base.form)
           const [inserted] = await tx
             .insert(medicines)
             .values({
               name: base.name,
               form: base.form,
               createdAt: base.createdAt
-                ? dayjs(base.createdAt, { jalali: true }).toDate()
+                ? parseDate(base.createdAt, isGregorian)
                 : sql`now()`,
               isActive: base.isActive,
               siteId: siteId,
@@ -95,10 +97,9 @@ export async function POST(req: NextRequest) {
         for (const r of rows) {
           if (!r.chargeQuantity) continue;
 
-          // تبدیل expiryDate - اگر وجود نداشت، 30 روز بعد
-          const expiryDate = r.chargeExpiryDate
-            ? dayjs(r.chargeExpiryDate, { jalali: true }).toDate()
-            : dayjs().add(30, "days").toDate();
+          const expiryDate =
+            parseDate(r.chargeExpiryDate, isGregorian) ??
+            dayjs().add(30, "days").toDate();
 
           const existingCharge = await tx
             .select({
@@ -110,21 +111,23 @@ export async function POST(req: NextRequest) {
               and(
                 eq(medicineCharges.medicineId, medicineId),
                 eq(medicineCharges.expiryDate, expiryDate),
-                eq(medicineCharges.storageLocation, r.chargeStorageLocation ?? "وارد نشده")
-              )
+                eq(
+                  medicineCharges.storageLocation,
+                  r.chargeStorageLocation ?? "وارد نشده",
+                ),
+              ),
             )
             .limit(1);
 
           const chargeData = {
             medicineId,
-            quantity: Number(r.chargeQuantity), // تبدیل به number
+            quantity: Number(r.chargeQuantity),
             createdAt: r.chargeCreateAt
-              ? dayjs(r.chargeCreateAt, { jalali: true }).toDate()
+              ? parseDate(r.chargeCreateAt, isGregorian)
               : sql`now()`,
-            expiryDate: expiryDate, // حتما Date است
+            expiryDate: expiryDate,
             storageLocation: r.chargeStorageLocation ?? "وارد نشده",
-            expiryAlertDays: Number(r.chargeWarningDays ?? 10), // تبدیل به number
-            suspended: r.chargeIsActive ?? false,
+            expiryAlertDays: Number(r.chargeWarningDays ?? 10),
             notes: r.chargeNotes ?? null,
           };
 
@@ -149,7 +152,7 @@ export async function POST(req: NextRequest) {
     console.error("خطا در ایمپورت داروها:", err);
     return NextResponse.json(
       { error: "خطای سرور در هنگام ایمپورت" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -45,9 +45,18 @@ export const MedicineTableRow = ({
       <TableCell>
         <SelectCell
           label="وضعیت"
-          value={row.data.isActive}
+          value={
+            row.data.isActive === true
+              ? 1
+              : row.data.isActive === false
+                ? 0
+                : undefined
+          }
           options={ImportExcelStatusOption}
-          onChange={(value) => onEdit("isActive", value)}
+          onChange={(value) => {
+            console.log(value);
+            onEdit("isActive", value === 1);
+          }}
         />
       </TableCell>
       <TableCell>
