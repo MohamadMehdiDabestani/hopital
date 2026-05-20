@@ -14,15 +14,12 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "@/features/core/utils/dayjs";
-import type { Dayjs } from "dayjs";
 import { useDashboardMedicineAddForm } from "../../forms/dashboard-medicineAddCharges";
-import { Charge } from "./type";
+import { Charge } from "@/features/dashboard-medicine/type";
 import { addOrUpdateMedicineChargeAction } from "../../actions";
 import { useNotificationStore } from "@/features/core";
 const JALALI_FMT = "YYYY/MM/DD";
 const GREG_FMT = "YYYY-MM-DD";
-
-const toGregorianString = (d: Dayjs) => d.calendar("gregory").format(GREG_FMT);
 
 // مقدار ذخیره‌شده میلادی است:
 const fromGregorianStringToGregorianDayjs = (s: string) =>
@@ -78,7 +75,7 @@ export const ChargeMedicineDialog = ({
         expiryAlertDays: charge.expiryAlertDays,
         expiryDate: charge.expiryDate,
         quantity: charge.quantity,
-        notes: charge.note,
+        notes: charge.notes,
         storageLocation: charge.storageLocation,
         medicineId: medicineId,
         chargeId: charge.id,

@@ -5,7 +5,7 @@ import type { ImportExcelParsedRow, ImportExcelFilterState } from "@/features/da
 export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
   const [showOnlyEmpty, setShowOnlyEmpty] = useState(false);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-
+  
   const filteredRows = useMemo(() => {
     let filtered = rows;
 

@@ -1,5 +1,5 @@
 import { FormControlLabel, Checkbox, Box } from "@mui/material";
-
+import {Fragment} from 'react'
 type FilterControlsProps = {
   showOnlyEmpty: boolean;
   showOnlyErrors: boolean;
@@ -14,7 +14,7 @@ export const FilterControls = ({
   onToggleErrors,
 }: FilterControlsProps) => {
   return (
-    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+    <Fragment>
       <FormControlLabel
         control={
           <Checkbox
@@ -22,7 +22,7 @@ export const FilterControls = ({
             onChange={(e) => onToggleEmpty(e.target.checked)}
           />
         }
-        label="نمایش فقط ردیف‌های دارای مقدار خالی"
+        label="نمایش ردیف ها ی دارای حداقل یک ستون خالی"
       />
       <FormControlLabel
         control={
@@ -31,8 +31,8 @@ export const FilterControls = ({
             onChange={(e) => onToggleErrors(e.target.checked)}
           />
         }
-        label="نمایش فقط ردیف‌های دارای خطا"
+        label="نمایش ردیف های دارای حداقل یک اخطار"
       />
-    </Box>
+    </Fragment>
   );
 };

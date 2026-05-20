@@ -12,4 +12,5 @@ export const medicineExcelColumns: GridColDef[] = [
   { field: "chargeCreateAt", headerName: "تاریخ ورود شارژ", width: 140 },
   { field: "chargeExpiryDate", headerName: "تاریخ انقضا شارژ", width: 140 },
   { field: "chargeStorageLocation", headerName: "محل نگهداری", width: 160 },
+  { field: "chargeNotes", headerName: "توضیحات اضافه شارژ", width: 160 },
 ];

@@ -13,7 +13,7 @@ export type Charge = {
   storageLocation: string;
   expiryAlertDays: number;
   chargeCreateAt: string;
-  note?: string;
+  notes?: string;
 };
 
 export type Row = Medicine & {
@@ -36,3 +36,5 @@ export type ImportExcelFilterState = {
   showOnlyEmpty: boolean;
   showOnlyErrors: boolean;
 };
+
+export type DateTimeTrigger = "shamsi" | "miladi"

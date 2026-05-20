@@ -1,13 +1,22 @@
-// MedicineImportExcel.tsx
 "use client";
 
-import { Box, Typography, Alert, Button, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Alert,
+  Button,
+  CircularProgress,
+  ToggleButtonGroup,
+  ToggleButton,
+} from "@mui/material";
 import { FileUploader } from "./fileUpload";
 import { FilterControls } from "./filterControls";
 import { MedicineTable } from "./medicineTable";
 import { useExcelParser } from "@/features/dashboard-medicine/hooks/useExcelParser";
 import { useRowFilters } from "@/features/dashboard-medicine/hooks/useRowFilter";
 import { useImportMedicines } from "@/features/dashboard-medicine/hooks/useImportExcel";
+import { useNotificationStore } from "@/features/core";
+import { useRouter } from "next/navigation";
 
 export const MedicineImportExcel = () => {
   const {
@@ -18,7 +27,6 @@ export const MedicineImportExcel = () => {
     updateRow,
     toggleRowSelection,
     toggleSelectAll,
-    clearData,
   } = useExcelParser();
 
   const {
@@ -29,13 +37,20 @@ export const MedicineImportExcel = () => {
     setShowOnlyErrors,
   } = useRowFilters(parsedData);
 
-  const { importing, error: importError, importRows } = useImportMedicines();
-
+  const {
+    importing,
+    error: importError,
+    importRows,
+    dateTimeTrigger,
+    setDateTimeTrigger,
+  } = useImportMedicines();
+  const { show } = useNotificationStore();
+  const router = useRouter();
   const handleImport = async () => {
     const result = await importRows(parsedData);
     if (result.success) {
-      alert(`${result.imported} دارو با موفقیت ایمپورت شد`);
-      clearData();
+      show("دارو ها با موفقیت اضافه شدند", "success");
+      router.push("/dashboard/medicine");
     }
   };
 
@@ -47,10 +62,6 @@ export const MedicineImportExcel = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        ایمپورت داروها از اکسل
-      </Typography>
-
       <FileUploader loading={loading} onFileSelect={parseFile} />
 
       {(parseError || importError) && (
@@ -67,8 +78,22 @@ export const MedicineImportExcel = () => {
             onToggleEmpty={setShowOnlyEmpty}
             onToggleErrors={setShowOnlyErrors}
           />
-
-          <Typography variant="h6" gutterBottom>
+          <ToggleButtonGroup
+            value={dateTimeTrigger}
+            color="info"
+            exclusive
+            onChange={(_, value) => {
+              if (value !== null) {
+                setDateTimeTrigger(value);
+              }
+            }}
+            size="small"
+            sx={{ ml: 2 }}
+          >
+            <ToggleButton value="shamsi">شمسی</ToggleButton>
+            <ToggleButton value="miladi">میلادی</ToggleButton>
+          </ToggleButtonGroup>
+          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
             {parsedData.length} ردیف خوانده شد (
             {parsedData.filter((r) => r.isValid).length} معتبر)
           </Typography>

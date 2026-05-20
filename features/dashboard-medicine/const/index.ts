@@ -4,6 +4,12 @@ export const formMedicineMapper = {
   oitment: "پماد",
   injection: "تزریقی",
 };
+export const persianToEnglishForm: Record<string, string> = {
+  "قرص": "pill",
+  "شربت": "cyrup",
+  "تزریقی": "injection",
+  "پماد": "oitment",
+};
 
 // import excel type
 export const ImportExcelHeaderMap: Record<string, string> = {
@@ -15,19 +21,19 @@ export const ImportExcelHeaderMap: Record<string, string> = {
   "تعداد شارژ": "chargeQuantity",
   "تاریخ ورود شارژ": "chargeCreateAt",
   "روزهای هشدار": "chargeWarningDays",
-  "تاریخ انقضاشارژ": "chargeExpiryDate",
+  "تاریخ انقضا شارژ": "chargeExpiryDate",
   "محل نگهداری": "chargeStorageLocation",
   "توضیحات اضافه شارژ": "chargeNotes",
 };
 
 export const ImportExcelFormOption = [
-  { value: "قرص", label: "قرص" },
-  { value: "شربت", label: "شربت" },
-  { value: "پماد", label: "پماد" },
-  { value: "تزریقی", label: "تزریقی" },
+  { value: "pill", label: "قرص" },
+  { value: "cyrup", label: "شربت" },
+  { value: "oitment", label: "پماد" },
+  { value: "injection", label: "تزریقی" },
 ];
 
 export const ImportExcelStatusOption = [
-  { value: "غیر فعال", label: "غیر فعال" },
-  { value: "فعال", label: "فعال" },
+  { value: 0, label: "غیر فعال" },
+  { value: 1, label: "فعال" },
 ];

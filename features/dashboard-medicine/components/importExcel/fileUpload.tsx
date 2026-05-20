@@ -1,4 +1,4 @@
-import { Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 
 type FileUploaderProps = {
   loading: boolean;
@@ -14,8 +14,8 @@ export const FileUploader = ({ loading, onFileSelect }: FileUploaderProps) => {
   };
 
   return (
-    <Button variant="contained" component="label" disabled={loading}>
-      {loading ? <CircularProgress size={24} /> : "انتخاب فایل اکسل"}
+    <Button variant="contained" component="label" loading={loading}>
+      انتخاب فایل اکسل
       <input type="file" hidden accept=".xlsx,.xls" onChange={handleChange} />
     </Button>
   );

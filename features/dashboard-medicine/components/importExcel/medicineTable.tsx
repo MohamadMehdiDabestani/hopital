@@ -40,7 +40,7 @@ export const MedicineTable = ({
             <TableCell>وضعیت دارو</TableCell>
             <TableCell>وضعیت شارژ</TableCell>
             <TableCell>تعداد شارژ</TableCell>
-            <TableCell>تاریخ انقضا</TableCell>
+            <TableCell>تاریخ انقضا شارژ</TableCell>
             <TableCell>محل نگهداری</TableCell>
             <TableCell>خطاها</TableCell>
           </TableRow>
