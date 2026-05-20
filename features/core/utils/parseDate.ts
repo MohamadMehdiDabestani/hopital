@@ -1,4 +1,5 @@
-import dayjs from './dayjs'
+'use client'
+import dayjs from "./dayjs";
 export const parseDate = (
   date: string | undefined | null,
   isGregorian: boolean,
@@ -14,4 +15,11 @@ export const parseDate = (
   } catch {
     return undefined;
   }
+};
+export const formatDate = (date: string | Date, isGregorian: boolean) => {
+  if (!date) return "";
+  if (isGregorian) {
+    return dayjs(date).format("YYYY/MM/DD");
+  }
+  return dayjs(date).calendar("jalali").format("YYYY/MM/DD");
 };
