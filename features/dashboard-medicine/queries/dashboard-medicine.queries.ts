@@ -8,7 +8,7 @@ import { DashboardMedicineAddCharges } from "../schemas/dashboard-medicineAddCha
 import { medicineCharges } from "../schemas/charges.drizzle";
 import { visits } from "@/features/dasboard-admision/schemas/visits.drizzle";
 import { people } from "@/features/dashboard-manager/schemas/people.drizzle";
-import { visitToMedicine } from "../schemas/visitToMedicine.relations.drizzle";
+import { visitToMedicine } from "../schemas/visitToMedicine.drizzle";
 import { DashboardMedicineSchema } from "../schemas/dashboard-medicine.schema";
 
 export const addMedicineQuery = async (
