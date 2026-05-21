@@ -8,7 +8,7 @@ import {
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { people } from "@/features/dashboard-manager/schemas/people.drizzle";
 import { VisitHistory } from "../type";
-import { visitToMedicine } from "@/features/dashboard-medicine/schemas/visitToMedicine.relations.drizzle";
+import { visitToMedicine } from "@/features/dashboard-medicine/schemas/visitToMedicine.drizzle";
 import { DashboardDoctorPatientSchema } from "../schemas/dashboard-doctor.schema";
 
 export const getNextPatientQuery = async (
