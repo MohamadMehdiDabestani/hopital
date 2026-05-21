@@ -21,7 +21,7 @@ import {
   createOrUpdateUserForSite,
   useDashboardManagerAddForm,
 } from "@/features/dashboard-manager";
-import { UserRow } from "./type";
+import { UserRow } from "../../type";
 import { useNotificationStore } from "@/features/core";
 
 type Props = {
@@ -36,8 +36,6 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
   const { show } = useNotificationStore();
 
   const formik = useDashboardManagerAddForm((values) => {
-    // console.log("submit:", values);
-    // call add api
     startLoading(async () => {
       try {
         const data = await createOrUpdateUserForSite(values);
