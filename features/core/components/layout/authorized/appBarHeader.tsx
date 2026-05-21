@@ -33,7 +33,7 @@ export const AppBarHeader = () => {
         <UserMenu />
         <Box sx={{ flexGrow: 1, ml: 1 }}>
           <Typography variant="h6" noWrap component="div">
-            {user && user?.firstName + user?.lastName}
+            {user && user?.firstName + " " + user?.lastName}
           </Typography>
         </Box>
       </Toolbar>
