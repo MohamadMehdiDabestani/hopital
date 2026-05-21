@@ -4,6 +4,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { LoginSchemaType } from "@/features/auth/schemas/auth.schema";
 import bcrypt from "bcrypt";
 import { ActionResult } from "@/features/core";
+import { ChangePasswordInput } from "../schemas/changePassword.schema";
 type GetUserbyPhoneAndPassType = {
   rule: string;
   id: number;
@@ -37,4 +38,28 @@ export const updateLastLoginAfterLogin = async (userId: number) => {
       lastLoginAt: new Date(),
     })
     .where(eq(users.id, userId));
+};
+
+export const changePasswordQuery = async (
+  data: ChangePasswordInput,
+  userId: number,
+): Promise<ActionResult<undefined>> => {
+  const [user] = await db
+    .select({
+      hashedPassword: users.hashedPassword,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!user) return { ok: false, message: "اطلاعات ناقض است" };
+  const compare = await bcrypt.compare(
+    data.currentPassword,
+    user.hashedPassword,
+  );
+  if (!compare) return { ok: false, message: "اطلاعات ناقض است" };
+  const hashedNewPassword = await bcrypt.hash(data.newPassword, 12);
+  await db.update(users).set({
+    hashedPassword: hashedNewPassword,
+  });
+  return { ok: true, data: undefined };
 };

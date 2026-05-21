@@ -19,7 +19,6 @@ export const LoginForm = () => {
         }
         await router.push("/dashboard")
       } catch (err: any) {
-        console.log(err)
         show(ActionErrorMapping(err), "error");
       }
     });

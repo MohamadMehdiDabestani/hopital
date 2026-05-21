@@ -4,12 +4,14 @@ import { useDrawerStore } from "@/features/core/store";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useCallback } from "react";
 import { logoutUser } from "@/features/auth";
+import UserMenu from "@/features/auth/components/userMenu";
 
 interface AppBarHeaderProps {
   userName: string;
+  role: string;
 }
 
-export const AppBarHeader = ({ userName }: AppBarHeaderProps) => {
+export const AppBarHeader = ({ userName ,role}: AppBarHeaderProps) => {
   const { drawerWidth, setOpen } = useDrawerStore();
 
   const handleClick = useCallback(() => {
@@ -37,16 +39,10 @@ export const AppBarHeader = ({ userName }: AppBarHeaderProps) => {
         >
           <MenuIcon />
         </IconButton>
-        <Box sx={{ flexGrow: 1 }}>
+        <UserMenu userName={userName} role={role} />
+        <Box sx={{ flexGrow: 1 , ml : 1 }}>
           <Typography variant="h6" noWrap component="div">
             {userName}
-            <Typography
-              component="span"
-              sx={{ display: "inline-block", ml: 1, cursor: "pointer" }}
-              onClick={handleLogout}
-            >
-              (برای خروج کلیک کنید)
-            </Typography>
           </Typography>
         </Box>
       </Toolbar>
