@@ -6,6 +6,7 @@ import {
 import { ActionResult, signAccessToken } from "@/features/core";
 import { GetUserbyPhoneAndPass } from "@/features/auth/queries/users.queries";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 export const loginUser = async (
   user: LoginSchemaType,
 ): Promise<ActionResult<null>> => {
@@ -13,7 +14,6 @@ export const loginUser = async (
   if (!parsed.success) {
     return { ok: false, message: "اطلاعات ورودی معتبر نیست." };
   }
-
   try {
     const user = await GetUserbyPhoneAndPass(parsed.data);
     if (!user.ok) return { ok: false, message: "کاربری یافت نشد" };
@@ -30,4 +30,12 @@ export const loginUser = async (
   } catch (err: any) {
     return { ok: false, message: "کاربری یافت نشد" };
   }
+};
+
+export const logoutUser = async () => {
+  const cookieStore = await cookies();
+
+  cookieStore.delete("access_token");
+
+  redirect("/login");
 };
