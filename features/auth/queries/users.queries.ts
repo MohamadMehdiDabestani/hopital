@@ -1,6 +1,6 @@
 import { db } from "@/features/core/drizzle/client";
-import { users} from "@/features/core/schema/schema.drizzle";
-import { eq, and } from "drizzle-orm";
+import { users } from "@/features/core/schema/schema.drizzle";
+import { eq, and, sql } from "drizzle-orm";
 import { LoginSchemaType } from "@/features/auth/schemas/auth.schema";
 import bcrypt from "bcrypt";
 import { ActionResult } from "@/features/core";
@@ -28,4 +28,13 @@ export const GetUserbyPhoneAndPass = async (
       ...u,
     },
   };
+};
+
+export const updateLastLoginAfterLogin = async (userId: number) => {
+  await db
+    .update(users)
+    .set({
+      lastLoginAt: new Date(),
+    })
+    .where(eq(users.id, userId));
 };
