@@ -1,14 +1,9 @@
 "use client";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  IconButton,
-} from "@mui/material";
+import { AppBar, Toolbar, Typography, Box, IconButton } from "@mui/material";
 import { useDrawerStore } from "@/features/core/store";
 import MenuIcon from "@mui/icons-material/Menu";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+import { logoutUser } from "@/features/auth";
 
 interface AppBarHeaderProps {
   userName: string;
@@ -20,6 +15,10 @@ export const AppBarHeader = ({ userName }: AppBarHeaderProps) => {
   const handleClick = useCallback(() => {
     setOpen(true);
   }, [setOpen]);
+
+  const handleLogout = useCallback(async () => {
+    await logoutUser();
+  }, []);
   return (
     <AppBar
       position="fixed"
@@ -44,6 +43,7 @@ export const AppBarHeader = ({ userName }: AppBarHeaderProps) => {
             <Typography
               component="span"
               sx={{ display: "inline-block", ml: 1, cursor: "pointer" }}
+              onClick={handleLogout}
             >
               (برای خروج کلیک کنید)
             </Typography>
