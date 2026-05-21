@@ -4,7 +4,7 @@ import {
   LoginSchemaType,
 } from "@/features/auth/schemas/auth.schema";
 import { ActionResult, signAccessToken } from "@/features/core";
-import { GetUserbyPhoneAndPass } from "@/features/auth/queries/users.queries";
+import { GetUserbyPhoneAndPass, updateLastLoginAfterLogin } from "@/features/auth/queries/users.queries";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 export const loginUser = async (
@@ -26,6 +26,7 @@ export const loginUser = async (
       httpOnly: true,
       path: "/",
     });
+    await updateLastLoginAfterLogin(user.data.id)
     return { ok: true, data: null };
   } catch (err: any) {
     return { ok: false, message: "کاربری یافت نشد" };
@@ -37,5 +38,5 @@ export const logoutUser = async () => {
 
   cookieStore.delete("access_token");
 
-  redirect("/login");
+  redirect("/");
 };
