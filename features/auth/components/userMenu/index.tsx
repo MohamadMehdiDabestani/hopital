@@ -12,16 +12,12 @@ import {
 import { AccountCircle, Lock, Logout } from "@mui/icons-material";
 import { logoutUser } from "@/features/auth/actions";
 import { ChangePasswordDialog } from "./changePasswordDialog";
+import { useUserStore } from "@/features/core";
 
-interface UserMenuProps {
-  userName: string;
-  role: string;
-}
-
-export default function UserMenu({ userName, role }: UserMenuProps) {
+export default function UserMenu() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-
+  const {clearUser , user} = useUserStore()
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -37,6 +33,7 @@ export default function UserMenu({ userName, role }: UserMenuProps) {
 
   const handleLogout = async () => {
     handleMenuClose();
+    clearUser()
     await logoutUser();
   };
 
@@ -65,7 +62,7 @@ export default function UserMenu({ userName, role }: UserMenuProps) {
         }}
       >
         <MenuItem disabled>
-          <ListItemText primary={userName} secondary={role} />
+          <ListItemText primary={user ? user.firstName + user.lastName : ""} secondary={user?.role} />
         </MenuItem>
 
         <Divider />
