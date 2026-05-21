@@ -1,26 +1,17 @@
 "use client";
 import { AppBar, Toolbar, Typography, Box, IconButton } from "@mui/material";
-import { useDrawerStore } from "@/features/core/store";
+import { useDrawerStore, useUserStore } from "@/features/core/store";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useCallback } from "react";
-import { logoutUser } from "@/features/auth";
 import UserMenu from "@/features/auth/components/userMenu";
 
-interface AppBarHeaderProps {
-  userName: string;
-  role: string;
-}
-
-export const AppBarHeader = ({ userName ,role}: AppBarHeaderProps) => {
+export const AppBarHeader = () => {
   const { drawerWidth, setOpen } = useDrawerStore();
-
+  const { user } = useUserStore();
   const handleClick = useCallback(() => {
     setOpen(true);
   }, [setOpen]);
 
-  const handleLogout = useCallback(async () => {
-    await logoutUser();
-  }, []);
   return (
     <AppBar
       position="fixed"
@@ -39,10 +30,10 @@ export const AppBarHeader = ({ userName ,role}: AppBarHeaderProps) => {
         >
           <MenuIcon />
         </IconButton>
-        <UserMenu userName={userName} role={role} />
-        <Box sx={{ flexGrow: 1 , ml : 1 }}>
+        <UserMenu />
+        <Box sx={{ flexGrow: 1, ml: 1 }}>
           <Typography variant="h6" noWrap component="div">
-            {userName}
+            {user && user?.firstName + user?.lastName}
           </Typography>
         </Box>
       </Toolbar>
