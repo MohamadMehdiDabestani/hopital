@@ -27,15 +27,22 @@ type DoctorOption = {
   queueCount: number;
 };
 export const NewPatientForm = () => {
-  const { data: selectList = [], isLoading } = useSWR<DoctorOption[]>(
-    "/api/dashboard/admision/doctorSelectList",
-  );
+  const {
+    data: selectList = [],
+    isLoading,
+    mutate,
+  } = useSWR<DoctorOption[]>("/api/dashboard/admision/doctorSelectList", {
+    refreshInterval: 60000,
+  });
   const { show } = useNotificationStore();
   const formik = useDasboardAdmisionForm(async (values) => {
     const createVisit = await createVisitAction(values);
     if (!createVisit.ok) {
       show(createVisit.message, "error");
       return;
+    } else {
+      show("بیمار به صفه اضافه شد", "success");
+      mutate();
     }
     formik.resetForm();
   });

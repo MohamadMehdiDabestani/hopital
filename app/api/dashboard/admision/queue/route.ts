@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/features/core/drizzle/client";
 import { visits, users, people } from "@/features/core/schema/schema.drizzle";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { getUser } from "@/features/auth/utils/dal";
 
@@ -19,7 +19,12 @@ export async function GET() {
       reciveMedicineTime: visits.reciveMedicineTime,
     })
     .from(visits)
-    .where(eq(visits.siteId, user?.siteId as number))
+    .where(
+      and(
+        eq(visits.siteId, user?.siteId as number),
+        inArray(visits.status, ["waiting", "treat", "reciveMedicine"]),
+      ),
+    )
     .innerJoin(people, eq(visits.personId, people.id))
     .orderBy(visits.receptionTime);
 
