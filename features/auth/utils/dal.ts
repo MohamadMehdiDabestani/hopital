@@ -27,6 +27,7 @@ const getUserCache = (key: string, userId: number) =>
         firstName: users.firstName,
         lastName: users.lastName,
         siteId: users.siteId,
+        role : users.rule
       })
       .from(users)
       .where(eq(users.id, userId));

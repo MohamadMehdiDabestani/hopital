@@ -4,13 +4,15 @@ import { Fragment, ReactNode } from "react";
 import { AuthorizedLayoutClient } from "./client";
 import { Sidebar } from "./sideBar";
 import { AppBarHeader } from "./appBarHeader";
+import { redirect } from "next/navigation";
 export async function AuthorizedLayout({ children }: { children: ReactNode }) {
   const user = await getUser();
-
+  if (!user) redirect("/");
   return (
     <Fragment>
       <AppBarHeader
-        userName={user ? user.firstName + user.lastName : "کاربر"}
+        userName={user.firstName + user.lastName}
+        role={user.role}
       />
       <Sidebar />
       <AuthorizedLayoutClient>{children}</AuthorizedLayoutClient>

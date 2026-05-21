@@ -30,8 +30,6 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number", { length: 15 }).notNull().unique(),
   codeMeli: varchar("codeMeli", { length: 10 }).notNull().unique(),
   hashedPassword: text("hashedPassword").notNull(),
-  hashedFirstTimePassword: text("hashedFirstTimePassword"),
-  forcedChangePassword: boolean("forcedChangePassword").default(true).notNull(),
   rule: roleEnum("rule").notNull(),
   suspended: boolean("suspended").default(false).notNull(),
   siteId: integer("siteId").references((): AnyPgColumn => sites.id, {
