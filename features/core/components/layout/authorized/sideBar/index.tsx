@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect } from "react";
-import { Box, Drawer } from "@mui/material";
+import { Drawer } from "@mui/material";
 
 import Grid from "@mui/material/Grid";
 import { useTheme } from "@mui/material/styles";
@@ -14,7 +14,6 @@ export const Sidebar = () => {
   const { open, setOpen } = useDrawerStore();
   useEffect(() => {
     setOpen(isDesktop);
-    console.log("changed", isDesktop);
   }, [isDesktop]);
   return (
     <Fragment>
