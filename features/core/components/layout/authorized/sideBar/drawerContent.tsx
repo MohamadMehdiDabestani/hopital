@@ -18,31 +18,44 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import { useDrawerStore } from "@/features/core";
+import { useDrawerStore, useUserStore } from "@/features/core";
 import Link from "next/link";
 
 type MenuItem = { title: string; url: string };
-type MenuGroup = { title: string; items: MenuItem[] };
+type MenuGroup = { 
+  title: string; 
+  items: MenuItem[];
+  roles: string[]; // نقش‌هایی که این گروه رو می‌بینن
+};
 
 const menu: MenuGroup[] = [
   {
     title: "مدیریت",
+    roles: ["manager"],
     items: [
       { title: "لیست کاربران", url: "/dashboard/manager" },
     ],
   },
   {
     title: "پذیرش",
+    roles: ["admision", "manager"],
     items: [
-      { title: "لیست پذیرش", url: "/dashboard/admision" },
-      { title: "d", url: "/doctor/d" },
+      { title: "صف فعلی پذیرش", url: "/dashboard/admision" },
+      { title: "تاریخچه ی پذیرش", url: "/dashboard/admision/history" },
     ],
   },
   {
     title: "دکتر",
+    roles: ["doctor"],
     items: [
       { title: "مطب دکتر", url: "/dashboard/doctor" },
-      { title: "عنوان آیتم ۴", url: "/url-4" },
+    ],
+  },
+  {
+    title: "داروخانه",
+    roles: ["medicine", "manager"],
+    items: [
+      { title: "لیست داروها", url: "/dashboard/medicine" },
     ],
   },
 ];
@@ -50,13 +63,18 @@ const menu: MenuGroup[] = [
 export const DrawerContent = () => {
   const { open, drawerWidth, setOpen } = useDrawerStore();
   const pathname = usePathname();
+  const { user } = useUserStore();
 
-  // for finding whiche accordion should open
+  const filteredMenu = useMemo(() => {
+    if (!user?.role) return [];
+    return menu.filter((group) => group.roles.includes(user.role));
+  }, [user?.role]);
+
   const matchedAccordionIndex = useMemo(() => {
-    return menu.findIndex((group) =>
+    return filteredMenu.findIndex((group) =>
       group.items.some((item) => item.url === pathname)
     );
-  }, [pathname]);
+  }, [pathname, filteredMenu]);
 
   const [expanded, setExpanded] = useState<number | false>(false);
 
@@ -79,21 +97,21 @@ export const DrawerContent = () => {
           {open ? <CloseIcon /> : <MenuIcon />}
         </IconButton>
       </Box>
-      <Divider sx={{mt: 1}} />
+      <Divider sx={{ mt: 1 }} />
       <Box sx={{ visibility: open ? "visible" : "hidden" }}>
-        {menu.map((group, i) => (
+        {filteredMenu.map((group, i) => (
           <Accordion
             key={group.title}
             expanded={expanded === i}
             onChange={(_, isExpanded) => setExpanded(isExpanded ? i : false)}
             sx={{
-              boxShadow : "none"
+              boxShadow: "none",
             }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>{group.title}</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{p : 0}}>
+            <AccordionDetails sx={{ p: 0 }}>
               <List disablePadding>
                 {group.items.map((item) => {
                   const isActive = item.url === pathname;
