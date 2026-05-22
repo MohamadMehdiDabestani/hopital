@@ -5,6 +5,7 @@ import { GridColDef } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import { UserRow } from "@/features/dashboard-manager/type";
 import { DateTimeTrigger, formatDate } from "@/features/core";
+import { roleMapper } from "../../const";
 
 type Params = {
   dateTimeTrigger: DateTimeTrigger;
@@ -19,6 +20,8 @@ export const createManagerColumns = ({
 
   return [
     { field: "id", headerName: "آیدی", width: 90 },
+    { field: "firstName", headerName: "نام", width: 90 },
+    { field: "lastName", headerName: "نام خانوادگی", width: 90 },
     {
       field: "fullName",
       headerName: "نام و نام خانوادگی",
@@ -34,7 +37,12 @@ export const createManagerColumns = ({
       width: 180,
       valueFormatter: (value) => formatDate(value, isGregorian),
     },
-    { field: "role", headerName: "نقش", width: 120 },
+    {
+      field: "role",
+      valueFormatter: (value) => roleMapper[value],
+      headerName: "نقش",
+      width: 120,
+    },
     {
       field: "status",
       headerName: "وضعیت",

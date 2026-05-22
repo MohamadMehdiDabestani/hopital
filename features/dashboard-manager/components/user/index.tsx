@@ -1,11 +1,6 @@
 "use client";
-import { useMemo, useState, useEffect, useCallback } from "react";
-import {
-  DataGrid,
-  GridColDef,
-  GridFilterModel,
-  GridSortModel,
-} from "@mui/x-data-grid";
+import { useMemo, useState } from "react";
+import { DataGrid, GridColumnVisibilityModel } from "@mui/x-data-grid";
 import { Box, Button, Typography } from "@mui/material";
 import { UserDialog } from "./userDialog";
 import { DateTimeTrigger } from "@/features/core";
@@ -13,6 +8,10 @@ import { UserRow } from "../../type";
 import { createManagerColumns } from "./managerColumn";
 import { ManagerToolbar } from "./managerToolbar";
 import { useUsersList } from "../../hooks/useUsersList";
+const ALWAYS_HIDDEN_FIELDS = ["id"];
+const ALWAYS_HIDDEN = Object.fromEntries(
+  ALWAYS_HIDDEN_FIELDS.map((field) => [field, false]),
+);
 
 export const UsersList = ({ initialData }: { initialData: any }) => {
   const [open, setOpen] = useState(false);
@@ -31,7 +30,12 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
     setSortModel,
     isValidating,
   } = useUsersList({ initialData });
-
+  const [columnVisibilityModel, setColumnVisibilityModel] =
+    useState<GridColumnVisibilityModel>({
+      firstName: false,
+      lastName: false,
+      ...ALWAYS_HIDDEN,
+    });
   const columns = useMemo(
     () =>
       createManagerColumns({
@@ -75,10 +79,21 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
           onFilterModelChange={setFilterModel}
           sortModel={sortModel}
           onSortModelChange={setSortModel}
+          columnVisibilityModel={columnVisibilityModel}
+          onColumnVisibilityModelChange={(newModel) => {
+            setColumnVisibilityModel({ ...newModel, ...ALWAYS_HIDDEN });
+          }}
           pageSizeOptions={[10, 25, 50]}
           disableColumnFilter
-          columnVisibilityModel={{ id: false }}
           showToolbar
+          slotProps={{
+            columnsManagement: {
+              getTogglableColumns: (columns) =>
+                columns
+                  .filter((c) => !ALWAYS_HIDDEN_FIELDS.includes(c.field))
+                  .map((c) => c.field),
+            },
+          }}
           slots={{
             toolbar: () => (
               <ManagerToolbar

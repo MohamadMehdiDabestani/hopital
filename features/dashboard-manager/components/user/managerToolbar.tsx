@@ -76,7 +76,7 @@ export const ManagerToolbar = ({
           exportGridToExcel(rows ?? [], columns, {
             fileName: "users.xlsx",
             sheetName: "Users",
-            columnFilter: (c) => !['id','actions'].includes(c.field)
+            columnFilter: (c) => !['id','actions','fullName'].includes(c.field)
           });
         }}
       >
