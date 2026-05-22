@@ -19,7 +19,6 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
   const [row, setRow] = useState<UserRow | undefined>(undefined);
   const [dateTimeTrigger, setDateTimeTrigger] =
     useState<DateTimeTrigger>("shamsi");
-  console.log(initialData)
   const {
     data,
     isLoading,
@@ -31,7 +30,7 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
     sortModel,
     setSortModel,
     isValidating,
-  } = useUsersList(initialData);
+  } = useUsersList({ initialData });
 
   const columns = useMemo(
     () =>
@@ -44,7 +43,6 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
       }),
     [dateTimeTrigger],
   );
-
   return (
     <Box sx={{ width: "100%" }}>
       <Button
@@ -84,7 +82,7 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
           slots={{
             toolbar: () => (
               <ManagerToolbar
-              columns={columns}
+                columns={columns}
                 showQuickFilter
                 dateTimeTrigger={dateTimeTrigger}
                 onChangeDateTime={(value) => setDateTimeTrigger(value)}

@@ -8,7 +8,3 @@ export type UserRow = {
   role: string;
   suspended: boolean;
 };
-export type ApiResult = {
-  total: number;
-  rows: UserRow[];
-};
