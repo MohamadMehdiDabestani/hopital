@@ -1,7 +1,6 @@
 import { GridFilterModel, GridSortModel } from "@mui/x-data-grid";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ApiResult } from "../type";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import useSWR from "swr";
 
 export const useUsersList = ({ initialData }: { initialData: any }) => {
@@ -58,10 +57,13 @@ export const useUsersList = ({ initialData }: { initialData: any }) => {
     return `/api/dashboard/manager/users?${params.toString()}`;
   }, [paginationModel, filterModel, sortModel]);
 
-  const { data, isLoading, isValidating, mutate } = useSWR<ApiResult>(query, {
+  const { data, isLoading, isValidating, mutate } = useSWR(query, {
     fallbackData: initialData,
     keepPreviousData: true,
+    revalidateOnMount: false,
+    revalidateIfStale: false,
   });
+
   return {
     data,
     isLoading,
