@@ -1,20 +1,25 @@
 "use client";
 
-import { Chip, IconButton, Tooltip } from "@mui/material";
+import { Box, Chip, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import { UserRow } from "@/features/dashboard-manager/type";
-import { DateTimeTrigger, formatDate } from "@/features/core";
+import { DateTimeTrigger, formatDateWithTime } from "@/features/core";
 import { roleMapper } from "../../const";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 type Params = {
   dateTimeTrigger: DateTimeTrigger;
   onEditUser: (row: UserRow) => void;
+  onResetPassword: (userId: number) => void;
+  resetPasswordLoadingId?: number | null; // اضافه شد
 };
 
 export const createManagerColumns = ({
   dateTimeTrigger,
   onEditUser,
+  onResetPassword,
+  resetPasswordLoadingId, // اضافه شد
 }: Params): GridColDef[] => {
   const isGregorian = dateTimeTrigger === "miladi";
 
@@ -35,7 +40,9 @@ export const createManagerColumns = ({
       field: "lastLoginAt",
       headerName: "آخرین ورود",
       width: 180,
-      valueFormatter: (value) => formatDate(value, isGregorian),
+      valueFormatter: (value) => {
+        return formatDateWithTime(value, isGregorian);
+      },
     },
     {
       field: "role",
@@ -48,7 +55,6 @@ export const createManagerColumns = ({
       headerName: "وضعیت",
       width: 120,
       valueFormatter: (value, row) => (row.suspended ? "غیر فعال" : "فعال"),
-
       renderCell: (params) => {
         return (
           <Chip
@@ -66,17 +72,38 @@ export const createManagerColumns = ({
       width: 120,
       sortable: false,
       filterable: false,
-      renderCell: (params) => (
-        <Tooltip title="ویرایش کاربر">
-          <IconButton
-            color="warning"
-            size="small"
-            onClick={() => onEditUser(params.row as UserRow)}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      ),
+      renderCell: (params) => {
+        const isResetting = resetPasswordLoadingId === params.row.id;
+        console.log(isResetting)
+        return (
+          <Box>
+            <Tooltip title="ویرایش کاربر">
+              <IconButton
+                color="warning"
+                size="small"
+                onClick={() => onEditUser(params.row as UserRow)}
+                disabled={isResetting}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="تغییر رمز عبور">
+              <IconButton
+                color="error"
+                size="small"
+                onClick={() => onResetPassword(Number(params.row.id))}
+                disabled={isResetting}
+              >
+                {isResetting ? (
+                  <CircularProgress size={20} color="error" />
+                ) : (
+                  <RestartAltIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Box>
+        );
+      },
     },
   ];
 };

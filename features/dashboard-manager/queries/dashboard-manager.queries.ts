@@ -108,3 +108,10 @@ export const createOrUpdateUserForSiteQuery = async (
         .where(eq(users.id, data.rowUserId));
   });
 };
+export const updateUserPasswordQuery = async (userId : number) => {
+  const password = generatePassword();
+  const hashedPassword = await bcrypt.hash(password, 12);
+  await db.update(users).set({
+    hashedPassword : hashedPassword,
+  }).where(eq(users.id , userId))
+}
