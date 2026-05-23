@@ -12,12 +12,18 @@ import {
 import { FileUploader } from "./fileUpload";
 import { FilterControls } from "./filterControls";
 import { UsersTable } from "./usersTable";
-import { useExcelParser } from "@/features/dashboard-manager/hooks/useExcelParser";
-import { useRowFilters } from "@/features/dashboard-medicine/hooks/useRowFilter";
-import { useNotificationStore } from "@/features/core";
+import {
+  useExcelParser,
+  useNotificationStore,
+  useRowFilters,
+} from "@/features/core";
 import { useRouter } from "next/navigation";
 import { useImportUsers } from "../../hooks/useImportExcel";
-
+import {
+  ImportExcelHeaderMap,
+  PersianRoleMapper,
+} from "@/features/dashboard-manager/const";
+import { excelRowImportSchema } from "../../schemas/dashboard-managerImportExcel.schema";
 export const UsersImportExcel = () => {
   const {
     parsedData,
@@ -27,7 +33,21 @@ export const UsersImportExcel = () => {
     updateRow,
     toggleRowSelection,
     toggleSelectAll,
-  } = useExcelParser();
+  } = useExcelParser({
+    headerMap: ImportExcelHeaderMap,
+    schema: excelRowImportSchema,
+    transformRow: (row) => ({
+      ...row,
+      role: PersianRoleMapper[row.role] || row.role,
+      suspended: (() => {
+        const val = String(row.suspended || "").replace(/\s+/g, "");
+        if (val === "فعال") return false;
+        if (val === "غیرفعال") return true;
+        return row.suspended;
+      })(),
+      phoneNumber: String(row.phoneNumber),
+    }),
+  });
 
   const {
     filteredRows,
@@ -35,13 +55,11 @@ export const UsersImportExcel = () => {
     showOnlyErrors,
     setShowOnlyEmpty,
     setShowOnlyErrors,
+    showValidUnselected,
+    setShowValidUnselected,
   } = useRowFilters(parsedData);
 
-  const {
-    importing,
-    error: importError,
-    importRows,
-  } = useImportUsers();
+  const { importing, error: importError, importRows } = useImportUsers();
   const { show } = useNotificationStore();
   const router = useRouter();
   const handleImport = async () => {
@@ -57,12 +75,11 @@ export const UsersImportExcel = () => {
   ).length;
 
   const allSelected = parsedData.every((row) => row.selected);
-  console.log(parsedData)
   return (
     <Box sx={{ p: 3 }}>
       <FileUploader loading={loading} onFileSelect={parseFile} />
 
-    {(parseError || importError) && (
+      {(parseError || importError) && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {parseError || importError}
         </Alert>
@@ -71,12 +88,14 @@ export const UsersImportExcel = () => {
       {parsedData.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <FilterControls
+            onToggleUnselected={setShowValidUnselected}
+            showValidUnselected={showValidUnselected}
             showOnlyEmpty={showOnlyEmpty}
             showOnlyErrors={showOnlyErrors}
             onToggleEmpty={setShowOnlyEmpty}
             onToggleErrors={setShowOnlyErrors}
           />
-          
+
           <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
             {parsedData.length} ردیف خوانده شد (
             {parsedData.filter((r) => r.isValid).length} معتبر)

@@ -1,9 +1,6 @@
-// hooks/useRowFilters.ts
+"use client";
 import { useMemo, useState } from "react";
-import type {
-  ImportExcelParsedRow,
-  ImportExcelFilterState,
-} from "@/features/dashboard-medicine/type";
+import type { ImportExcelParsedRow } from "../type";
 
 export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
   const [showOnlyEmpty, setShowOnlyEmpty] = useState(false);
@@ -30,7 +27,7 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
       );
     }
     return filtered;
-  }, [rows, showOnlyEmpty, showOnlyErrors]);
+  }, [rows, showOnlyEmpty, showOnlyErrors , showValidUnselected]);
 
   return {
     filteredRows,

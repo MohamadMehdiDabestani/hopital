@@ -1,8 +1,10 @@
 import { FormControlLabel, Checkbox } from "@mui/material";
-import {Fragment} from 'react'
+import { Fragment } from "react";
 type FilterControlsProps = {
   showOnlyEmpty: boolean;
   showOnlyErrors: boolean;
+  showValidUnselected: boolean;
+  onToggleUnselected: (checked: boolean) => void;
   onToggleEmpty: (checked: boolean) => void;
   onToggleErrors: (checked: boolean) => void;
 };
@@ -10,7 +12,9 @@ type FilterControlsProps = {
 export const FilterControls = ({
   showOnlyEmpty,
   showOnlyErrors,
+  showValidUnselected,
   onToggleEmpty,
+  onToggleUnselected,
   onToggleErrors,
 }: FilterControlsProps) => {
   return (
@@ -32,6 +36,15 @@ export const FilterControls = ({
           />
         }
         label="نمایش ردیف های دارای حداقل یک اخطار"
+      />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={showValidUnselected}
+            onChange={(e) => onToggleUnselected(e.target.checked)}
+          />
+        }
+        label="نمایش ردیف ها ی معتبر انتخاب نشده"
       />
     </Fragment>
   );
