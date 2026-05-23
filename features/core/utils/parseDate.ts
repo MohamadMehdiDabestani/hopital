@@ -22,3 +22,11 @@ export const formatDate = (date: string | Date, isGregorian: boolean) => {
   }
   return dayjs(date).calendar("jalali").format("YYYY/MM/DD");
 };
+
+export const formatDateWithTime = (date: string | Date, isGregorian: boolean) => {
+  if (!date) return "";
+  if (isGregorian) {
+    return dayjs(date).format("YYYY/MM/DD HH:mm:ss");
+  }
+  return dayjs(date).calendar("jalali").format("YYYY/MM/DD HH:mm:ss");
+}

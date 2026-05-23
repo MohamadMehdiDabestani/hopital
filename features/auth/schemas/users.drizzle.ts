@@ -27,7 +27,7 @@ export const users = pgTable("users", {
     .defaultNow()
     .notNull(),
   lastLoginAt: timestamp("lastLoginAt", { withTimezone: true }),
-  phoneNumber: varchar("phone_number", { length: 15 }).notNull().unique(),
+  phoneNumber: varchar("phone_number", { length: 11 }).notNull().unique(),
   codeMeli: varchar("codeMeli", { length: 10 }).notNull().unique(),
   hashedPassword: text("hashedPassword").notNull(),
   rule: roleEnum("rule").notNull(),

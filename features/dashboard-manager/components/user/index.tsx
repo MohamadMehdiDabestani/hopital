@@ -1,13 +1,14 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DataGrid, GridColumnVisibilityModel } from "@mui/x-data-grid";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { UserDialog } from "./userDialog";
-import { DateTimeTrigger } from "@/features/core";
+import { DateTimeTrigger, useNotificationStore } from "@/features/core";
 import { UserRow } from "../../type";
 import { createManagerColumns } from "./managerColumn";
 import { ManagerToolbar } from "./managerToolbar";
 import { useUsersList } from "../../hooks/useUsersList";
+import { resetUserPasswordAction } from "../../actions";
 const ALWAYS_HIDDEN_FIELDS = ["id"];
 const ALWAYS_HIDDEN = Object.fromEntries(
   ALWAYS_HIDDEN_FIELDS.map((field) => [field, false]),
@@ -16,6 +17,11 @@ const ALWAYS_HIDDEN = Object.fromEntries(
 export const UsersList = ({ initialData }: { initialData: any }) => {
   const [open, setOpen] = useState(false);
   const [row, setRow] = useState<UserRow | undefined>(undefined);
+  const { show } = useNotificationStore();
+  const [resetPasswordLoadingId, setResetPasswordLoadingId] = useState<
+    number | null
+  >(null);
+
   const [dateTimeTrigger, setDateTimeTrigger] =
     useState<DateTimeTrigger>("shamsi");
   const {
@@ -36,6 +42,24 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
       lastName: false,
       ...ALWAYS_HIDDEN,
     });
+  const resetPassword = useCallback(
+    async (userId: number) => {
+      setResetPasswordLoadingId(userId);
+      try {
+        const res = await resetUserPasswordAction(userId);
+        if (res.ok) {
+          show("رمز عبور با موفقیت تغییر یافت", "success");
+        } else {
+          show(res.message, "error");
+        }
+      } catch (error) {
+        show("مشکلی به وجود آمده", "error");
+      } finally {
+        setResetPasswordLoadingId(null);
+      }
+    },
+    [show],
+  );
   const columns = useMemo(
     () =>
       createManagerColumns({
@@ -44,19 +68,13 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
           setRow(row);
           setOpen(true);
         },
+        resetPasswordLoadingId,
+        onResetPassword: resetPassword,
       }),
-    [dateTimeTrigger],
+    [dateTimeTrigger, resetPasswordLoadingId, resetPassword],
   );
   return (
     <Box sx={{ width: "100%" }}>
-      <Button
-        onClick={() => {
-          setOpen(true);
-          setRow(undefined);
-        }}
-      >
-        افزودن کارمند جدید
-      </Button>
       <UserDialog
         onSaved={() => mutate()}
         onClose={() => setOpen(false)}

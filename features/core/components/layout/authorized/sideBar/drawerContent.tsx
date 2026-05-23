@@ -25,7 +25,7 @@ type MenuItem = { title: string; url: string };
 type MenuGroup = { 
   title: string; 
   items: MenuItem[];
-  roles: string[]; // نقش‌هایی که این گروه رو می‌بینن
+  roles: string[];
 };
 
 const menu: MenuGroup[] = [
@@ -34,6 +34,7 @@ const menu: MenuGroup[] = [
     roles: ["manager"],
     items: [
       { title: "لیست کاربران", url: "/dashboard/manager" },
+      { title: "افزودن کاربران از طریق اکسل", url: "/dashboard/manager/importExcel" },
     ],
   },
   {
@@ -56,6 +57,7 @@ const menu: MenuGroup[] = [
     roles: ["medicine", "manager"],
     items: [
       { title: "لیست داروها", url: "/dashboard/medicine" },
+      { title: "افزودن داروها از طریق اکسل", url: "/dashboard/medicine/importExcel" },
     ],
   },
 ];

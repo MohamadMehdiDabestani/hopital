@@ -61,7 +61,6 @@ export const useUsersList = ({ initialData }: { initialData: any }) => {
     fallbackData: initialData,
     keepPreviousData: true,
     revalidateOnMount: false,
-    revalidateIfStale: false,
   });
 
   return {
