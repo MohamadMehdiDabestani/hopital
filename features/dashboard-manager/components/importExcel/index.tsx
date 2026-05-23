@@ -57,6 +57,7 @@ export const UsersImportExcel = () => {
     setShowOnlyErrors,
     showValidUnselected,
     setShowValidUnselected,
+    pinRow
   } = useRowFilters(parsedData);
 
   const { importing, error: importError, importRows } = useImportUsers();
@@ -69,7 +70,10 @@ export const UsersImportExcel = () => {
       router.push("/dashboard/manager");
     }
   };
-
+const handleEditCell = (rowId: string, field: string, value: any) => {
+  if (showOnlyErrors) pinRow(rowId);  // قبل از ویرایش pin کن
+  updateRow(rowId, field, value);
+};
   const selectedValidCount = parsedData.filter(
     (r) => r.selected && r.isValid,
   ).length;
@@ -106,7 +110,7 @@ export const UsersImportExcel = () => {
             allSelected={allSelected}
             onSelectAll={toggleSelectAll}
             onSelectRow={toggleRowSelection}
-            onEditCell={updateRow}
+            onEditCell={handleEditCell}
           />
 
           <Button

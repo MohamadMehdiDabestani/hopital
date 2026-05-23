@@ -6,7 +6,16 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
   const [showOnlyEmpty, setShowOnlyEmpty] = useState(false);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [showValidUnselected, setShowValidUnselected] = useState(false);
+  const [pinnedRowIds, setPinnedRowIds] = useState<Set<string>>(new Set());
+  const handleToggleErrors = (val: boolean) => {
+    setShowOnlyErrors(val);
+    if (!val) setPinnedRowIds(new Set());
+  };
 
+  // وقتی row داره ویرایش میشه، pinش کن
+  const pinRow = (rowId: string) => {
+    setPinnedRowIds((prev) => new Set(prev).add(rowId));
+  };
   const filteredRows = useMemo(() => {
     let filtered = rows;
 
@@ -19,7 +28,9 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
     }
 
     if (showOnlyErrors) {
-      filtered = filtered.filter((row) => row.validationError.length > 0);
+      filtered = filtered.filter(
+        (row) => row.validationError.length > 0 || pinnedRowIds.has(row.id),
+      );
     }
     if (showValidUnselected) {
       filtered = filtered.filter(
@@ -27,15 +38,16 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
       );
     }
     return filtered;
-  }, [rows, showOnlyEmpty, showOnlyErrors , showValidUnselected]);
+  }, [rows, showOnlyEmpty, showOnlyErrors, showValidUnselected, pinnedRowIds]);
 
   return {
     filteredRows,
     showOnlyEmpty,
     showOnlyErrors,
     setShowOnlyEmpty,
-    setShowOnlyErrors,
+    setShowOnlyErrors: handleToggleErrors,
     showValidUnselected,
     setShowValidUnselected,
+    pinRow,
   };
 };

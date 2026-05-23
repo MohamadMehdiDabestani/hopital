@@ -110,7 +110,6 @@ export const useExcelParser = <T = Record<string, any>,>(
           data,
           isValid,
           validationError,
-          selected: isValid,
         };
       }),
     );
