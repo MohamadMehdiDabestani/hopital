@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseGridParams } from "@/features/core/utils/filterDatagrid";
 import { getUser } from "@/features/auth/utils/dal";
-import { getUserListQuery } from "@/features/dashboard-manager/queries/dashboard-manager.queries";
+import { getAdmisionHistoryQuery } from "@/features/dasboard-admision/queries/dasboard-admision.queries";
 
 export async function GET(req: NextRequest) {
   try {
     const currentUser = await getUser();
     const { page, pageSize, sortModel, filterModel } = parseGridParams(req.url);
-    const { rows, total } = await getUserListQuery({
+    const { rows, total } = await getAdmisionHistoryQuery({
       siteId: Number(currentUser?.siteId),
       page,
       pageSize,

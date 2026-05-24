@@ -1,2 +1,2 @@
-export * from './newPatient';
-export * from './patientTable'
+export * from "./queue"
+export * from './history'
