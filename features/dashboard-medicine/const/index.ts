@@ -17,7 +17,7 @@ export const ImportExcelHeaderMap: Record<string, string> = {
   فرم: "form",
   "تاریخ ثبت": "createdAt",
   وضعیت: "isActive",
-  "وضعیت شارژ": "chargeIsActive",
+  // "وضعیت شارژ": "chargeIsActive",
   "تعداد شارژ": "chargeQuantity",
   "تاریخ ورود شارژ": "chargeCreateAt",
   "روزهای هشدار": "chargeWarningDays",

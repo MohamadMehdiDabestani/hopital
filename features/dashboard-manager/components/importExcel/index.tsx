@@ -6,11 +6,9 @@ import {
   Alert,
   Button,
   CircularProgress,
-  ToggleButtonGroup,
-  ToggleButton,
 } from "@mui/material";
 import { FileUploader } from "./fileUpload";
-import { FilterControls } from "./filterControls";
+import { FilterControls } from "@/features/core";
 import { UsersTable } from "./usersTable";
 import {
   useExcelParser,
@@ -57,7 +55,7 @@ export const UsersImportExcel = () => {
     setShowOnlyErrors,
     showValidUnselected,
     setShowValidUnselected,
-    pinRow
+    pinRow,
   } = useRowFilters(parsedData);
 
   const { importing, error: importError, importRows } = useImportUsers();
@@ -70,10 +68,10 @@ export const UsersImportExcel = () => {
       router.push("/dashboard/manager");
     }
   };
-const handleEditCell = (rowId: string, field: string, value: any) => {
-  if (showOnlyErrors) pinRow(rowId);  // قبل از ویرایش pin کن
-  updateRow(rowId, field, value);
-};
+  const handleEditCell = (rowId: string, field: string, value: any) => {
+    if (showOnlyErrors) pinRow(rowId); // قبل از ویرایش pin کن
+    updateRow(rowId, field, value);
+  };
   const selectedValidCount = parsedData.filter(
     (r) => r.selected && r.isValid,
   ).length;

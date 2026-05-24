@@ -1,7 +1,6 @@
 // components/MedicineTableRow.tsx
 import { TableRow, TableCell, Checkbox, Typography } from "@mui/material";
-import { EditableCell } from "./editableCell";
-import { SelectCell } from "./selectCell";
+import { EditableCell, SelectCell } from "@/features/core";
 import {
   ImportExcelFormOption,
   ImportExcelStatusOption,

@@ -10,13 +10,16 @@ import {
   ToggleButton,
 } from "@mui/material";
 import { FileUploader } from "./fileUpload";
-import { FilterControls } from "./filterControls";
 import { MedicineTable } from "./medicineTable";
-import { useExcelParser } from "@/features/dashboard-medicine/hooks/useExcelParser";
-import { useRowFilters } from "@/features/dashboard-medicine/hooks/useRowFilter";
+import { useExcelParser , useRowFilters , FilterControls } from "@/features/core";
 import { useImportMedicines } from "@/features/dashboard-medicine/hooks/useImportExcel";
 import { useNotificationStore } from "@/features/core";
 import { useRouter } from "next/navigation";
+import {
+  ImportExcelHeaderMap,
+  persianToEnglishForm,
+} from "@/features/dashboard-medicine/const";
+import { excelRowImportSchema } from "@/features/dashboard-medicine/schemas/dashbaord-medicineImport.schema";
 
 export const MedicineImportExcel = () => {
   const {
@@ -27,7 +30,20 @@ export const MedicineImportExcel = () => {
     updateRow,
     toggleRowSelection,
     toggleSelectAll,
-  } = useExcelParser();
+  } = useExcelParser({
+    headerMap: ImportExcelHeaderMap,
+    schema: excelRowImportSchema,
+    transformRow: (rowData) => ({
+      ...rowData,
+      form: persianToEnglishForm[rowData.form] || rowData.form,
+      isActive: (() => {
+        const val = String(rowData.isActive || "").replace(/\s+/g, "");
+        if (val === "فعال") return true;
+        if (val === "غیرفعال") return false;
+        return rowData.isActive;
+      })(),
+    }),
+  });
 
   const {
     filteredRows,
@@ -35,6 +51,9 @@ export const MedicineImportExcel = () => {
     showOnlyErrors,
     setShowOnlyEmpty,
     setShowOnlyErrors,
+    showValidUnselected,
+    setShowValidUnselected,
+    pinRow,
   } = useRowFilters(parsedData);
 
   const {
@@ -54,6 +73,10 @@ export const MedicineImportExcel = () => {
     }
   };
 
+  const handleEditCell = (rowId: string, field: string, value: any) => {
+    if (showOnlyErrors) pinRow(rowId);
+    updateRow(rowId, field, value);
+  };
   const selectedValidCount = parsedData.filter(
     (r) => r.selected && r.isValid,
   ).length;
@@ -73,6 +96,8 @@ export const MedicineImportExcel = () => {
       {parsedData.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <FilterControls
+            onToggleUnselected={setShowValidUnselected}
+            showValidUnselected={showValidUnselected}
             showOnlyEmpty={showOnlyEmpty}
             showOnlyErrors={showOnlyErrors}
             onToggleEmpty={setShowOnlyEmpty}
@@ -103,7 +128,7 @@ export const MedicineImportExcel = () => {
             allSelected={allSelected}
             onSelectAll={toggleSelectAll}
             onSelectRow={toggleRowSelection}
-            onEditCell={updateRow}
+            onEditCell={handleEditCell}
           />
 
           <Button

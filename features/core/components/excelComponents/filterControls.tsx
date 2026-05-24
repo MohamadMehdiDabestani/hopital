@@ -1,3 +1,4 @@
+'use client'
 import { FormControlLabel, Checkbox } from "@mui/material";
 import { Fragment } from "react";
 type FilterControlsProps = {
