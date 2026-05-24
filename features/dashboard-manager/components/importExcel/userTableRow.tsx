@@ -1,7 +1,6 @@
 // components/MedicineTableRow.tsx
 import { TableRow, TableCell, Checkbox, Typography } from "@mui/material";
-import { EditableCell } from "./editableCell";
-import { SelectCell } from "./selectCell";
+import { SelectCell,EditableCell } from "@/features/core";
 import { ImportExcelRoleOption, ImportExcelSuspendedOption } from "@/features/dashboard-manager/const";
 import type { ImportExcelParsedRow } from "@/features/dashboard-medicine/type";
 import { ImportExcelStatusOption } from "@/features/dashboard-medicine/const";

@@ -32,7 +32,6 @@ export const useImportUsers = () => {
       const result = await response.json();
       return { success: true, imported: result.imported };
     } catch (err) {
-      console.log(err);
       setError(err instanceof Error ? err.message : "خطا در ایمپورت");
       return { success: false };
     } finally {

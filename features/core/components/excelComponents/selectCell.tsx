@@ -1,8 +1,8 @@
-// src/components/SelectCell.tsx
+'use client'
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 type SelectOption = {
-  value: string | number; // ✅ اضافه کردن number
+  value: string | number; 
   label: string;
 };
 
@@ -10,7 +10,7 @@ type SelectCellProps = {
   label: string;
   value: any;
   options: SelectOption[];
-  onChange: (value: string | number) => void; // ✅ اضافه کردن number
+  onChange: (value: string | number) => void;
 };
 
 export const SelectCell = ({
