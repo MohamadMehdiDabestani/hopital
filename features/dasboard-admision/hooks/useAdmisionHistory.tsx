@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { GridFilterModel, GridSortModel } from "@mui/x-data-grid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -39,9 +39,9 @@ export const useAdmisionHistory = ({ initialData }: { initialData: any }) => {
       ) {
         params.set("filter", JSON.stringify(filter));
       }
-      router.replace(`?${params.toString()}`, { scroll: false });
+      window.history.replaceState(null, "", `?${params.toString()}`);
     },
-    [router],
+    [],
   );
 
   useEffect(() => {
