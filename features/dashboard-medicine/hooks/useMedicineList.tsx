@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GridFilterModel, GridSortModel } from "@mui/x-data-grid";
 import useSWR from "swr";
 import dayjs from "@/features/core/utils/dayjs";
 import { getServerTime } from "@/features/core/actions/time";
-import { useNotificationStore } from "@/features/core";
 
-export const useMedicineList = () => {
-  const { show } = useNotificationStore();
-
+export const useMedicineList = ({ initialData }: { initialData: any }) => {
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
@@ -39,7 +36,29 @@ export const useMedicineList = () => {
   const baseToday = useMemo(() => {
     return serverNowIso ? dayjs(serverNowIso).startOf("day") : null;
   }, [serverNowIso]);
-
+  const updateURL = useCallback(
+    (
+      pagination: typeof paginationModel,
+      filter: GridFilterModel,
+      sort: GridSortModel,
+    ) => {
+      const params = new URLSearchParams();
+      params.set("page", String(pagination.page));
+      params.set("pageSize", String(pagination.pageSize));
+      if (sort.length > 0) params.set("sort", JSON.stringify(sort));
+      if (
+        filter.items.length > 0 ||
+        (filter.quickFilterValues && filter.quickFilterValues.length > 0)
+      ) {
+        params.set("filter", JSON.stringify(filter));
+      }
+      window.history.replaceState(null, "", `?${params.toString()}`);
+    },
+    [],
+  );
+  useEffect(() => {
+    updateURL(paginationModel, filterModel, sortModel);
+  }, [paginationModel, filterModel, sortModel, updateURL]);
   const query = useMemo(() => {
     const params = new URLSearchParams();
 
@@ -55,14 +74,12 @@ export const useMedicineList = () => {
     return `/api/dashboard/medicine/list?${params.toString()}`;
   }, [paginationModel, sortModel, filterModel, showExpired]);
 
-  const { data, isLoading, mutate } = useSWR(query);
+  const { data, isLoading, mutate } = useSWR(query, {
+    fallbackData: initialData,
+    keepPreviousData: true,
+    revalidateOnMount: false,
+  });
 
-  useEffect(() => {
-    if (data && !data.ok) {
-      show(data.message, "error");
-    }
-  }, [data, show]);
-  
   return {
     data,
     isLoading,

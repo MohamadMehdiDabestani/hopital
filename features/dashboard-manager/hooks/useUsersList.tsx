@@ -1,10 +1,9 @@
 import { GridFilterModel, GridSortModel } from "@mui/x-data-grid";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import useSWR from "swr";
 
 export const useUsersList = ({ initialData }: { initialData: any }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [paginationModel, setPaginationModel] = useState(() => ({
@@ -38,11 +37,10 @@ export const useUsersList = ({ initialData }: { initialData: any }) => {
       ) {
         params.set("filter", JSON.stringify(filter));
       }
-      router.replace(`?${params.toString()}`, { scroll: false });
+      window.history.replaceState(null, "", `?${params.toString()}`);
     },
-    [router],
+    [],
   );
-
   useEffect(() => {
     updateURL(paginationModel, filterModel, sortModel);
   }, [paginationModel, filterModel, sortModel, updateURL]);

@@ -12,7 +12,7 @@ import { createMedicineColumns } from "./medicineColumn";
 import { MedicineListToolbar } from "./medicineToolbar";
 
 
-export const DashboardMedicineList = () => {
+export const DashboardMedicineList = ({initialData} : {initialData : any}) => {
   const [open, setOpen] = useState(false);
   const [openCharge, setOpenCharge] = useState(false);
   const [medicine, setMedicine] = useState<Row | undefined>(undefined);
@@ -33,7 +33,7 @@ export const DashboardMedicineList = () => {
     setShowExpired,
     serverNowIso,
     baseToday,
-  } = useMedicineList();
+  } = useMedicineList({initialData});
 
   const columns = useMemo(
     () =>

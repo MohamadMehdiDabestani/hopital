@@ -2,14 +2,15 @@ import "server-only";
 import { MedicineAddFormValues } from "../schemas/dashboard-medicineAdd.schema";
 import { db } from "@/features/core/drizzle/client";
 import { medicines } from "../schemas/medicine.drizzle";
-import { and, eq, gte, sql } from "drizzle-orm";
-import { ActionResult } from "@/features/core";
+import { and, eq, gte, inArray, SQL, sql } from "drizzle-orm";
+import { ActionResult, buildOrderBy, buildWhere } from "@/features/core";
 import { DashboardMedicineAddCharges } from "../schemas/dashboard-medicineAddCharges.schema";
 import { medicineCharges } from "../schemas/charges.drizzle";
 import { visits } from "@/features/dasboard-admision/schemas/visits.drizzle";
 import { people } from "@/features/dashboard-manager/schemas/people.drizzle";
 import { visitToMedicine } from "../schemas/visitToMedicine.drizzle";
 import { DashboardMedicineSchema } from "../schemas/dashboard-medicine.schema";
+import { getUser } from "@/features/auth/utils/dal";
 
 export const addMedicineQuery = async (
   data: MedicineAddFormValues,
@@ -31,7 +32,7 @@ export const updateMedicineQuery = async (
     .set({
       name: data.name,
       form: data.form,
-      isActive : data.isActive,
+      isActive: data.isActive,
     })
     .where(eq(medicines.id, data.medicineId));
   return { ok: true, data: undefined };
@@ -152,4 +153,210 @@ export const getVisitMedicinesQuery = async (visitId: number) => {
       medicines.name,
     );
   return data;
+};
+const baseColumnMap = {
+  id: medicines.id,
+  name: medicines.name,
+  form: medicines.form,
+  createdAt: medicines.createdAt,
+  siteId: medicines.siteId,
+  isActive: medicines.isActive,
+};
+
+const fullColumnMap = {
+  ...baseColumnMap,
+  expiryDate: medicineCharges.expiryDate,
+  quantity: medicineCharges.quantity,
+  storageLocation: medicineCharges.storageLocation,
+  expiryAlertDays: medicineCharges.expiryAlertDays,
+  chargeCreateAt: medicineCharges.createdAt,
+};
+
+const chargeFields = new Set([
+  "expiryDate",
+  "quantity",
+  "storageLocation",
+  "expiryAlertDays",
+  "chargeCreateAt",
+]);
+
+function needsChargeJoin(
+  sortModel: any,
+  filterModel: any,
+  expiredOnly: boolean,
+) {
+  if (expiredOnly) return true;
+  if (sortModel?.some((s: any) => chargeFields.has(s.field))) return true;
+  if (filterModel?.items?.some((f: any) => chargeFields.has(f.field)))
+    return true;
+  if (filterModel?.quickFilterValues?.length) {
+    return true;
+  }
+  return false;
+}
+
+// تابع کمکی برای ساخت شرط انقضا
+function buildExpiryCondition() {
+  return sql`
+    EXISTS (
+      SELECT 1
+      FROM ${medicineCharges} c
+      WHERE c."medicineId" = ${medicines.id}
+        AND c."expiryDate" IS NOT NULL
+        AND c."expiryAlertDays" IS NOT NULL
+        AND (c."expiryDate"::DATE - CURRENT_DATE) <= c."expiryAlertDays"
+    )
+  `;
+}
+export const getMedicineListQuery = async ({
+  page = 0,
+  pageSize = 10,
+  sortModel = [],
+  filterModel = { items: [] },
+  expiredOnly = false,
+}: {
+  page?: number;
+  pageSize?: number;
+  sortModel?: Array<{ field: string; sort: "asc" | "desc" }>;
+  filterModel?: { items: Array<any>; quickFilterValues?: string[] };
+  expiredOnly?: boolean;
+}) => {
+  const currentUser = await getUser();
+  const userSiteId = Number(currentUser?.siteId);
+
+  const joinCharges = needsChargeJoin(sortModel, filterModel, expiredOnly);
+  const columnMap = joinCharges ? fullColumnMap : baseColumnMap;
+  
+  const searchFields = joinCharges 
+    ? [medicines.name, medicineCharges.storageLocation]
+    : [medicines.name];
+
+  const whereCondition = buildWhere(columnMap, filterModel, searchFields);
+  
+  const baseConditions = [
+    eq(medicines.siteId, userSiteId),
+    whereCondition,
+    expiredOnly ? buildExpiryCondition() : undefined,
+  ].filter((x): x is SQL => Boolean(x));
+
+  const orderBy = buildOrderBy(columnMap, sortModel, medicines.id);
+
+  // دریافت IDهای صفحه‌بندی شده
+  let idsQuery = db
+    .selectDistinct({ id: medicines.id })
+    .from(medicines)
+    .$dynamic();
+
+  if (joinCharges) {
+    idsQuery = idsQuery.leftJoin(
+      medicineCharges,
+      eq(medicines.id, medicineCharges.medicineId),
+    );
+  }
+
+  const idsResult = await idsQuery
+    .where(and(...baseConditions))
+    .orderBy(orderBy)
+    .limit(pageSize)
+    .offset(page * pageSize);
+
+  const idList = idsResult.map((x) => x.id);
+  
+  if (!idList.length) {
+    // محاسبه تعداد کل
+    let totalCountQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(medicines)
+      .$dynamic();
+
+    if (joinCharges && (filterModel.items.length > 0 || filterModel.quickFilterValues?.length)) {
+      totalCountQuery = totalCountQuery.leftJoin(
+        medicineCharges,
+        eq(medicines.id, medicineCharges.medicineId),
+      );
+    }
+
+    const totalCount = await totalCountQuery
+      .where(and(...baseConditions))
+      .then((r) => r[0]?.count ?? 0);
+
+    return { rows: [], total: totalCount };
+  }
+
+  // دریافت داده‌های کامل
+  const flatRows = await db
+    .select({
+      id: medicines.id,
+      name: medicines.name,
+      form: medicines.form,
+      createdAt: medicines.createdAt,
+      siteId: medicines.siteId,
+      isActive: medicines.isActive,
+      chargeId: medicineCharges.id,
+      expiryDate: medicineCharges.expiryDate,
+      quantity: medicineCharges.quantity,
+      storageLocation: medicineCharges.storageLocation,
+      expiryAlertDays: medicineCharges.expiryAlertDays,
+      chargeCreateAt: medicineCharges.createdAt,
+      notes: medicineCharges.notes,
+    })
+    .from(medicines)
+    .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
+    .where(inArray(medicines.id, idList))
+    .orderBy(orderBy);
+
+  // محاسبه تعداد کل
+  let totalCountQuery = db
+    .select({ count: sql<number>`count(DISTINCT ${medicines.id})` })
+    .from(medicines)
+    .$dynamic();
+
+  if (joinCharges) {
+    totalCountQuery = totalCountQuery.leftJoin(
+      medicineCharges,
+      eq(medicines.id, medicineCharges.medicineId),
+    );
+  }
+
+  const total = await totalCountQuery
+    .where(and(...baseConditions))
+    .then((r) => r[0]?.count ?? 0);
+
+  // گروه‌بندی داده‌ها
+  const groupedData = flatRows.reduce((acc, row) => {
+    if (!acc.has(row.id)) {
+      acc.set(row.id, {
+        id: row.id,
+        name: row.name,
+        form: row.form,
+        createdAt: row.createdAt,
+        siteId: row.siteId,
+        isActive: row.isActive,
+        charges: [],
+      });
+    }
+    
+    if (row.chargeId) {
+      acc.get(row.id).charges.push({
+        id: row.chargeId,
+        expiryDate: row.expiryDate,
+        quantity: row.quantity,
+        storageLocation: row.storageLocation,
+        expiryAlertDays: row.expiryAlertDays,
+        chargeCreateAt: row.chargeCreateAt,
+        notes: row.notes,
+      });
+    }
+    
+    return acc;
+  }, new Map<number, any>());
+
+  const rows = idList
+    .map(id => groupedData.get(id))
+    .filter(Boolean);
+
+  return { 
+    rows, 
+    total 
+  };
 };
