@@ -17,6 +17,7 @@ import { useEffect, useMemo, useReducer, useState } from "react";
 import { tehranTimezone } from "@/features/core";
 import useSWR from "swr";
 import { statusColor, statusFa } from "@/features/dasboard-admision/const";
+import { makeSuspendAction } from "@/features/dasboard-admision/actions";
 
 type ReceptionRow = {
   id: number;
@@ -27,7 +28,6 @@ type ReceptionRow = {
   exitRoomAt: string | null;
   status: string;
 };
-
 
 type Order = "asc" | "desc";
 type SortKey =
@@ -133,8 +133,8 @@ export const ReceptionTable = () => {
     }
   };
 
-  const handleSuspend = (row: ReceptionRow) => {
-    console.log("Suspend:", row.id);
+  const handleSuspend = async (row: ReceptionRow) => {
+    await makeSuspendAction(row.id);
   };
 
   return (

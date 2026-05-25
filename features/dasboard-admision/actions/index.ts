@@ -5,7 +5,10 @@ import {
   DasboardAdmisionSchemaType,
   dasboardAdmisionSchema,
 } from "@/features/dasboard-admision/schemas/dasboard-admision.schema";
-import { createVisitQuery } from "../queries/dasboard-admision.queries";
+import {
+  createVisitQuery,
+  makeSuspendQuery,
+} from "../queries/dasboard-admision.queries";
 import { getUser } from "@/features/auth/utils/dal";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
 
@@ -17,10 +20,21 @@ export const createVisitAction = async (
   try {
     const user = await getUser();
     if (!user) return { ok: false, message: "اطلاعات ناقض میباشد" };
-    const res =  await createVisitQuery(parsedData.data, Number(user.siteId));
+    const res = await createVisitQuery(parsedData.data, Number(user.siteId));
     return res;
   } catch (error: any) {
-    console.log(error)
+    console.log(error);
+    return { ok: false, message: ActionErrorMapping(error) };
+  }
+};
+
+export const makeSuspendAction = async (
+  visitId: number,
+): Promise<ActionResult<undefined>> => {
+  try {
+    await makeSuspendQuery(visitId);
+    return { ok: true, data: undefined };
+  } catch (error: any) {
     return { ok: false, message: ActionErrorMapping(error) };
   }
 };

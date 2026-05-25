@@ -20,6 +20,8 @@ export const getNextPatientQuery = async (
       .select({
         personId: visits.personId,
         siteId: visits.siteId,
+        treatTime: visits.treatTime,
+        visitId: visits.id,
       })
       .from(visits)
       .innerJoin(people, and(eq(people.id, visits.personId)))
@@ -54,8 +56,13 @@ export const getNextPatientQuery = async (
             eq(visits.siteId, currentTreat.siteId),
           ),
         )
-        .orderBy(desc(visits.receptionTime));
-
+        .orderBy(desc(visits.receptionTime))
+        .limit(10);
+      if (!currentTreat.treatTime)
+        await tx
+          .update(visits)
+          .set({ treatTime: sql`now()` })
+          .where(eq(visits.id, currentTreat.visitId));
       return history;
     }
 
@@ -105,7 +112,8 @@ export const getNextPatientQuery = async (
           eq(visits.siteId, current.siteId),
         ),
       )
-      .orderBy(desc(visits.receptionTime));
+      .orderBy(desc(visits.receptionTime))
+      .limit(10);
 
     return history;
   });

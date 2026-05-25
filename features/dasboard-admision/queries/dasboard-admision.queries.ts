@@ -5,38 +5,59 @@ import {
   medicineCharges,
   medicines,
   people,
+  Status,
   tests,
   users,
   visits,
   visitToMedicine,
 } from "@/features/core/schema/schema.drizzle";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { ActionResult, buildOrderBy, buildWhere } from "@/features/core";
-
 export const createVisitQuery = async (
   data: DasboardAdmisionSchemaType,
   siteId: number,
 ): Promise<ActionResult<undefined>> => {
   return await db.transaction(async (tx) => {
-    const [row] = await tx
-      .select({
-        personId: people.id,
-        visitId: visits.id, // اگر null بود یعنی ویزیت فعال ندارد
-      })
+    // چک کردن وجود شخص
+    const [personRow] = await tx
+      .select({ id: people.id })
       .from(people)
-      .leftJoin(
-        visits,
-        and(eq(visits.personId, people.id), eq(visits.status, "waiting")),
-      )
       .where(eq(people.codeMeli, data.codeMeli))
       .limit(1);
 
-    if (!row) return { ok: false, message: "شخصی وجود ندارد" };
+    if (!personRow) return { ok: false, message: "شخصی وجود ندارد" };
 
-    if (row.visitId) return { ok: false, message: "ویزیت فعال دارد" };
+    // چک کردن ویزیت فعال (تمام وضعیت‌های فعال)
+    const activeStatuses: Status[] = ["waiting", "treat"];
 
-    const [queue] = await tx
-      .select({ count: sql<number>`count(*)` })
+    const [activeVisit] = await tx
+      .select({ id: visits.id })
+      .from(visits)
+      .where(
+        and(
+          eq(visits.personId, personRow.id),
+          inArray(visits.status, activeStatuses),
+        ),
+      )
+      .limit(1);
+
+    if (activeVisit) return { ok: false, message: "ویزیت فعال دارد" };
+
+    // چک کردن آیا بیماری با وضعیت treat وجود داره
+    const [hasTreat] = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(visits)
+      .where(
+        and(
+          eq(visits.siteId, siteId),
+          eq(visits.doctorId, data.doctorId),
+          eq(visits.status, "treat"),
+        ),
+      );
+
+    // چک کردن آیا بیماری با وضعیت waiting وجود داره
+    const [hasWaiting] = await tx
+      .select({ count: sql<number>`count(*)::int` })
       .from(visits)
       .where(
         and(
@@ -45,14 +66,22 @@ export const createVisitQuery = async (
           eq(visits.status, "waiting"),
         ),
       );
-    const status = queue.count === 0 ? "treat" : "waiting";
+
+    const treatCount = Number(hasTreat.count);
+    const waitingCount = Number(hasWaiting.count);
+
+    // اگر هیچ treat یا waiting وجود نداشت -> بیمار جدید treat می‌گیره
+    // در غیر اینصورت waiting می‌گیره
+    const status: Status =
+      treatCount === 0 && waitingCount === 0 ? "treat" : "waiting";
 
     await tx.insert(visits).values({
-      personId: row.personId,
+      personId: personRow.id,
       status,
       siteId,
       doctorId: data.doctorId,
     });
+
     return { ok: true, data: undefined };
   });
 };
@@ -190,4 +219,13 @@ export const getAdmisionHistoryQuery = async ({
 
   const total = Number(totalResult[0]?.count ?? 0);
   return { rows, total };
+};
+
+export const makeSuspendQuery = async (visitId: number) => {
+  await db
+    .update(visits)
+    .set({
+      status: "suspended",
+    })
+    .where(eq(visits.id, visitId));
 };

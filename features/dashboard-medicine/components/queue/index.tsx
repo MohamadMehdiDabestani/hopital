@@ -63,22 +63,11 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
 
         setRowMap((prev) => {
           const next = new Map(prev);
-          if (payload.status !== "reciveMedicine") {
+          if (payload.status == "suspended") {
             next.delete(payload.id);
             return next;
-          }
-          if (payload.op === "INSERT") {
+          } else if (payload.status == "reciveMedicine") {
             next.set(payload.id, payload);
-            console.log("INSERT");
-          }
-          if (payload.op === "UPDATE") {
-            const existing = next.get(payload.id);
-
-            if (existing) {
-              next.set(payload.id, { ...existing, ...payload });
-            } else {
-              next.set(payload.id, payload);
-            }
           }
 
           return next;

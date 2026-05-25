@@ -68,6 +68,11 @@ export const DoctorPatient = ({
       try {
         const payload = JSON.parse(e.data);
         if (
+          payload.status == "suspended" &&
+          currentPatientRef.current?.id == payload.id
+        )
+          handleNextPatient();
+        else if (
           !currentPatientRef.current &&
           historyRef.current.length === 0 &&
           payload.status === "treat"
