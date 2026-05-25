@@ -31,7 +31,7 @@ type MenuGroup = {
 const menu: MenuGroup[] = [
   {
     title: "مدیریت",
-    roles: ["manager"],
+    roles: ["manager" , "doctor"],
     items: [
       { title: "لیست کاربران", url: "/dashboard/manager" },
       { title: "افزودن کاربران از طریق اکسل", url: "/dashboard/manager/importExcel" },
@@ -39,7 +39,7 @@ const menu: MenuGroup[] = [
   },
   {
     title: "پذیرش",
-    roles: ["admision", "manager"],
+    roles: ["admision", "manager" , "doctor"],
     items: [
       { title: "صف فعلی پذیرش", url: "/dashboard/admision" },
       { title: "تاریخچه ی پذیرش", url: "/dashboard/admision/history" },
@@ -54,9 +54,11 @@ const menu: MenuGroup[] = [
   },
   {
     title: "داروخانه",
-    roles: ["medicine", "manager"],
+    roles: ["medicine", "manager" , "doctor"],
     items: [
+      { title: "صف دریافت", url: "/dashboard/medicine/queue" },
       { title: "لیست داروها", url: "/dashboard/medicine" },
+      { title: "لیست آزمایشات", url: "/dashboard/medicine/tests" },
       { title: "افزودن داروها از طریق اکسل", url: "/dashboard/medicine/importExcel" },
     ],
   },
