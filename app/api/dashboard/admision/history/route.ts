@@ -7,12 +7,20 @@ export async function GET(req: NextRequest) {
   try {
     const currentUser = await getUser();
     const { page, pageSize, sortModel, filterModel } = parseGridParams(req.url);
+    
+    // استخراج پارامترهای تاریخ از URL
+    const url = new URL(req.url);
+    const fromDateTime = url.searchParams.get('fromDateTime');
+    const toDateTime = url.searchParams.get('toDateTime');
+
     const { rows, total } = await getAdmisionHistoryQuery({
       siteId: Number(currentUser?.siteId),
       page,
       pageSize,
       sortModel,
       filterModel,
+      fromDateTime: fromDateTime || undefined,
+      toDateTime: toDateTime || undefined,
     });
 
     return NextResponse.json({ ok: true, rows, total });

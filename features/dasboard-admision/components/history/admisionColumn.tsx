@@ -92,6 +92,7 @@ export const createAdmisionColumns = ({
       width: 100,
       flex: 0.8,
       minWidth: 90,
+      valueFormatter: (value) => statusFa[value],
       renderCell: (p) => (
         <Chip
           label={statusFa[p.value]}

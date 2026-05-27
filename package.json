@@ -27,7 +27,6 @@
     "@mui/x-date-pickers": "^9.1.0",
     "@tanstack/react-virtual": "^3.13.24",
     "bcrypt": "^6.0.0",
-    "date-fns-jalali": "^4.0.0-0",
     "dayjs": "^1.11.20",
     "drizzle-orm": "^0.45.2",
     "formik": "^2.4.9",

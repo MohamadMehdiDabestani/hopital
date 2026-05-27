@@ -11,7 +11,7 @@ import {
   visits,
   visitToMedicine,
 } from "@/features/core/schema/schema.drizzle";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { ActionResult, buildOrderBy, buildWhere } from "@/features/core";
 export const createVisitQuery = async (
   data: DasboardAdmisionSchemaType,
@@ -124,16 +124,42 @@ export const getAdmisionHistoryQuery = async ({
   pageSize = 10,
   sortModel = [],
   filterModel = { items: [] },
+  fromDateTime,
+  toDateTime,
 }: {
   siteId: number;
   page?: number;
   pageSize?: number;
   sortModel?: Array<{ field: string; sort: "asc" | "desc" }>;
   filterModel?: { items: Array<any>; quickFilterValues?: string[] };
+  fromDateTime?: string;
+  toDateTime?: string;
 }) => {
+  let additionalWhere = undefined;
+
+  if (fromDateTime || toDateTime) {
+    const dateConditions = [];
+
+    if (fromDateTime) {
+      dateConditions.push(gte(visits.receptionTime, new Date(fromDateTime)));
+    }
+    if (toDateTime) {
+      console.log(toDateTime)
+      dateConditions.push(lte(visits.receptionTime, new Date(toDateTime)));
+    }
+
+    additionalWhere = and(...dateConditions);
+  }
+
   const where = buildWhere(columnMap, filterModel, quickSearchCols);
   const orderBy = buildOrderBy(columnMap, sortModel, users.id);
-  const baseWhere = and(eq(visits.siteId, siteId), where);
+
+  // ترکیب where conditions
+  const baseWhere = and(
+    eq(visits.siteId, siteId),
+    where,
+    additionalWhere
+  );
 
   const [rows, totalResult] = await Promise.all([
     db
@@ -220,6 +246,7 @@ export const getAdmisionHistoryQuery = async ({
   const total = Number(totalResult[0]?.count ?? 0);
   return { rows, total };
 };
+
 
 export const makeSuspendQuery = async (visitId: number) => {
   await db
