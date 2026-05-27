@@ -3,21 +3,28 @@
 import {
   Box,
   Button,
-  Checkbox,
   Divider,
-  FormControlLabel,
+  IconButton,
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
 import { GridToolbar, GridToolbarProps } from "@mui/x-data-grid/internals";
 import { exportGridToExcel } from "@/features/core/utils/gridToExcel";
-import { DateTimeTrigger } from "@/features/core";
-
+import { DateTimeTrigger } from "@/features/dashboard-medicine/type";
+import { DateTimePicker } from "@mui/x-date-pickers";
+import dayjs from "@/features/core/utils/dayjs";
+import { useMemo, useState } from "react";
+import { PickerValue } from "@mui/x-date-pickers/internals";
+import RefreshIcon from "@mui/icons-material/Refresh";
 type Props = GridToolbarProps & {
   dateTimeTrigger: DateTimeTrigger;
   onChangeDateTime: (value: DateTimeTrigger) => void;
-  rows: any;
-  columns: any;
+  rows: any[];
+  columns: any[];
+  setFromDateTime: (value: PickerValue) => void;
+  setToDateTime: (value: PickerValue) => void;
+  fromDateTime: dayjs.Dayjs | null;
+  toDateTime: dayjs.Dayjs | null;
 };
 
 export const AdmisionHistoryToolbar = ({
@@ -25,8 +32,17 @@ export const AdmisionHistoryToolbar = ({
   dateTimeTrigger,
   onChangeDateTime,
   rows,
+  fromDateTime,
+  toDateTime,
+  setFromDateTime,
+  setToDateTime,
   ...props
 }: Props) => {
+  const today = useMemo(() => dayjs().calendar("jalali"), []);
+  const resetDateTime = () => {
+    setFromDateTime(null);
+    setToDateTime(null);
+  };
   return (
     <Box
       sx={{
@@ -38,10 +54,46 @@ export const AdmisionHistoryToolbar = ({
         "&>div": {
           borderBottom: "none",
         },
+        flexWrap: "wrap",
+        gap: 1,
+        p: 1,
       }}
     >
       <GridToolbar {...props} />
-
+      <DateTimePicker
+        label="از تاریخ"
+        value={fromDateTime ?? today} // for handle initial jalali format
+        maxDateTime={toDateTime ? toDateTime : today}
+        onChange={(newValue) =>
+          setFromDateTime(dayjs(newValue).calendar("jalali"))
+        }
+        ampm={false}
+        format="HH:mm YYYY/MM/DD"
+        slotProps={{
+          textField: {
+            variant: "filled",
+          },
+        }}
+      />
+      <DateTimePicker
+        label="تا تاریخ"
+        value={toDateTime ?? today} // for handle initial jalali format
+        maxDateTime={today}
+        format="HH:mm YYYY/MM/DD"
+        onChange={(newValue) =>
+          setToDateTime(dayjs(newValue).calendar("jalali"))
+        }
+        ampm={false}
+        slotProps={{
+          textField: {
+            variant: "filled",
+          },
+        }}
+      />
+      <IconButton onClick={resetDateTime}>
+        <RefreshIcon />
+      </IconButton>
+      <Divider orientation="vertical" />
       <ToggleButtonGroup
         value={dateTimeTrigger}
         color="info"
@@ -58,21 +110,16 @@ export const AdmisionHistoryToolbar = ({
         <ToggleButton value="miladi">میلادی</ToggleButton>
       </ToggleButtonGroup>
 
+
+
       <Button
         color="warning"
         sx={{ ml: 2 }}
         variant="contained"
         onClick={() => {
           exportGridToExcel(rows ?? [], columns, {
-            fileName: "medicines.xlsx",
-            sheetName: "Medicines",
-            // transformRows: (rows) =>
-            //   flattenMedicineRowsForExcel(
-            //     rows as Row[],
-            //     baseToday,
-            //     dateTimeTrigger,
-            //   ),
-            // columnFilter: (c) => c.field !== "id",
+            fileName: "admision.xlsx",
+            sheetName: "Admision",
             columnFilter: (c) =>
               ![
                 "id",
