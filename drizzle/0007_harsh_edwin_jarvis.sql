@@ -1,1 +1,0 @@
-ALTER TABLE "visits" ALTER COLUMN "doctorId" SET NOT NULL;

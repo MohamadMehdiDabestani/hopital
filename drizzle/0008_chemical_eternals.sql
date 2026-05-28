@@ -1,1 +1,0 @@
-ALTER TABLE "visits" ADD COLUMN "reciveMedicineTime" timestamp with time zone;
