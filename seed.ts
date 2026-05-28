@@ -2,7 +2,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '@/features/core/schema/schema.drizzle';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -17,14 +17,17 @@ async function main() {
 
   // --- Insert seed data ---
   const hashedPassword = await bcrypt.hash("123456789" , 12)
-  await db.insert(schema.users).values({
-    lastName : "Reza",
-    firstName : "Ali",
-    codeMeli : "5569235741",
-    phoneNumber : "09115699104",
-    rule : "manager",
-    hashedPassword,
-  })
+  console.log('🔐 Hashed password:', hashedPassword)
+  const compare = await bcrypt.compare("123456789", hashedPassword);
+  console.log('✅ Password comparison result:', compare)
+  // await db.insert(schema.users).values({
+  //   lastName : "DDDD",
+  //   firstName : "DDDD",
+  //   codeMeli : "666685124",
+  //   phoneNumber : "09136666666",
+  //   rule : "manager",
+  //   hashedPassword,
+  // })
 
   console.log('🎉 Seeding complete!');
   

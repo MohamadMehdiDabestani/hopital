@@ -4,7 +4,7 @@ import { DashboardManagerUserAddSchema } from "@/features/dashboard-manager/sche
 import { db } from "@/features/core/drizzle/client";
 import { users } from "@/features/auth/schemas/users.drizzle";
 import { generatePassword } from "@/features/core/utils/passwordGenerator";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { sites } from "@/features/dashboard-root/schemas/sites.drizzle";
 import { and, eq, sql } from "drizzle-orm";
 import { buildOrderBy, buildWhere } from "@/features/core";

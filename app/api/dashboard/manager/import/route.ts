@@ -7,7 +7,7 @@ import { getUser } from "@/features/auth/utils/dal";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { generatePassword } from "@/features/core/utils/passwordGenerator";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
