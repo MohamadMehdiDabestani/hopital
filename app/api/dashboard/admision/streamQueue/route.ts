@@ -45,7 +45,7 @@ export async function GET(req: Request) {
         unsubscribe();
         try {
           controller.close();
-        } catch {}
+        } catch { }
       };
 
       req.signal.addEventListener("abort", cleanup);
@@ -57,6 +57,8 @@ export async function GET(req: Request) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+
     },
   });
 }
