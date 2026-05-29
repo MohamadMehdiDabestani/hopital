@@ -4,7 +4,7 @@ import { DashboardRootSchema } from "@/features/dashboard-root/schemas/dashboard
 import { sites } from "@/features/dashboard-root/schemas/sites.drizzle";
 import { users } from "@/features/auth/schemas/users.drizzle";
 import { generatePassword } from "@/features/core/utils/passwordGenerator";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 export const createNewSite = async (data: DashboardRootSchema) => {
   const password = generatePassword();

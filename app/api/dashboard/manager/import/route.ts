@@ -7,7 +7,18 @@ import { getUser } from "@/features/auth/utils/dal";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { generatePassword } from "@/features/core/utils/passwordGenerator";
-import bcrypt from "bcrypt";
+import { sendMultiple } from "@/features/core/utils/sendSMS"; // مسیر رو تنظیم کن
+import bcrypt from "bcryptjs";
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+const SENDER = "50004075015802";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,10 +53,7 @@ export async function POST(req: NextRequest) {
 
     if (validRows.length === 0) {
       return NextResponse.json(
-        {
-          error: "هیچ ردیف معتبری برای ایمپورت وجود ندارد",
-          invalidRows,
-        },
+        { error: "هیچ ردیف معتبری برای ایمپورت وجود ندارد", invalidRows },
         { status: 400 },
       );
     }
@@ -58,14 +66,18 @@ export async function POST(req: NextRequest) {
       grouped.get(row.codeMeli)!.push(row);
     }
 
+    const smsReceivers: Array<{
+      Sender: string;
+      Text: string;
+      Destination: string;
+    }> = [];
+
     await db.transaction(async (tx) => {
       for (const [codeMeli, rows] of grouped.entries()) {
         const base = rows[0];
 
         const existing = await tx
-          .select({
-            id: users.id,
-          })
+          .select({ id: users.id })
           .from(users)
           .where(and(eq(users.codeMeli, codeMeli), eq(users.siteId, siteId)))
           .limit(1);
@@ -73,22 +85,35 @@ export async function POST(req: NextRequest) {
         if (!existing.length) {
           const password = generatePassword();
           const hashedPassword = await bcrypt.hash(password, 12);
-          await tx
-            .insert(users)
-            .values({
-              firstName: base.firstName,
-              lastName: base.lastName,
-              codeMeli: base.codeMeli,
-              suspended: base.suspended,
-              rule: base.role,
-              hashedPassword: hashedPassword,
-              phoneNumber: base.phoneNumber,
-              siteId: siteId,
-            })
-            
+
+          await tx.insert(users).values({
+            firstName: base.firstName,
+            lastName: base.lastName,
+            codeMeli: base.codeMeli,
+            suspended: base.suspended,
+            rule: base.role,
+            hashedPassword: hashedPassword,
+            phoneNumber: base.phoneNumber,
+            siteId: siteId,
+          });
+
+          const fullName = `${base.firstName} ${base.lastName}`;
+
+          smsReceivers.push({
+            Sender: SENDER,
+            Text: `اقا/خانم:${fullName} رمز عبور جدید شما: | ${password} | |${user.siteName}|`,
+            Destination: base.phoneNumber,
+          });
         }
       }
     });
+
+    if (smsReceivers.length > 0) {
+      const chunks = chunkArray(smsReceivers, 90);
+      for (const chunk of chunks) {
+        await sendMultiple(chunk as any);
+      }
+    }
 
     return NextResponse.json({
       message: "ایمپورت با موفقیت انجام شد",

@@ -6,6 +6,7 @@ import { db } from "@/features/core/drizzle/client";
 import { users } from "@/features/auth/schemas/users.drizzle";
 import { eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { sites } from "@/features/dashboard-root/schemas/sites.drizzle";
 
 export const verifySession = async () => {
   const cookie = (await cookies()).get("access_token")?.value;
@@ -27,9 +28,11 @@ const getUserCache = (key: string, userId: number) =>
         firstName: users.firstName,
         lastName: users.lastName,
         siteId: users.siteId,
-        role : users.rule
+        role: users.rule,
+        siteName: sites.name,
       })
       .from(users)
+      .leftJoin(sites, eq(users.siteId, sites.id))
       .where(eq(users.id, userId));
     return user;
   }, [`user:${key}`])();

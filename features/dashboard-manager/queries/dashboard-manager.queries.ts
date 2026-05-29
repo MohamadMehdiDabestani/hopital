@@ -4,10 +4,11 @@ import { DashboardManagerUserAddSchema } from "@/features/dashboard-manager/sche
 import { db } from "@/features/core/drizzle/client";
 import { users } from "@/features/auth/schemas/users.drizzle";
 import { generatePassword } from "@/features/core/utils/passwordGenerator";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { sites } from "@/features/dashboard-root/schemas/sites.drizzle";
 import { and, eq, sql } from "drizzle-orm";
 import { buildOrderBy, buildWhere } from "@/features/core";
+import { sendGetSMS } from "@/features/core/utils/sendSMS";
 
 const columnMap = {
   id: users.id,
@@ -108,10 +109,22 @@ export const createOrUpdateUserForSiteQuery = async (
         .where(eq(users.id, data.rowUserId));
   });
 };
-export const updateUserPasswordQuery = async (userId : number) => {
+export const updateUserPasswordQuery = async (userId: number) => {
   const password = generatePassword();
   const hashedPassword = await bcrypt.hash(password, 12);
-  await db.update(users).set({
-    hashedPassword : hashedPassword,
-  }).where(eq(users.id , userId))
-}
+  const [{ phoneNumber, fullName , siteName }] = await db
+    .update(users)
+    .set({
+      hashedPassword: hashedPassword,
+    })
+    .where(eq(users.id, userId))
+    .returning({
+      phoneNumber: users.phoneNumber,
+      siteName: sites.name,
+      fullName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+    });
+  await sendGetSMS(
+    `آقا/خانم:${fullName} رمز عبور جدید شما: | ${password} | |${siteName}|`,
+    phoneNumber,
+  );
+};
