@@ -22,15 +22,10 @@ export const useMedicineList = ({ initialData }: { initialData: any }) => {
   const [serverNowIso, setServerNowIso] = useState<string | null>(null);
 
   useEffect(() => {
-    let active = true;
-
     getServerTime().then((d) => {
-      if (active) setServerNowIso(d.gregorianIso);
+      setServerNowIso(d.gregorianIso);
     });
 
-    return () => {
-      active = false;
-    };
   }, []);
 
   const baseToday = useMemo(() => {
