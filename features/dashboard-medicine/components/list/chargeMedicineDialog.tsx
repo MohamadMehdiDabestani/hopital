@@ -89,7 +89,6 @@ export const ChargeMedicineDialog = ({
       });
     }
   }, [open, charge, medicineId]);
-  console.log(formik.errors);
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       {charge ? (

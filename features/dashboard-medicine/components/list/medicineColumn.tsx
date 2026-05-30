@@ -37,7 +37,6 @@ export const createMedicineColumns = ({
   dateTimeTrigger,
 }: Params): GridColDef[] => {
   const isGregorian = dateTimeTrigger === "miladi";
-
   return [
     { field: "id", headerName: "آیدی", width: 90 },
 
@@ -142,11 +141,10 @@ export const createMedicineColumns = ({
               return (
                 <Tooltip
                   key={`${c.medicineId}-${c.expiryDate}-${c.chargeCreateAt}`}
-                  title={`${
-                    c.storageLocation
+                  title={`${c.storageLocation
                       ? `محل: ${c.storageLocation}`
                       : "محل نامشخص"
-                  } (برای ویرایش کلیک کنید)`}
+                    } (برای ویرایش کلیک کنید)`}
                   arrow
                   placement="left-start"
                 >
