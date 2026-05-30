@@ -1,6 +1,6 @@
 'use client'
 import { FormControlLabel, Checkbox } from "@mui/material";
-import { Fragment } from "react";
+import { Fragment, ReactNode } from "react";
 type FilterControlsProps = {
   showOnlyEmpty: boolean;
   showOnlyErrors: boolean;
@@ -8,6 +8,7 @@ type FilterControlsProps = {
   onToggleUnselected: (checked: boolean) => void;
   onToggleEmpty: (checked: boolean) => void;
   onToggleErrors: (checked: boolean) => void;
+  children? : ReactNode
 };
 
 export const FilterControls = ({
@@ -17,6 +18,7 @@ export const FilterControls = ({
   onToggleEmpty,
   onToggleUnselected,
   onToggleErrors,
+  children
 }: FilterControlsProps) => {
   return (
     <Fragment>
@@ -47,6 +49,7 @@ export const FilterControls = ({
         }
         label="نمایش ردیف ها ی معتبر انتخاب نشده"
       />
+      {children}
     </Fragment>
   );
 };
