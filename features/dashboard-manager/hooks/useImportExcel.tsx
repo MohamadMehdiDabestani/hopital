@@ -4,7 +4,10 @@ import { ImportExcelParsedRow } from "@/features/dashboard-medicine/type";
 export const useImportUsers = () => {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const importRows = async (rows: ImportExcelParsedRow[]) => {
+  const importRows = async (
+    rows: ImportExcelParsedRow[],
+    codeMeliPass: boolean,
+  ) => {
     const selectedRows = rows.filter((row) => row.selected && row.isValid);
 
     if (selectedRows.length === 0) {
@@ -21,6 +24,7 @@ export const useImportUsers = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rows: selectedRows.map((row) => row.data),
+          codeMeliPass,
         }),
       });
 

@@ -6,6 +6,8 @@ import {
   Alert,
   Button,
   CircularProgress,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { FileUploader } from "./fileUpload";
 import { FilterControls } from "@/features/core";
@@ -22,7 +24,9 @@ import {
   PersianRoleMapper,
 } from "@/features/dashboard-manager/const";
 import { excelRowImportSchema } from "../../schemas/dashboard-managerImportExcel.schema";
+import { useState } from "react";
 export const UsersImportExcel = () => {
+  const [codeMeliPass, setCodeMeliPass] = useState<boolean>(false);
   const {
     parsedData,
     loading,
@@ -62,7 +66,7 @@ export const UsersImportExcel = () => {
   const { show } = useNotificationStore();
   const router = useRouter();
   const handleImport = async () => {
-    const result = await importRows(parsedData);
+    const result = await importRows(parsedData , codeMeliPass);
     if (result.success) {
       show("کاربران با موفقیت اضافه شده اند", "success");
       router.push("/dashboard/manager");
@@ -96,7 +100,17 @@ export const UsersImportExcel = () => {
             showOnlyErrors={showOnlyErrors}
             onToggleEmpty={setShowOnlyEmpty}
             onToggleErrors={setShowOnlyErrors}
-          />
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={codeMeliPass}
+                  onChange={(e) => setCodeMeliPass(e.target.checked)}
+                />
+              }
+              label="استفاده از کد ملی برای رمز عبور"
+            />
+          </FilterControls>
 
           <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
             {parsedData.length} ردیف خوانده شد (
