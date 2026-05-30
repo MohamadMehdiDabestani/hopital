@@ -11,8 +11,6 @@ import {
 } from "@mui/material";
 import { GridToolbar, GridToolbarProps } from "@mui/x-data-grid/internals";
 import { exportGridToExcel } from "@/features/core/utils/gridToExcel";
-import { managerExcelColumns } from "@/features/dashboard-manager/utils/flattenColumns";
-import { UserRow } from "@/features/dashboard-manager/type";
 import { DateTimeTrigger } from "@/features/core";
 
 type Props = GridToolbarProps & {
