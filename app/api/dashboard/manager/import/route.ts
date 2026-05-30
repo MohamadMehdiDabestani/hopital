@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const siteId = Number(user.siteId);
 
     const body = await req.json();
-    const { rows } = body;
+    const { rows, codeMeliPass = false } = body;
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json(
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
           .limit(1);
 
         if (!existing.length) {
-          const password = generatePassword();
+          const password = codeMeliPass ? base.codeMeli : generatePassword();
           const hashedPassword = await bcrypt.hash(password, 12);
 
           await tx.insert(users).values({
@@ -92,18 +92,18 @@ export async function POST(req: NextRequest) {
             codeMeli: base.codeMeli,
             suspended: base.suspended,
             rule: base.role,
-            hashedPassword: hashedPassword,
+            hashedPassword,
             phoneNumber: base.phoneNumber,
-            siteId: siteId,
+            siteId,
           });
 
           const fullName = `${base.firstName} ${base.lastName}`;
-
-          smsReceivers.push({
-            Sender: SENDER,
-            Text: `اقا/خانم:${fullName} رمز عبور جدید شما: | ${password} | |${user.siteName}|`,
-            Destination: base.phoneNumber,
-          });
+          !codeMeliPass &&
+            smsReceivers.push({
+              Sender: SENDER,
+              Text: `اقا/خانم:${fullName} رمز عبور شما: | ${password} | |${user.siteName}|`,
+              Destination: base.phoneNumber,
+            });
         }
       }
     });
