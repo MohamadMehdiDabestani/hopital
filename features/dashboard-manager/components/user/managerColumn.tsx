@@ -35,7 +35,7 @@ export const createManagerColumns = ({
       valueGetter: (params, row) => `${row.firstName} ${row.lastName}`,
     },
     { field: "codeMeli", headerName: "کد ملی", width: 140 },
-    { field: "phone", headerName: "شماره تماس", width: 140 },
+    { field: "phone", headerName: "شماره موبایل", width: 140 },
     {
       field: "lastLoginAt",
       headerName: "آخرین ورود",
