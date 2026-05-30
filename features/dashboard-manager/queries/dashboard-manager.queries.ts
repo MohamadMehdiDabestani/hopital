@@ -73,28 +73,33 @@ export const getUserListQuery = async ({
 };
 export const createOrUpdateUserForSiteQuery = async (
   data: DashboardManagerUserAddSchema,
-  currentUserId: number,
+  siteId: number,
 ) => {
-  const password = generatePassword();
-  const hashedPassword = await bcrypt.hash(password, 12);
   return db.transaction(async (tx) => {
     if (!data.rowUserId) {
-      const [site] = await tx
-        .select({ siteId: sites.id })
-        .from(sites)
-        .where(eq(sites.createdByUserId, currentUserId));
-
-      if (!site) throw new Error("کاربری یافت نشد");
-      await tx.insert(users).values({
-        firstName: data.firstName,
-        codeMeli: data.codeMeli,
-        suspended: false,
-        lastName: data.lastName,
-        phoneNumber: data.phone,
-        rule: data.role,
-        hashedPassword,
-        siteId: site.siteId,
-      });
+      const password = generatePassword();
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const [{ phoneNumber, fullName, siteName }] = await tx
+        .insert(users)
+        .values({
+          firstName: data.firstName,
+          codeMeli: data.codeMeli,
+          suspended: false,
+          lastName: data.lastName,
+          phoneNumber: data.phone,
+          rule: data.role,
+          hashedPassword,
+          siteId,
+        })
+        .returning({
+          phoneNumber: users.phoneNumber,
+          siteName: sites.name,
+          fullName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+        });
+      await sendGetSMS(
+        `آقا/خانم:${fullName} رمز عبور جدید شما: | ${password} | |${siteName}|`,
+        phoneNumber,
+      );
     } else
       await tx
         .update(users)
@@ -112,7 +117,7 @@ export const createOrUpdateUserForSiteQuery = async (
 export const updateUserPasswordQuery = async (userId: number) => {
   const password = generatePassword();
   const hashedPassword = await bcrypt.hash(password, 12);
-  const [{ phoneNumber, fullName , siteName }] = await db
+  const [{ phoneNumber, fullName, siteName }] = await db
     .update(users)
     .set({
       hashedPassword: hashedPassword,

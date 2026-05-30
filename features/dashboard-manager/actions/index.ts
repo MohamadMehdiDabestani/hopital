@@ -10,9 +10,8 @@ import {
   updateUserPasswordQuery,
 } from "@/features/dashboard-manager/queries/dashboard-manager.queries";
 import { ActionErrorMapping } from "@/features/core/utils/actionErrorMapping";
-import { verifySession } from "@/features/auth/utils/dal";
+import { getUser } from "@/features/auth/utils/dal";
 import { revalidatePath } from "next/cache";
-import { sendGetSMS } from "@/features/core/utils/sendSMS";
 
 export const createOrUpdateUserForSite = async (
   data: DashboardManagerUserAddSchema,
@@ -21,11 +20,11 @@ export const createOrUpdateUserForSite = async (
   if (!parsedData.success)
     return { ok: false, message: "اطلاعات را کامل وارد کنید" };
   try {
-    const user = await verifySession();
-    console.log(parsedData.data);
-    await createOrUpdateUserForSiteQuery(parsedData.data, Number(user?.userId));
+    const user = await getUser();
+    await createOrUpdateUserForSiteQuery(parsedData.data, Number(user?.siteId));
     return { ok: true, data: undefined };
   } catch (error: any) {
+
     return {
       ok: false,
       message: error.message ?? ActionErrorMapping(error as any),
