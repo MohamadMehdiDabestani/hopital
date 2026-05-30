@@ -1,6 +1,6 @@
 {
-  "id": "a0981b6c-1de8-49d8-b87f-8de53cf1f8c3",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "cd6cb946-3c9f-4d06-a092-9ed9e5222927",
+  "prevId": "a0981b6c-1de8-49d8-b87f-8de53cf1f8c3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -83,10 +83,30 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "users_site_id_sites_id_fk": {
+          "name": "users_site_id_sites_id_fk",
+          "tableFrom": "users",
+          "tableTo": "sites",
+          "columnsFrom": [
+            "site_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "users_phone_number_unique": {

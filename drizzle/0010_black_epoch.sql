@@ -1,0 +1,2 @@
+ALTER TABLE "medicines" ADD COLUMN "siteId" integer;--> statement-breakpoint
+ALTER TABLE "medicines" ADD CONSTRAINT "medicines_siteId_sites_id_fk" FOREIGN KEY ("siteId") REFERENCES "public"."sites"("id") ON DELETE no action ON UPDATE no action;

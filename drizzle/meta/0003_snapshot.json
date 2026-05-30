@@ -1,6 +1,6 @@
 {
-  "id": "a0981b6c-1de8-49d8-b87f-8de53cf1f8c3",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "4d911738-8f53-45e7-980b-f4eadf9bdfda",
+  "prevId": "eaeab208-3f1c-44e1-aa68-8d64e95879e5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -83,10 +83,30 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "siteId": {
+          "name": "siteId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "users_siteId_sites_id_fk": {
+          "name": "users_siteId_sites_id_fk",
+          "tableFrom": "users",
+          "tableTo": "sites",
+          "columnsFrom": [
+            "siteId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "users_phone_number_unique": {
@@ -131,8 +151,8 @@
           "notNull": false,
           "default": "gen_random_uuid()"
         },
-        "userId": {
-          "name": "userId",
+        "createByUserId": {
+          "name": "createByUserId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -140,12 +160,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "sites_userId_users_id_fk": {
-          "name": "sites_userId_users_id_fk",
+        "sites_createByUserId_users_id_fk": {
+          "name": "sites_createByUserId_users_id_fk",
           "tableFrom": "sites",
           "tableTo": "users",
           "columnsFrom": [
-            "userId"
+            "createByUserId"
           ],
           "columnsTo": [
             "id"
@@ -156,11 +176,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "sites_userId_unique": {
-          "name": "sites_userId_unique",
+        "sites_createByUserId_unique": {
+          "name": "sites_createByUserId_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "userId"
+            "createByUserId"
           ]
         }
       },
