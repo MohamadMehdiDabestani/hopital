@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/features/core/drizzle/client";
 import { and, eq, sql } from "drizzle-orm";
-import { excelRowImportSchema } from "@/features/dashboard-medicine/schemas/dashboard-medicineAdd.schema";
+import { excelRowImportSchema } from "@/features/dashboard-medicine/schemas/dashbaord-medicineImport.schema";
 import { medicines } from "@/features/dashboard-medicine/schemas/medicine.drizzle";
 import { getUser } from "@/features/auth/utils/dal";
 import { redirect } from "next/navigation";

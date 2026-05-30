@@ -7,12 +7,12 @@ export const excelRowImportSchema = z.object({
   phoneNumber: z
     .string("3")
     .regex(/^\d{11}$/, "شماره موبایل باید دقیقاً 11 رقم باشد"),
-  codeMeli: z
-    .string("4")
-    .regex(/^\d{10}$/, "کد ملی باید دقیقاً 10 رقم باشد"),
+  codeMeli: z.string("4").regex(/^\d{10}$/, "کد ملی باید دقیقاً 10 رقم باشد"),
   suspended: z.boolean(),
-  role: z.enum(roleEnum.enumValues),
+  role: z.enum(
+    roleEnum.enumValues,
+    "نقش باید یکی از موارد: مدیر , دارودار , دکتر , پذیرش باشد",
+  ),
 });
-
 
 export type ExcelRowImport = z.infer<typeof excelRowImportSchema>;

@@ -26,6 +26,7 @@ export const SelectCell = ({
         label={label}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
+        size="small"
       >
         {options.map((option) => (
           <MenuItem key={option.value} value={option.value}>
