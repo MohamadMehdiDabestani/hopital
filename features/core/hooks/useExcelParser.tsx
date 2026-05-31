@@ -116,22 +116,27 @@ export const useExcelParser = <T = Record<string, any>,>(
   };
 
   // ── Selection Helpers ────────────────────────────────────────────────────
-
   const toggleRowSelection = (rowId: string) => {
     setParsedData((prev) =>
-      prev.map((row) =>
-        row.id === rowId ? { ...row, selected: !row.selected } : row,
-      ),
+      prev.map((row) => {
+        if (row.id !== rowId) return row;
+        if (!row.isValid) return { ...row, selected: false };
+        return { ...row, selected: !row.selected };
+      }),
     );
   };
-
   const toggleSelectAll = () => {
-    const allSelected = parsedData.every((row) => row.selected);
+    const validRows = parsedData.filter((row) => row.isValid);
+    const allValidSelected =
+      validRows.length > 0 && validRows.every((row) => row.selected);
+
     setParsedData((prev) =>
-      prev.map((row) => ({ ...row, selected: !allSelected })),
+      prev.map((row) => {
+        if (!row.isValid) return { ...row, selected: false }; 
+        return { ...row, selected: !allValidSelected };
+      }),
     );
   };
-
   return {
     parsedData,
     loading,
