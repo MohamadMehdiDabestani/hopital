@@ -33,25 +33,33 @@ export function useVisitsRealtime({
   const onChangeRef = useRef(onChange);
   const onConnectedRef = useRef(onConnected);
   const onDisconnectedRef = useRef(onDisconnected);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+    onConnectedRef.current = onConnected;
+    onDisconnectedRef.current = onDisconnected;
+  }, [onChange, onConnected, onDisconnected]);
+
   useEffect(() => {
     if (!enabled) return;
     cleanupRef.current?.();
     cleanupRef.current = null;
-
+    const handleOpen = () => onConnectedRef.current?.();
+    const handleError = () => onDisconnectedRef.current?.();
+    const handleDisconnect = () => onDisconnectedRef.current?.();
     if (method === "sse") {
       const es = new EventSource("/api/dashboard/admision/streamQueue");
 
-      const handleOpen = () => onConnected?.();
-      const handleError = () => onDisconnected?.();
-
+      const handleChange = (data: string) =>
+        onChangeRef.current(JSON.parse(data));
       es.addEventListener("open", handleOpen);
       es.addEventListener("error", handleError);
-      // es.addEventListener("visits:changed", handleChanged as any);
-      es.onmessage = (ev) => onChange(JSON.parse(ev.data));
+      es.onmessage = (ev) => handleChange(ev.data);
       cleanupRef.current = () => {
         es.removeEventListener("open", handleOpen);
         es.removeEventListener("error", handleError);
         es.close();
+        handleDisconnect();
       };
 
       return () => cleanupRef.current?.();
@@ -73,20 +81,16 @@ export function useVisitsRealtime({
         ...(siteId ? { query: { siteId } } : {}),
       });
 
-      const handleConnect = () => onConnectedRef.current?.();
-      const handleDisconnect = () => onDisconnectedRef.current?.();
-      const handleChanged = (payload: VisitsChangedPayload) =>
+      const handleChange = (payload: VisitsChangedPayload) =>
         onChangeRef.current(payload);
-
-      socket.on("connect", handleConnect);
-      socket.on("disconnect", handleDisconnect);
-      socket.on("visits:changed", handleChanged);
-
+      socket.on("connect", handleOpen);
+      socket.on("disconnect", handleError);
+      socket.on("visits:changed", handleChange);
       cleanupRef.current = () => {
         try {
-          socket.off("connect", handleConnect);
+          socket.off("connect", handleOpen);
           socket.off("disconnect", handleDisconnect);
-          socket.off("visits:changed", handleChanged);
+          socket.off("visits:changed", handleChange);
           socket.disconnect();
         } catch {}
       };

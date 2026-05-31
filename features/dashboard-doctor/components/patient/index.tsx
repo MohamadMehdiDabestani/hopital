@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   Box,
   Button,
@@ -30,6 +30,7 @@ import {
   Item,
   VisitHistory,
 } from "@/features/dashboard-doctor/type";
+import { useVisitsRealtime } from "@/features/core/hooks/useVisitsRealtime";
 
 export const DoctorPatient = ({
   medicineList,
@@ -61,31 +62,27 @@ export const DoctorPatient = ({
     currentPatientRef.current = currentPatient;
     historyRef.current = history;
   }, [currentPatient, history]);
-  // for auto change if list is empty
-  useEffect(() => {
-    const es = new EventSource("/api/dashboard/admision/streamQueue");
-    es.onmessage = (e) => {
-      try {
-        const payload = JSON.parse(e.data);
-        if (
-          payload.status == "suspended" &&
-          currentPatientRef.current?.id == payload.id
-        )
-          handleNextPatient();
-        else if (
-          !currentPatientRef.current &&
-          historyRef.current.length === 0 &&
-          payload.status === "treat"
-        ) {
-          setShowWarning(true);
-        }
-      } catch (err) {
-        console.error("SSE parse error:", err);
-      }
-    };
-    return () => es.close();
+  const handleRealtimeChange = useCallback((payload: any) => {
+    if (
+      payload.status == "suspended" &&
+      currentPatientRef.current?.id == payload.id
+    )
+      handleNextPatient();
+    else if (
+      !currentPatientRef.current &&
+      historyRef.current.length === 0 &&
+      payload.status === "treat"
+    ) {
+      setShowWarning(true);
+    }
   }, []);
-
+  // for auto change if list is empty
+  useVisitsRealtime({
+    enabled: true,
+    onConnected: () => console.log("realtime connected"),
+    onDisconnected: () => console.log("realtime disconnected"),
+    onChange: handleRealtimeChange,
+  });
   const handleNextPatient = () => {
     startTransition(() => {
       (async () => {
