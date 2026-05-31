@@ -41,3 +41,7 @@ main().catch((err) => {
 // runflare users:
 // doctor : 
 // phone : 09135377502 - pass : ASDFGHasdfgh123
+
+// local user:
+// manager : 
+// phone : phone : 0913537705 - 5569235741

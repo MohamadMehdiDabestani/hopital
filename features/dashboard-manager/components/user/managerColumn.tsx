@@ -1,6 +1,12 @@
 "use client";
 
-import { Box, Chip, CircularProgress, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Chip,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import { UserRow } from "@/features/dashboard-manager/type";
@@ -8,17 +14,21 @@ import { DateTimeTrigger, formatDateWithTime } from "@/features/core";
 import { roleMapper } from "../../const";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
+type ResetPasswordMode = "random" | "nationalCode";
+
 type Params = {
   dateTimeTrigger: DateTimeTrigger;
   onEditUser: (row: UserRow) => void;
-  onResetPassword: (userId: number) => void;
-  resetPasswordLoadingId?: number | null; // اضافه شد
+  // onResetPassword: (userId: number, mode: ResetPasswordMode) => void;
+  resetPasswordLoadingId?: number | null;
+  onOpenResetMenu: (event: React.MouseEvent<HTMLElement>, row: UserRow) => void;
 };
 
 export const createManagerColumns = ({
   dateTimeTrigger,
   onEditUser,
-  onResetPassword,
+  // onResetPassword,
+  onOpenResetMenu,
   resetPasswordLoadingId, // اضافه شد
 }: Params): GridColDef[] => {
   const isGregorian = dateTimeTrigger === "miladi";
@@ -69,7 +79,7 @@ export const createManagerColumns = ({
     {
       field: "actions",
       headerName: "عملیات",
-      width: 120,
+      width: 140,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -86,11 +96,12 @@ export const createManagerColumns = ({
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="تغییر رمز عبور">
+
+            <Tooltip title="ریست رمز عبور">
               <IconButton
                 color="error"
                 size="small"
-                onClick={() => onResetPassword(Number(params.row.id))}
+                onClick={(e) => onOpenResetMenu(e, params.row as UserRow)}
                 disabled={isResetting}
               >
                 {isResetting ? (
