@@ -88,7 +88,6 @@ export const MedicineDialog = ({
       formik.setFieldValue("visitId", visitId);
     }
   }, [data, open]);
-  console.log(data);
   return (
     <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
       <Box component="form" onSubmit={formik.handleSubmit}>

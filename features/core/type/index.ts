@@ -33,3 +33,9 @@ export type ImportExcelFilterState = {
   showOnlyEmpty: boolean;
   showOnlyErrors: boolean;
 };
+
+export type SubscribeQueue = {
+  transport: string;
+  onEvent: (data: any) => void;
+  onError: (error: any) => void;
+};

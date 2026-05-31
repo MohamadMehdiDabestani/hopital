@@ -76,7 +76,6 @@ export async function POST(req: NextRequest) {
         if (existing.length) {
           medicineId = existing[0].id;
         } else {
-          console.log("UPADTING" , base.form)
           const [inserted] = await tx
             .insert(medicines)
             .values({

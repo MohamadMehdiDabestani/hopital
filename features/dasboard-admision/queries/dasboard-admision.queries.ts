@@ -144,7 +144,6 @@ export const getAdmisionHistoryQuery = async ({
       dateConditions.push(gte(visits.receptionTime, new Date(fromDateTime)));
     }
     if (toDateTime) {
-      console.log(toDateTime)
       dateConditions.push(lte(visits.receptionTime, new Date(toDateTime)));
     }
 

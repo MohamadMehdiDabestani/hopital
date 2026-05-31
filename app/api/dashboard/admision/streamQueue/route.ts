@@ -1,7 +1,9 @@
+import { getUser } from "@/features/auth/utils/dal";
 import {
   startVisitsListener,
   onVisitsChange,
 } from "@/features/core/utils/pgListener";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +12,8 @@ export async function GET(req: Request) {
   await startVisitsListener();
 
   const encoder = new TextEncoder();
-
+  const user = await getUser();
+  if (!user) return NextResponse.redirect("/");
   const stream = new ReadableStream({
     start(controller) {
       let closed = false;
@@ -31,7 +34,11 @@ export async function GET(req: Request) {
       send(JSON.stringify({ type: "connected" }));
 
       const unsubscribe = onVisitsChange((payload) => {
-        send(typeof payload === "string" ? payload : JSON.stringify(payload));
+        console.log(payload);
+        const data = JSON.parse(payload);
+        if (data.siteId === user.siteId) {
+          send(payload);
+        }
       });
 
       const ping = setInterval(() => {

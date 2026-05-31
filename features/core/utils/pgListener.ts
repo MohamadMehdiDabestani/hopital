@@ -1,4 +1,3 @@
-import "server-only"
 import postgres from "postgres";
 
 type Listener = (payload: string) => void;

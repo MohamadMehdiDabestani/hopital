@@ -13,11 +13,12 @@ import {
   TextField,
   TableSortLabel,
 } from "@mui/material";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { tehranTimezone } from "@/features/core";
 import useSWR from "swr";
 import { statusColor, statusFa } from "@/features/dasboard-admision/const";
 import { makeSuspendAction } from "@/features/dasboard-admision/actions";
+import { useVisitsRealtime } from "@/features/dasboard-admision/hooks/useVisitsRealtime";
 
 type ReceptionRow = {
   id: number;
@@ -75,28 +76,19 @@ export const ReceptionTable = () => {
       dispatch({ type: "SET", payload: data.rows });
     }
   }, [data]);
-
-  useEffect(() => {
-    const es = new EventSource("/api/dashboard/admision/streamQueue");
-
-    es.onmessage = (e) => {
-      try {
-        const payload = JSON.parse(e.data);
-        console.log(payload);
-        if (payload?.op === "UPDATE") {
-          dispatch({ type: "UPDATE", payload });
-        } else if (payload?.op === "INSERT") {
-          dispatch({ type: "ADD", payload });
-        }
-      } catch (err) {
-        console.error("SSE parse error:", err);
-      }
-    };
-
-    es.addEventListener("ping", () => {});
-
-    return () => es.close();
+  const handleRealtimeChange = useCallback((payload: any) => {
+    if (payload?.op === "UPDATE") {
+      dispatch({ type: "UPDATE", payload });
+    } else if (payload?.op === "INSERT") {
+      dispatch({ type: "ADD", payload });
+    }
   }, []);
+  useVisitsRealtime({
+    enabled: true,
+    onConnected: () => console.log("realtime connected"),
+    onDisconnected: () => console.log("realtime disconnected"),
+    onChange: handleRealtimeChange,
+  });
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();

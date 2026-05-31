@@ -74,7 +74,6 @@ export const createManagerColumns = ({
       filterable: false,
       renderCell: (params) => {
         const isResetting = resetPasswordLoadingId === params.row.id;
-        console.log(isResetting)
         return (
           <Box>
             <Tooltip title="ویرایش کاربر">

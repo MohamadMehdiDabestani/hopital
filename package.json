@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env NODE_ENV=development tsx watch server.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -38,6 +38,7 @@
     "postgres": "^3.4.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "stylis": "^4.3.6",
     "stylis-plugin-rtl": "^2.1.1",
@@ -59,16 +60,18 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/stylis": "^4.2.7",
+    "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jest": "^30.3.0",
     "jest-canvas-mock": "^2.5.2",
     "jest-environment-jsdom": "^30.3.0",
+    "nodemon": "^3.1.14",
     "plop": "^4.0.5",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.3",
     "typescript": "^5.9.3"
   }
 }

@@ -40,7 +40,6 @@ export const SiteDialog = ({ open, onClose, row , onSvaed}: Props) => {
         onSvaed();
         onClose();
       } catch (err: any) {
-        console.log(err);
         show(ActionErrorMapping(err), "error");
       }
     });
@@ -64,7 +63,6 @@ export const SiteDialog = ({ open, onClose, row , onSvaed}: Props) => {
       formik.resetForm();
     }
   }, [open, row]);
-  console.log(formik.errors)
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>{row ? "ویرایش کاربر" : "افزودن کاربر"}</DialogTitle>
