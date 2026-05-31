@@ -34,9 +34,10 @@ export const createOrUpdateUserForSite = async (
 
 export const resetUserPasswordAction = async (
   userId: number,
+  mode : string
 ): Promise<ActionResult<undefined>> => {
   try {
-    await updateUserPasswordQuery(userId);
+    await updateUserPasswordQuery(userId , mode);
     revalidatePath("/dashboard/manager");
     return { ok: true, data: undefined };
   } catch (error: any) {

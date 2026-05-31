@@ -114,22 +114,37 @@ export const createOrUpdateUserForSiteQuery = async (
         .where(eq(users.id, data.rowUserId));
   });
 };
-export const updateUserPasswordQuery = async (userId: number) => {
-  const password = generatePassword();
-  const hashedPassword = await bcrypt.hash(password, 12);
-  const [{ phoneNumber, fullName, siteName }] = await db
-    .update(users)
-    .set({
-      hashedPassword: hashedPassword,
-    })
-    .where(eq(users.id, userId))
-    .returning({
-      phoneNumber: users.phoneNumber,
-      siteName: sites.name,
-      fullName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
-    });
-  await sendGetSMS(
-    `آقا/خانم:${fullName} رمز عبور جدید شما: | ${password} | |${siteName}|`,
-    phoneNumber,
-  );
+export const updateUserPasswordQuery = async (userId: number, mode: string) => {
+  if (mode == "codeMeli") {
+    const [user] = await db
+      .select({ codeMeli: users.codeMeli })
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!user) throw new Error("کاربری یافت نشد");
+    const hashedPassword = await bcrypt.hash(user.codeMeli, 12);
+    await db
+      .update(users)
+      .set({
+        hashedPassword: hashedPassword,
+      })
+      .where(eq(users.id, userId));
+  } else {
+    const password = generatePassword();
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const [{ phoneNumber, fullName, siteName }] = await db
+      .update(users)
+      .set({
+        hashedPassword: hashedPassword,
+      })
+      .where(eq(users.id, userId))
+      .returning({
+        phoneNumber: users.phoneNumber,
+        siteName: sites.name,
+        fullName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+      });
+    await sendGetSMS(
+      `آقا/خانم:${fullName} رمز عبور جدید شما: | ${password} | |${siteName}|`,
+      phoneNumber,
+    );
+  }
 };

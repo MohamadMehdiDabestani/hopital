@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useMemo, useState } from "react";
 import { DataGrid, GridColumnVisibilityModel } from "@mui/x-data-grid";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Menu, MenuItem } from "@mui/material";
 import { UserDialog } from "./userDialog";
 import { DateTimeTrigger, useNotificationStore } from "@/features/core";
 import { UserRow } from "../../type";
@@ -9,21 +9,26 @@ import { createManagerColumns } from "./managerColumn";
 import { ManagerToolbar } from "./managerToolbar";
 import { useUsersList } from "../../hooks/useUsersList";
 import { resetUserPasswordAction } from "../../actions";
+
 const ALWAYS_HIDDEN_FIELDS = ["id"];
 const ALWAYS_HIDDEN = Object.fromEntries(
   ALWAYS_HIDDEN_FIELDS.map((field) => [field, false]),
 );
 
+type ResetPasswordMode = "random" | "codeMeli";
+
 export const UsersList = ({ initialData }: { initialData: any }) => {
   const [open, setOpen] = useState(false);
   const [row, setRow] = useState<UserRow | undefined>(undefined);
-  const { show } = useNotificationStore();
-  const [resetPasswordLoadingId, setResetPasswordLoadingId] = useState<
-    number | null
-  >(null);
 
-  const [dateTimeTrigger, setDateTimeTrigger] =
-    useState<DateTimeTrigger>("shamsi");
+  const [resetMenuAnchor, setResetMenuAnchor] = useState<null | HTMLElement>(null);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<UserRow | null>(null);
+
+  const { show } = useNotificationStore();
+  const [resetPasswordLoadingId, setResetPasswordLoadingId] = useState<number | null>(null);
+
+  const [dateTimeTrigger, setDateTimeTrigger] = useState<DateTimeTrigger>("shamsi");
+
   const {
     data,
     isLoading,
@@ -36,23 +41,38 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
     setSortModel,
     isValidating,
   } = useUsersList({ initialData });
+
   const [columnVisibilityModel, setColumnVisibilityModel] =
     useState<GridColumnVisibilityModel>({
       firstName: false,
       lastName: false,
       ...ALWAYS_HIDDEN,
     });
+
+  const handleOpenResetMenu = useCallback(
+    (event: React.MouseEvent<HTMLElement>, user: UserRow) => {
+      setResetMenuAnchor(event.currentTarget);
+      setSelectedUserForReset(user);
+    },
+    [],
+  );
+
+  const handleCloseResetMenu = useCallback(() => {
+    setResetMenuAnchor(null);
+    setSelectedUserForReset(null);
+  }, []);
+
   const resetPassword = useCallback(
-    async (userId: number) => {
+    async (userId: number, mode: ResetPasswordMode) => {
       setResetPasswordLoadingId(userId);
       try {
-        const res = await resetUserPasswordAction(userId);
+        const res = await resetUserPasswordAction(userId, mode);
         if (res.ok) {
           show("رمز عبور با موفقیت تغییر یافت", "success");
         } else {
           show(res.message, "error");
         }
-      } catch (error) {
+      } catch {
         show("مشکلی به وجود آمده", "error");
       } finally {
         setResetPasswordLoadingId(null);
@@ -60,6 +80,16 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
     },
     [show],
   );
+
+  const handleSelectResetMode = useCallback(
+    async (mode: ResetPasswordMode) => {
+      if (!selectedUserForReset) return;
+      await resetPassword(selectedUserForReset.id, mode);
+      handleCloseResetMenu();
+    },
+    [selectedUserForReset, resetPassword, handleCloseResetMenu],
+  );
+
   const columns = useMemo(
     () =>
       createManagerColumns({
@@ -69,10 +99,12 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
           setOpen(true);
         },
         resetPasswordLoadingId,
-        onResetPassword: resetPassword,
+        // onResetPassword: resetPassword,
+        onOpenResetMenu: handleOpenResetMenu,
       }),
-    [dateTimeTrigger, resetPasswordLoadingId, resetPassword],
+    [dateTimeTrigger, resetPasswordLoadingId, resetPassword, handleOpenResetMenu],
   );
+
   return (
     <Box sx={{ width: "100%" }}>
       <UserDialog
@@ -81,6 +113,20 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
         open={open}
         row={row}
       />
+
+      <Menu
+        anchorEl={resetMenuAnchor}
+        open={Boolean(resetMenuAnchor)}
+        onClose={handleCloseResetMenu}
+      >
+        <MenuItem onClick={() => handleSelectResetMode("random")}>
+          رمز عبور تصادفی
+        </MenuItem>
+        <MenuItem onClick={() => handleSelectResetMode("codeMeli")}>
+          رمز عبور بر اساس کد ملی
+        </MenuItem>
+      </Menu>
+
       <Box sx={{ height: 750, width: "100%" }}>
         <DataGrid
           rows={data?.rows ?? []}
