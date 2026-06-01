@@ -154,6 +154,7 @@ export const getVisitMedicinesQuery = async (visitId: number) => {
     );
   return data;
 };
+
 const baseColumnMap = {
   id: medicines.id,
   name: medicines.name,
@@ -194,19 +195,14 @@ function needsChargeJoin(
   }
   return false;
 }
-
-// تابع کمکی برای ساخت شرط انقضا
-function buildExpiryCondition() {
-  return sql`
-    EXISTS (
-      SELECT 1
-      FROM ${medicineCharges} c
-      WHERE c."medicineId" = ${medicines.id}
-        AND c."expiryDate" IS NOT NULL
-        AND c."expiryAlertDays" IS NOT NULL
-        AND (c."expiryDate"::DATE - CURRENT_DATE) <= c."expiryAlertDays"
-    )
-  `;
+function expireOnlyCondition(expireOnly: boolean) {
+  return expireOnly
+    ? sql`${medicines.id} = ${medicineCharges.medicineId}
+          AND ${medicineCharges.expiryDate} IS NOT NULL
+          AND ${medicineCharges.expiryAlertDays} IS NOT NULL
+          AND (${medicineCharges.expiryDate}::DATE - CURRENT_DATE) <= ${medicineCharges.expiryAlertDays}`
+    : sql`${medicines.id} = ${medicineCharges.medicineId}
+          AND (${medicineCharges.expiryDate} IS NULL OR ${medicineCharges.expiryDate}::DATE >= CURRENT_DATE)`;
 }
 export const getMedicineListQuery = async ({
   page = 0,
@@ -226,17 +222,17 @@ export const getMedicineListQuery = async ({
 
   const joinCharges = needsChargeJoin(sortModel, filterModel, expiredOnly);
   const columnMap = joinCharges ? fullColumnMap : baseColumnMap;
-  
-  const searchFields = joinCharges 
+
+  const searchFields = joinCharges
     ? [medicines.name, medicineCharges.storageLocation]
     : [medicines.name];
 
   const whereCondition = buildWhere(columnMap, filterModel, searchFields);
-  
+  const chargeCondition = expireOnlyCondition(expiredOnly);
+
   const baseConditions = [
     eq(medicines.siteId, userSiteId),
     whereCondition,
-    expiredOnly ? buildExpiryCondition() : undefined,
   ].filter((x): x is SQL => Boolean(x));
 
   const orderBy = buildOrderBy(columnMap, sortModel, medicines.id);
@@ -248,10 +244,7 @@ export const getMedicineListQuery = async ({
     .$dynamic();
 
   if (joinCharges) {
-    idsQuery = idsQuery.leftJoin(
-      medicineCharges,
-      eq(medicines.id, medicineCharges.medicineId),
-    );
+    idsQuery = idsQuery.leftJoin(medicineCharges, chargeCondition);
   }
 
   const idsResult = await idsQuery
@@ -259,9 +252,8 @@ export const getMedicineListQuery = async ({
     .orderBy(orderBy)
     .limit(pageSize)
     .offset(page * pageSize);
-
   const idList = idsResult.map((x) => x.id);
-  
+
   if (!idList.length) {
     // محاسبه تعداد کل
     let totalCountQuery = db
@@ -269,7 +261,10 @@ export const getMedicineListQuery = async ({
       .from(medicines)
       .$dynamic();
 
-    if (joinCharges && (filterModel.items.length > 0 || filterModel.quickFilterValues?.length)) {
+    if (
+      joinCharges &&
+      (filterModel.items.length > 0 || filterModel.quickFilterValues?.length)
+    ) {
       totalCountQuery = totalCountQuery.leftJoin(
         medicineCharges,
         eq(medicines.id, medicineCharges.medicineId),
@@ -282,8 +277,6 @@ export const getMedicineListQuery = async ({
 
     return { rows: [], total: totalCount };
   }
-
-  // دریافت داده‌های کامل
   const flatRows = await db
     .select({
       id: medicines.id,
@@ -301,7 +294,7 @@ export const getMedicineListQuery = async ({
       notes: medicineCharges.notes,
     })
     .from(medicines)
-    .leftJoin(medicineCharges, eq(medicines.id, medicineCharges.medicineId))
+    .leftJoin(medicineCharges, chargeCondition) // اعمال شرط جدید
     .where(inArray(medicines.id, idList))
     .orderBy(orderBy);
 
@@ -314,7 +307,7 @@ export const getMedicineListQuery = async ({
   if (joinCharges) {
     totalCountQuery = totalCountQuery.leftJoin(
       medicineCharges,
-      eq(medicines.id, medicineCharges.medicineId),
+      chargeCondition,
     );
   }
 
@@ -335,7 +328,7 @@ export const getMedicineListQuery = async ({
         charges: [],
       });
     }
-    
+
     if (row.chargeId) {
       acc.get(row.id).charges.push({
         id: row.chargeId,
@@ -347,16 +340,14 @@ export const getMedicineListQuery = async ({
         notes: row.notes,
       });
     }
-    
+
     return acc;
   }, new Map<number, any>());
 
-  const rows = idList
-    .map(id => groupedData.get(id))
-    .filter(Boolean);
+  const rows = idList.map((id) => groupedData.get(id)).filter(Boolean);
 
-  return { 
-    rows, 
-    total 
+  return {
+    rows,
+    total,
   };
 };
