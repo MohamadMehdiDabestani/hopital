@@ -1,11 +1,11 @@
 "use client";
 import { Fragment } from "react";
-import { NewPatient } from "./newPatient";
+import { NewPatientForm } from "./newPatient";
 import { ReceptionTable } from "./patientTable";
 export const AdmisionQueue = () => {
   return (
     <Fragment>
-      <NewPatient />
+      <NewPatientForm />
       <ReceptionTable />
     </Fragment>
   );
