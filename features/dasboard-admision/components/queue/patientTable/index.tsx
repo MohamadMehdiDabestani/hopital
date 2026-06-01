@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { tehranTimezone } from "@/features/core";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { statusColor, statusFa } from "@/features/dasboard-admision/const";
 import { makeSuspendAction } from "@/features/dasboard-admision/actions";
 import { useVisitsRealtime } from "@/features/core/hooks/useVisitsRealtime";
@@ -70,6 +70,7 @@ export const ReceptionTable = () => {
   const [rows, dispatch] = useReducer(rowsReducer, []);
 
   const { data, isLoading } = useSWR("/api/dashboard/admision/queue");
+  const { mutate: globalMutate } = useSWRConfig();
 
   useEffect(() => {
     if (data) {
@@ -79,8 +80,12 @@ export const ReceptionTable = () => {
   const handleRealtimeChange = useCallback((payload: any) => {
     if (payload?.op === "UPDATE") {
       dispatch({ type: "UPDATE", payload });
+      if (payload.status == "reciveMedicine" || payload.status == "treat")
+        globalMutate("/api/dashboard/admision/doctorSelectList");
     } else if (payload?.op === "INSERT") {
       dispatch({ type: "ADD", payload });
+      if (payload.status == "waiting")
+        globalMutate("/api/dashboard/admision/doctorSelectList");
     }
   }, []);
   useVisitsRealtime({
