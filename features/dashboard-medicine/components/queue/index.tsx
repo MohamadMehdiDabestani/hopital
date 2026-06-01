@@ -13,9 +13,10 @@ import {
   TableSortLabel,
 } from "@mui/material";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { tehranTimezone } from "@/features/core";
 import { MedicineDialog } from "./medicineDialog";
+import { useVisitsRealtime } from "@/features/core/hooks/useVisitsRealtime";
 
 type ReceptionRow = {
   id: number;
@@ -53,32 +54,23 @@ export const DashboardMedicineQueue = ({ list }: Props) => {
   useEffect(() => {
     setRowMap(new Map(list.map((r) => [r.id, r])));
   }, [list]);
-
-  useEffect(() => {
-    const es = new EventSource("/api/dashboard/admision/streamQueue");
-
-    es.onmessage = (e) => {
-      try {
-        const payload = JSON.parse(e.data);
-
-        setRowMap((prev) => {
-          const next = new Map(prev);
-          if (payload.status == "suspended") {
-            next.delete(payload.id);
-            return next;
-          } else if (payload.status == "reciveMedicine") {
-            next.set(payload.id, payload);
-          }
-
-          return next;
-        });
-      } catch (err) {
-        console.error("SSE parse error:", err);
-      }
-    };
-
-    return () => es.close();
+  const handleRealtimeChange = useCallback((payload: any) => {
+    setRowMap((prev) => {
+      const next = new Map(prev);
+      if (payload.status == "suspended" || payload.status == "finish")
+        next.delete(payload.id);
+      else if (payload.status == "reciveMedicine")
+        next.set(payload.id, payload);
+      return next;
+    });
   }, []);
+  // for auto change if list is empty
+  useVisitsRealtime({
+    enabled: true,
+    onConnected: () => console.log("realtime connected"),
+    onDisconnected: () => console.log("realtime disconnected"),
+    onChange: handleRealtimeChange,
+  });
 
   const compare = (a: ReceptionRow, b: ReceptionRow) => {
     const aVal = a[orderBy];

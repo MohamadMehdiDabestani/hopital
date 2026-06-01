@@ -18,7 +18,7 @@ import { tehranTimezone } from "@/features/core";
 import useSWR from "swr";
 import { statusColor, statusFa } from "@/features/dasboard-admision/const";
 import { makeSuspendAction } from "@/features/dasboard-admision/actions";
-import { useVisitsRealtime } from "@/features/dasboard-admision/hooks/useVisitsRealtime";
+import { useVisitsRealtime } from "@/features/core/hooks/useVisitsRealtime";
 
 type ReceptionRow = {
   id: number;
