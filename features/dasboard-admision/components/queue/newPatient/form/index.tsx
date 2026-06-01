@@ -79,6 +79,7 @@ export const NewPatientForm = () => {
           autoHighlight
           loading={isLoading}
           options={selectList}
+          getOptionKey={(option) => option.id}
           value={
             selectList.find(
               (d) => String(d.id) === String(formik.values.doctorId),
