@@ -62,7 +62,10 @@ const normalize = (v: string | null | number) => {
   if (v === null) return -Infinity;
   return typeof v === "string" ? new Date(v).getTime() : v;
 };
-
+function jitteredMutate(mutateFn: () => void, baseDelay = 500) {
+  const jitter = Math.random() * baseDelay;
+  setTimeout(mutateFn, jitter);
+}
 export const ReceptionTable = () => {
   const [query, setQuery] = useState("");
   const [orderBy, setOrderBy] = useState<SortKey>("receptionTime");
@@ -81,11 +84,15 @@ export const ReceptionTable = () => {
     if (payload?.op === "UPDATE") {
       dispatch({ type: "UPDATE", payload });
       if (payload.status == "reciveMedicine" || payload.status == "treat")
-        globalMutate("/api/dashboard/admision/doctorSelectList");
+        jitteredMutate(() =>
+          globalMutate("/api/dashboard/admision/doctorSelectList"),
+        );
     } else if (payload?.op === "INSERT") {
       dispatch({ type: "ADD", payload });
       if (payload.status == "waiting")
-        globalMutate("/api/dashboard/admision/doctorSelectList");
+        jitteredMutate(() =>
+          globalMutate("/api/dashboard/admision/doctorSelectList"),
+        );
     }
   }, []);
   useVisitsRealtime({
