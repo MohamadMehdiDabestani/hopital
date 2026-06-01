@@ -1,0 +1,19 @@
+stages:
+  - sync
+
+sync_master_to_publish:
+  stage: sync
+  image: alpine:latest
+  only:
+    - master
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "ci@gitlab.local"
+    - git remote set-url origin "https://oauth2:${PUBLISH_CI}@hamgit.ir/mohammadmehdidabestani/hospital.git"
+    - git fetch origin
+  script:
+    - git checkout publish || git checkout -b publish origin/publish
+    - git pull origin publish
+    - 'git merge origin/master --no-ff -m "chore(sync): merge master into publish [skip ci]"'
+    - git push origin publish
