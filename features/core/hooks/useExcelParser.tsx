@@ -1,122 +1,163 @@
 "use client";
-import { useState } from "react";
-import * as XLSX from "xlsx";
+
+import { useState, useCallback, useMemo, useRef } from "react";
 import { ExcelParserOptions, ParsedRow } from "../type";
 
-export const useExcelParser = <T = Record<string, any>,>(
-  options: ExcelParserOptions<T>,
-) => {
-  const { headerMap, schema, transformRow } = options;
+interface UseExcelParserReturn<T> {
+  parsedData: ParsedRow<T>[];
+  loading: boolean;
+  error: string | null;
+  parseFile: (file: File) => Promise<void>;
+  updateRow: (rowId: string, field: string, value: unknown) => void;
+  toggleRowSelection: (rowId: string) => void;
+  toggleSelectAll: () => void;
+  setError: (error: string | null) => void;
+  selectedCount: number;
+  validCount: number;
+}
 
+export function useExcelParser<T = Record<string, unknown>>({
+  headerMap,
+  schema,
+  transformRow,
+}: ExcelParserOptions<T>): UseExcelParserReturn<T> {
   const [parsedData, setParsedData] = useState<ParsedRow<T>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  // ── Validation ──────────────────────────────────────────────────────────
 
-  const validateRow = (
-    rawData: Record<string, any>,
-  ): Pick<ParsedRow<T>, "data" | "isValid" | "validationError"> => {
-    const transformed = transformRow ? transformRow(rawData) : rawData;
-    const result = schema.safeParse(transformed);
+  const validateRow = useCallback(
+    (
+      rawData: Record<string, unknown>,
+    ): Omit<ParsedRow<T>, "id" | "selected"> => {
+      const transformed = transformRow
+        ? transformRow(rawData)
+        : (rawData as Record<string, T>);
+      const result = schema.safeParse(transformed);
 
-    if (result.success) {
-      return { data: result.data, isValid: true, validationError: "" };
-    }
-
-    return {
-      data: transformed as T,
-      isValid: false,
-      validationError: result.error.issues.map((e) => e.message).join(" | "),
-    };
-  };
-
-  // ── Parse File ───────────────────────────────────────────────────────────
-
-  const parseFile = async (file: File) => {
-    setLoading(true);
-    setError(null);
-    setParsedData([]);
-
-    try {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, {
-        type: "array",
-        cellText: false,
-        cellDates: true,
-        raw: false,
-      });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-
-      const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        defval: "",
-        raw: false,
-      });
-
-      if (jsonData.length < 2) {
-        throw new Error("فایل اکسل خالی است یا فرمت صحیحی ندارد");
+      if (result.success) {
+        return { data: result.data, isValid: true, validationError: "" };
       }
 
-      const headerRow = jsonData[0] as string[];
-      const mappedHeaders = headerRow.map((h) => headerMap[h?.trim()] ?? h);
+      return {
+        data: transformed as T,
+        isValid: false,
+        validationError: result.error.issues
+          .map((issue) => issue.message)
+          .join(" | "),
+      };
+    },
+    [schema, transformRow],
+  );
 
-      const dataRows = jsonData
-        .slice(1)
-        .filter((row) =>
-          row.some(
-            (cell) => cell !== "" && cell !== null && cell !== undefined,
-          ),
+  // ── Excel Parsing ───────────────────────────────────────────────────────
+  const parseFile = useCallback(
+    async (file: File) => {
+      setLoading(true);
+      setError(null);
+      setParsedData([]);
+
+      // terminate worker قبلی اگه هنوز داره کار می‌کنه
+      workerRef.current?.terminate();
+
+      const buffer = await file.arrayBuffer();
+
+      await new Promise<void>((resolve) => {
+        const worker = new Worker(
+          new URL("../worker/excelParser.worker.ts", import.meta.url),
+          { type: "module" },
         );
+        workerRef.current = worker;
 
-      const rows: ParsedRow<T>[] = dataRows.map((row, index) => {
-        const rawData: Record<string, any> = {};
-        mappedHeaders.forEach((header, i) => {
-          if (header) rawData[header] = row[i] ?? "";
-        });
+        worker.onmessage = (e: MessageEvent) => {
+          const result = e.data;
 
-        const { data, isValid, validationError } = validateRow(rawData);
+          if (!result.success) {
+            setError(result.error);
+            worker.terminate();
+            workerRef.current = null;
+            setLoading(false);
+            resolve();
+            return;
+          }
 
-        return {
-          id: `row-${index}`,
-          selected: isValid,
-          data,
-          isValid,
-          validationError,
+          const allRows: ParsedRow<T>[] = result.rows.map(
+            ({
+              id,
+              rawData,
+            }: {
+              id: string;
+              rawData: Record<string, unknown>;
+            }) => {
+              const validation = validateRow(rawData);
+              return { id, selected: validation.isValid, ...validation };
+            },
+          );
+
+          worker.terminate();
+          workerRef.current = null;
+
+          // ── Chunked Rendering ──────────────────────────────────────────────
+          const CHUNK_SIZE = 100;
+          let index = 0;
+
+          const addChunk = () => {
+            const end = Math.min(index + CHUNK_SIZE, allRows.length);
+            setParsedData(allRows.slice(0, end));
+            index = end;
+            if (index < allRows.length) {
+              requestAnimationFrame(addChunk);
+            } else {
+              setLoading(false);
+              resolve();
+            }
+          };
+
+          addChunk();
         };
+
+        worker.onerror = (err) => {
+          console.error("❌ Worker error:", err);
+          setError("خطا در پردازش فایل");
+          worker.terminate();
+          workerRef.current = null;
+          setLoading(false);
+          resolve();
+        };
+
+        // buffer رو با transfer منتقل می‌کنیم تا کپی نشه (zero-copy)
+        worker.postMessage({ buffer, headerMap }, [buffer]);
       });
+    },
+    [headerMap, validateRow],
+  );
 
-      setParsedData(rows);
-    } catch (err) {
-      console.error("❌ Error reading file:", err);
-      setError(err instanceof Error ? err.message : "خطا در خواندن فایل");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ── Row Updates ─────────────────────────────────────────────────────────
 
-  // ── Update Row ───────────────────────────────────────────────────────────
+  const updateRow = useCallback(
+    (rowId: string, field: string, value: unknown) => {
+      setParsedData((prev) =>
+        prev.map((row) => {
+          if (row.id !== rowId) return row;
 
-  const updateRow = (rowId: string, field: string, value: any) => {
-    setParsedData((prev) =>
-      prev.map((row) => {
-        if (row.id !== rowId) return row;
+          const mergedData = { ...row.data, [field]: value };
+          const validation = validateRow(mergedData);
 
-        const { data, isValid, validationError } = validateRow({
-          ...row.data,
-          [field]: value,
-        });
+          return {
+            ...row,
+            selected: validation.isValid,
+            ...validation,
+          };
+        }),
+      );
+    },
+    [validateRow],
+  );
 
-        return {
-          ...row,
-          data,
-          isValid,
-          validationError,
-        };
-      }),
-    );
-  };
+  // ── Selection Helpers ───────────────────────────────────────────────────
 
-  // ── Selection Helpers ────────────────────────────────────────────────────
-  const toggleRowSelection = (rowId: string) => {
+  const toggleRowSelection = useCallback((rowId: string) => {
     setParsedData((prev) =>
       prev.map((row) => {
         if (row.id !== rowId) return row;
@@ -124,19 +165,35 @@ export const useExcelParser = <T = Record<string, any>,>(
         return { ...row, selected: !row.selected };
       }),
     );
-  };
-  const toggleSelectAll = () => {
-    const validRows = parsedData.filter((row) => row.isValid);
-    const allValidSelected =
-      validRows.length > 0 && validRows.every((row) => row.selected);
+  }, []);
 
-    setParsedData((prev) =>
-      prev.map((row) => {
-        if (!row.isValid) return { ...row, selected: false }; 
+  const toggleSelectAll = useCallback(() => {
+    setParsedData((prev) => {
+      const validRows = prev.filter((row) => row.isValid);
+      const allValidSelected =
+        validRows.length > 0 && validRows.every((row) => row.selected);
+
+      return prev.map((row) => {
+        if (!row.isValid) return { ...row, selected: false };
         return { ...row, selected: !allValidSelected };
-      }),
-    );
-  };
+      });
+    });
+  }, []);
+
+  // ── Derived State ───────────────────────────────────────────────────────
+
+  const validCount = useMemo(
+    () => parsedData.filter((row) => row.isValid).length,
+    [parsedData],
+  );
+
+  const selectedCount = useMemo(
+    () => parsedData.filter((row) => row.selected).length,
+    [parsedData],
+  );
+
+  // ── Return ──────────────────────────────────────────────────────────────
+
   return {
     parsedData,
     loading,
@@ -146,5 +203,7 @@ export const useExcelParser = <T = Record<string, any>,>(
     toggleRowSelection,
     toggleSelectAll,
     setError,
+    selectedCount,
+    validCount,
   };
-};
+}
