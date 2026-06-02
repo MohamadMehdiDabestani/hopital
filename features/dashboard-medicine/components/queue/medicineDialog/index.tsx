@@ -35,7 +35,7 @@ type ApiResult = {
   medicineId: number;
   medicineName: string;
   charges: {
-    id: number;
+    chargeId: number;
     expiryDate: string;
     quantity: number;
     storageLocation: string;
@@ -76,11 +76,12 @@ export const MedicineDialog = ({
   useEffect(() => {
     if (!open || !data) return;
     if (data.ok) {
+      console.log("SETTING", data.data);
       formik.setFieldValue(
         "medicines",
         data.data.map((m) => ({
           medicineId: m.medicineId,
-          chargeId: m.charges[0]?.id ?? 0,
+          chargeId: m.charges[0]?.chargeId ?? 0,
           count: 1,
           quantity: m.charges[0]?.quantity ?? 0,
         })),
@@ -117,6 +118,7 @@ export const MedicineDialog = ({
                   medicineId: med.medicineId,
                   chargeId: 0,
                   count: 1,
+                  quantity: med.charges[0]?.quantity ?? 0,
                 };
                 const chargeTouched = (formik.touched.medicines?.[i] as any)
                   ?.chargeId;
@@ -140,11 +142,18 @@ export const MedicineDialog = ({
                         name={`medicines[${i}].chargeId`}
                         value={row.chargeId}
                         onChange={(e) => {
+                          const selectedChargeId = Number(e.target.value);
+                          const selectedCharge = med.charges.find(
+                            (c) => c.chargeId === selectedChargeId,
+                          );
                           formik.setFieldValue(
                             `medicines[${i}].chargeId`,
-                            Number(e.target.value),
+                            selectedChargeId,
                           );
-                            formik.setFieldValue(`medicines[${i}].quantity`, row.quantity)
+                          formik.setFieldValue(
+                            `medicines[${i}].quantity`,
+                            selectedCharge?.quantity ?? 0,
+                          );
                         }}
                         onBlur={formik.handleBlur}
                         error={Boolean(chargeTouched && chargeError)}
@@ -155,7 +164,7 @@ export const MedicineDialog = ({
                         }
                       >
                         {med.charges.map((c) => (
-                          <MenuItem key={c.id} value={c.id}>
+                          <MenuItem key={c.chargeId} value={c.chargeId}>
                             {c.quantity} - exp: {c.expiryDate}
                           </MenuItem>
                         ))}

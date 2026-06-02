@@ -20,6 +20,6 @@ export const medicineCharges = pgTable("medicine_charges", {
   storageLocation: varchar("storageLocation", { length: 100 }),
   expiryAlertDays: integer("expiryAlertDays").default(30).notNull(),
   notes: text("notes"),
-  suspended : boolean("suspended"),
+  suspended : boolean("suspended").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

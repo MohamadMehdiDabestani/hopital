@@ -2,7 +2,7 @@ import "server-only";
 import { MedicineAddFormValues } from "../schemas/dashboard-medicineAdd.schema";
 import { db } from "@/features/core/drizzle/client";
 import { medicines } from "../schemas/medicine.drizzle";
-import { and, eq, gte, inArray, SQL, sql } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, SQL, sql } from "drizzle-orm";
 import { ActionResult, buildOrderBy, buildWhere } from "@/features/core";
 import { DashboardMedicineAddCharges } from "../schemas/dashboard-medicineAddCharges.schema";
 import { medicineCharges } from "../schemas/charges.drizzle";
@@ -125,34 +125,62 @@ export const updateVisitToMedicineQuery = async (
     }
   });
 };
-
 export const getVisitMedicinesQuery = async (visitId: number) => {
-  const data = await db
+  const rows = await db
     .select({
-      visitId: visitToMedicine.visitId,
       medicineId: visitToMedicine.medicineId,
       medicineName: medicines.name,
-      charges: sql`
-      json_agg(
-        json_build_object(
-          'id', ${medicineCharges.id},
-          'expiryDate', ${medicineCharges.expiryDate},
-          'quantity', ${medicineCharges.quantity},
-          'storageLocation', ${medicineCharges.storageLocation}
-        )
-      )
-    `.as("charges"),
+      chargeId: medicineCharges.id,
+      quantity: medicineCharges.quantity,
+      expiryDate: medicineCharges.expiryDate,
+      storageLocation: medicineCharges.storageLocation,
     })
     .from(visitToMedicine)
     .leftJoin(medicines, eq(visitToMedicine.medicineId, medicines.id))
-    .leftJoin(medicineCharges, eq(medicineCharges.medicineId, medicines.id))
-    .where(eq(visitToMedicine.visitId, visitId))
-    .groupBy(
-      visitToMedicine.visitId,
-      visitToMedicine.medicineId,
-      medicines.name,
-    );
-  return data;
+    .leftJoin(
+      medicineCharges,
+      and(
+        eq(medicineCharges.medicineId, medicines.id),
+        eq(medicineCharges.suspended, false),
+        gt(medicineCharges.expiryDate, sql`NOW()`),
+      ),
+    )
+    .where(eq(visitToMedicine.visitId, visitId));
+
+  // گروه‌بندی در کد
+  const map = new Map<
+    number,
+    {
+      medicineId: number;
+      medicineName: string;
+      charges: {
+        chargeId: number;
+        quantity: number;
+        expiryDate: Date;
+        storageLocation: string;
+      }[];
+    }
+  >();
+
+  for (const row of rows) {
+    if (!map.has(row.medicineId!)) {
+      map.set(row.medicineId!, {
+        medicineId: row.medicineId!,
+        medicineName: row.medicineName!,
+        charges: [],
+      });
+    }
+    if (row.chargeId) {
+      map.get(row.medicineId!)!.charges.push({
+        chargeId: row.chargeId,
+        quantity: row.quantity!,
+        expiryDate: row.expiryDate!,
+        storageLocation: row.storageLocation!,
+      });
+    }
+  }
+
+  return [...map.values()];
 };
 
 const baseColumnMap = {
@@ -244,7 +272,11 @@ export const getMedicineListQuery = async ({
     .$dynamic();
 
   if (joinCharges) {
-    idsQuery = idsQuery.leftJoin(medicineCharges, chargeCondition);
+    if (expiredOnly) {
+      idsQuery = idsQuery.innerJoin(medicineCharges, chargeCondition);
+    } else {
+      idsQuery = idsQuery.leftJoin(medicineCharges, chargeCondition);
+    }
   }
 
   const idsResult = await idsQuery
@@ -294,7 +326,7 @@ export const getMedicineListQuery = async ({
       notes: medicineCharges.notes,
     })
     .from(medicines)
-    .leftJoin(medicineCharges, chargeCondition) // اعمال شرط جدید
+    [expiredOnly ? "innerJoin" : "leftJoin"](medicineCharges, chargeCondition)
     .where(inArray(medicines.id, idList))
     .orderBy(orderBy);
 
@@ -305,12 +337,18 @@ export const getMedicineListQuery = async ({
     .$dynamic();
 
   if (joinCharges) {
-    totalCountQuery = totalCountQuery.leftJoin(
-      medicineCharges,
-      chargeCondition,
-    );
+    if (expiredOnly) {
+      totalCountQuery = totalCountQuery.innerJoin(
+        medicineCharges,
+        chargeCondition,
+      );
+    } else {
+      totalCountQuery = totalCountQuery.leftJoin(
+        medicineCharges,
+        chargeCondition,
+      );
+    }
   }
-
   const total = await totalCountQuery
     .where(and(...baseConditions))
     .then((r) => r[0]?.count ?? 0);
