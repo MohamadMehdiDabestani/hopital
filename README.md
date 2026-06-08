@@ -68,7 +68,11 @@ In hospital environments where the application often runs on a **Local Area Netw
    git clone https://github.com/yourusername/nexhealth.git
    cd nexhealth
    npm install
-   
+   ```
+2. **Required env:**
+   DATABASE_URL="postgresql://user:password@localhost:5432/dbName"
+   JWT_SECRET="your_ultra_secure_secret"
+   NEXT_PUBLIC_SUBSCRIBE_METHOD="sse" | "socketio"
 
 
 # [published website](http://hospital.runflare.run/)
