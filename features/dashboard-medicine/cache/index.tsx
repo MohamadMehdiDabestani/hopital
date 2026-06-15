@@ -14,7 +14,7 @@ const getCachedMedicineList = (siteId: number) =>
           id: medicines.id,
           name: medicines.name,
           form: medicines.form,
-          isActive  : medicines.isActive,
+          isActive: medicines.isActive,
         })
         .from(medicines)
         .where(and(eq(medicines.siteId, siteId), eq(medicines.isActive, true)))

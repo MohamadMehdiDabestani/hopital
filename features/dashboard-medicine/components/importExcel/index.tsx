@@ -8,10 +8,12 @@ import {
   CircularProgress,
   ToggleButtonGroup,
   ToggleButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { FileUploader } from "./fileUpload";
 import { MedicineTable } from "./medicineTable";
-import { useExcelParser , useRowFilters , FilterControls } from "@/features/core";
+import { useExcelParser, useRowFilters, FilterControls } from "@/features/core";
 import { useImportMedicines } from "@/features/dashboard-medicine/hooks/useImportExcel";
 import { useNotificationStore } from "@/features/core";
 import { useRouter } from "next/navigation";
@@ -54,6 +56,10 @@ export const MedicineImportExcel = () => {
     showValidUnselected,
     setShowValidUnselected,
     pinRow,
+    runWrongNamesCheck,
+    setShowOnlyWrongNames,
+    showOnlyWrongNames,
+    medicinesLoading
   } = useRowFilters(parsedData);
 
   const {
@@ -86,7 +92,7 @@ export const MedicineImportExcel = () => {
   return (
     <Box sx={{ p: 3 }}>
       <FileUploader loading={loading} onFileSelect={parseFile} />
-
+      
       {(parseError || importError) && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {parseError || importError}
@@ -102,7 +108,21 @@ export const MedicineImportExcel = () => {
             showOnlyErrors={showOnlyErrors}
             onToggleEmpty={setShowOnlyEmpty}
             onToggleErrors={setShowOnlyErrors}
-          />
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showOnlyWrongNames}
+                  onChange={(e) => {
+                    if (e.target.checked) runWrongNamesCheck();
+                    else setShowOnlyWrongNames(e.target.checked);
+                  }}
+                />
+              }
+              disabled={medicinesLoading}
+              label="نمایش ردیف های مشکوک به خطای املایی"
+            />
+          </FilterControls>
           <ToggleButtonGroup
             value={dateTimeTrigger}
             color="info"

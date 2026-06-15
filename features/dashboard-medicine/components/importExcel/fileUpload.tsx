@@ -16,7 +16,6 @@ export const FileUploader = ({ loading, onFileSelect }: FileUploaderProps) => {
     // برای اینکه اگر همان فایل دوباره انتخاب شد، onChange دوباره اجرا شود:
     e.target.value = "";
   };
-  console.log(loading)
   return (
     <>
       <input
