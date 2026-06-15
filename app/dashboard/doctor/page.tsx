@@ -1,5 +1,5 @@
 import { DoctorPatient } from "@/features/dashboard-doctor";
-import { getMedicineListCache, getTestListCache } from "@/features/dashboard-doctor/cache";
+import { getMedicineListCache, getTestListCache } from "@/features/dashboard-medicine/cache";
 import { redirect } from "next/navigation";
 
 export default async function DasoboardAdmisionPage() {
