@@ -51,7 +51,6 @@ export const LoginForm = () => {
       }}
     >
       <Container maxWidth="xs">
-
         <Paper
           elevation={3}
           sx={{
@@ -94,8 +93,13 @@ export const LoginForm = () => {
               helperText={formik.touched.phone && formik.errors.phone}
               fullWidth
               slotProps={{
-                htmlInput: { maxLength: 11, inputMode: "numeric" },
+                htmlInput: {
+                  "data-testid": "phone",
+                  maxLength: 11,
+                  inputMode: "numeric",
+                },
               }}
+              // data-testid="phone"
             />
 
             <TextField
@@ -110,9 +114,15 @@ export const LoginForm = () => {
               helperText={formik.touched.password && formik.errors.password}
               fullWidth
               slotProps={{
+                htmlInput: {
+                  "data-testid": "password",
+                },
                 input: {
                   endAdornment: (
-                    <InputAdornment position="end">
+                    <InputAdornment
+                      position="end"
+                      data-testid="toggle-password"
+                    >
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
@@ -131,6 +141,10 @@ export const LoginForm = () => {
               size="large"
               loading={loading}
               sx={{ py: 1.2, fontWeight: "bold", fontSize: "1.1rem" }}
+              aria-label={
+                showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
+              }
+              data-testid="login-submit"
             >
               ورود
             </Button>
