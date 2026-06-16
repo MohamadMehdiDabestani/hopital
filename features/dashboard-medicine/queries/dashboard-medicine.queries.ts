@@ -389,12 +389,3 @@ export const getMedicineListQuery = async ({
     total,
   };
 };
-
-export async function justMedicineNames(siteId: number) {
-  const namesArray = await db
-    .select({ name: medicines.name })
-    .from(medicines)
-    .where(eq(medicines.siteId, siteId))
-    .then((rows) => rows.map((r) => r.name));
-  return namesArray;
-}
