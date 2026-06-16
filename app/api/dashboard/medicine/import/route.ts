@@ -9,6 +9,7 @@ import { medicineCharges } from "@/features/dashboard-medicine/schemas/charges.d
 import dayjs from "@/features/core/utils/dayjs";
 import { z } from "zod";
 import { parseDate } from "@/features/core";
+import { revalidateTag, updateTag } from "next/cache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
         }
       }
     });
-
+    updateTag(`medicines-site-${siteId}`)
     return NextResponse.json({
       message: "ایمپورت با موفقیت انجام شد",
       importedCount: validRows.length,
