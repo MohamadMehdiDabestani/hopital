@@ -3,16 +3,33 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ImportExcelParsedRow } from "../type";
 import levenshtein from "fast-levenshtein";
 import useSWR from "swr";
+import { WorkerPool } from "../utils/workerPool";
+import {
+  LevenshteinResult,
+  LevenshteinTask,
+} from "../worker/excelFilter.worker";
+let workerPool: WorkerPool | null = null;
+function getWorkerPool() {
+  if (!workerPool) {
+    workerPool = new WorkerPool(
+      () =>
+        new Worker(new URL("../worker/excelFilter.worker.ts", import.meta.url)),
+    );
+  }
+  return workerPool;
+}
+const SPELL_METHOD = process.env.NEXT_PUBLIC_SPELL_METHOD as
+  | "locale"
+  | "openai";
 type WrongNameItem = {
   rowId: string;
   input: string;
   suggestion: string;
 };
+
 export function parseMedicine(text: string) {
   const normalized = normalizePersian(text);
-
   const doseRegex = /(\d+(\.\d+)?)\s?(mg|ml|mcg|میلی ?گرم|میلی ?لیتر|گرم)?/i;
-
   const match = normalized.match(doseRegex);
 
   let doseValue = null;
@@ -24,13 +41,9 @@ export function parseMedicine(text: string) {
   }
 
   const name = normalized.replace(doseRegex, "").trim();
-
-  return {
-    name,
-    doseValue,
-    doseUnit,
-  };
+  return { name, doseValue, doseUnit };
 }
+
 export function normalizePersian(text: string) {
   return text
     .replace(/[يى]/g, "ی")
@@ -40,6 +53,7 @@ export function normalizePersian(text: string) {
     .trim()
     .toLowerCase();
 }
+
 export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
   const [showOnlyEmpty, setShowOnlyEmpty] = useState(false);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
@@ -49,6 +63,8 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
   const autoRunAfterFetchRef = useRef(false);
   const [showOnlyWrongNames, setShowOnlyWrongNames] = useState(false);
   const [wrongNames, setWrongNames] = useState<WrongNameItem[]>([]);
+  const [isCheckingNames, setIsCheckingNames] = useState(false);
+
   const handleToggleErrors = (val: boolean) => {
     setShowOnlyErrors(val);
     if (!val) setPinnedRowIds(new Set());
@@ -81,14 +97,77 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
       new Set(dbMedicinesRaw.map((m) => normalizePersian(m)).filter(Boolean)),
     );
   }, [dbMedicinesRaw]);
-  // IF YOU WANT TO USE OPENAI API CHECKOUT /api/medicine/spellcheck BUT BECAUSE OF COSTS AND API INDEPENDENCE I PREFRE TO USE THIS METHOD
-  const calculateWrongNames = useCallback(() => {
+
+  // --- locale method ---
+  const calculateWrongNamesLocale = useCallback(async () => {
+    if (!dbMedicines || dbMedicines.length === 0) {
+      setWrongNames([]);
+      return;
+    }
+
+    // آماده‌سازی candidates
+    const candidates: Array<{
+      rowId: string;
+      inputRaw: string;
+      inputName: string;
+      compactInput: string;
+    }> = [];
+
+    for (const row of rows) {
+      const inputRaw = row?.data?.name || "";
+      const parsed = parseMedicine(inputRaw);
+      const inputName = normalizePersian(parsed.name);
+
+      if (!inputName || dbMedicines.includes(inputName)) continue;
+
+      candidates.push({
+        rowId: row.id,
+        inputRaw,
+        inputName,
+        compactInput: inputName.replace(/\s/g, ""),
+      });
+    }
+
+    if (candidates.length === 0) {
+      setWrongNames([]);
+      return;
+    }
+
+    // تقسیم به chunk‌ها
+    const pool = getWorkerPool();
+    const chunkSize = Math.ceil(
+      candidates.length / (navigator.hardwareConcurrency || 4),
+    );
+    const chunks: (typeof candidates)[] = [];
+
+    for (let i = 0; i < candidates.length; i += chunkSize) {
+      chunks.push(candidates.slice(i, i + chunkSize));
+    }
+
+    // اجرای موازی
+    const promises = chunks.map((chunk) =>
+      pool.execute<LevenshteinTask, LevenshteinResult[]>({
+        candidates: chunk,
+        dbMedicines,
+      }),
+    );
+
+    const results = await Promise.all(promises);
+    const merged = results.flat();
+
+    setWrongNames(merged);
+    setShowOnlyWrongNames(true);
+  }, [rows, dbMedicines]);
+
+  // --- openai method ---
+  const calculateWrongNamesOpenAI = useCallback(async () => {
     if (!dbMedicines.length) {
       setWrongNames([]);
       return;
     }
 
-    const result: WrongNameItem[] = [];
+    const candidates: { rowId: string; inputRaw: string; inputName: string }[] =
+      [];
 
     for (const row of rows) {
       const inputRaw = row?.data?.name || "";
@@ -98,31 +177,59 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
       if (!inputName) continue;
       if (dbMedicines.includes(inputName)) continue;
 
-      let bestMatch: string | null = null;
-      let bestDistance = Infinity;
+      candidates.push({ rowId: row.id, inputRaw, inputName });
+    }
 
-      const compactInput = inputName.replace(/\s/g, "");
+    if (!candidates.length) {
+      setWrongNames([]);
+      return;
+    }
 
-      for (const med of dbMedicines) {
-        const dist = levenshtein.get(compactInput, med.replace(/\s/g, ""));
-        if (dist < bestDistance) {
-          bestDistance = dist;
-          bestMatch = med;
+    const uniqueNames = [...new Set(candidates.map((c) => c.inputName))];
+
+    setIsCheckingNames(true);
+    try {
+      const res = await fetch("/api/dashboard/medicine/spellchunk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ names: uniqueNames, dbMedicines }),
+      });
+
+      const { results } = (await res.json()) as {
+        results: { index: number; suggestion: string | null }[];
+      };
+
+      const suggestionMap = new Map<string, string>();
+      for (const r of results) {
+        if (r.suggestion) {
+          const name = uniqueNames[r.index - 1];
+          if (name) suggestionMap.set(name, r.suggestion);
         }
       }
 
-      if (bestDistance <= 3 && bestMatch) {
-        result.push({
-          rowId: row.id,
-          input: inputRaw,
-          suggestion: bestMatch,
-        });
-      }
+      const result: WrongNameItem[] = candidates
+        .filter((c) => suggestionMap.has(c.inputName))
+        .map((c) => ({
+          rowId: c.rowId,
+          input: c.inputRaw,
+          suggestion: suggestionMap.get(c.inputName)!,
+        }));
+
+      setWrongNames(result);
+      setShowOnlyWrongNames(true);
+    } finally {
+      setIsCheckingNames(false);
     }
-    setWrongNames(result);
-    setShowOnlyWrongNames(true);
   }, [rows, dbMedicines]);
-  const runWrongNamesCheck = useCallback(() => {
+
+  // --- dispatcher ---
+  const calculateWrongNames = useCallback(async () => {
+    const method = (SPELL_METHOD || "").trim().toLowerCase();
+    if (method === "openai") await calculateWrongNamesOpenAI();
+    else calculateWrongNamesLocale();
+  }, [calculateWrongNamesLocale, calculateWrongNamesOpenAI]);
+
+  const runWrongNamesCheck = useCallback(async () => {
     if (!shouldFetchWrongNames) {
       autoRunAfterFetchRef.current = true;
       setShouldFetchWrongNames(true);
@@ -131,8 +238,7 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
 
     if (medicinesLoading) return;
 
-    calculateWrongNames();
-    setShowOnlyWrongNames(true);
+    await calculateWrongNames();
   }, [shouldFetchWrongNames, medicinesLoading, calculateWrongNames]);
 
   useEffect(() => {
@@ -143,7 +249,6 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
 
     autoRunAfterFetchRef.current = false;
     calculateWrongNames();
-    setShowOnlyWrongNames(true);
   }, [
     shouldFetchWrongNames,
     medicinesLoading,
@@ -202,7 +307,7 @@ export const useRowFilters = (rows: ImportExcelParsedRow[]) => {
     setShowValidUnselected,
     pinRow,
     runWrongNamesCheck,
-    medicinesLoading,
+    medicinesLoading: medicinesLoading || isCheckingNames,
     setShowOnlyWrongNames,
     showOnlyWrongNames,
   };

@@ -59,7 +59,7 @@ export const MedicineImportExcel = () => {
     runWrongNamesCheck,
     setShowOnlyWrongNames,
     showOnlyWrongNames,
-    medicinesLoading
+    medicinesLoading,
   } = useRowFilters(parsedData);
 
   const {
@@ -92,7 +92,7 @@ export const MedicineImportExcel = () => {
   return (
     <Box sx={{ p: 3 }}>
       <FileUploader loading={loading} onFileSelect={parseFile} />
-      
+
       {(parseError || importError) && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {parseError || importError}
@@ -114,8 +114,9 @@ export const MedicineImportExcel = () => {
                 <Checkbox
                   checked={showOnlyWrongNames}
                   onChange={(e) => {
-                    if (e.target.checked) runWrongNamesCheck();
-                    else setShowOnlyWrongNames(e.target.checked);
+                    const checked = e.target.checked;
+                    setShowOnlyWrongNames(checked);
+                    if (checked) runWrongNamesCheck();
                   }}
                 />
               }
@@ -155,7 +156,7 @@ export const MedicineImportExcel = () => {
             variant="contained"
             color="primary"
             onClick={handleImport}
-            disabled={importing || selectedValidCount === 0}
+            disabled={importing || selectedValidCount === 0 || medicinesLoading}
             sx={{ mt: 2 }}
           >
             {importing ? (
