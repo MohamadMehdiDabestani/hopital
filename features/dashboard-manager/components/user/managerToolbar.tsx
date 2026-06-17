@@ -44,7 +44,7 @@ export const ManagerToolbar = ({
     >
       <GridToolbar {...props} />
       <Divider orientation="vertical" />
-      <Button variant="contained" sx={{ ml: 2, mr: 2 }} onClick={onAddUser}>
+      <Button data-testid="openUserDialog"  variant="contained" sx={{ ml: 2, mr: 2 }} onClick={onAddUser}>
         افزودن کاربر جدید
       </Button>
       <Divider orientation="vertical" />

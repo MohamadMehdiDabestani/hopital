@@ -70,7 +70,13 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
     }
   }, [open, row]);
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog
+      data-testid="userDialog"
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>{row ? "ویرایش کاربر" : "افزودن کاربر"}</DialogTitle>
 
       <Box component="form" onSubmit={formik.handleSubmit} noValidate>
@@ -87,6 +93,11 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
               }
               helperText={formik.touched.firstName && formik.errors.firstName}
               fullWidth
+              slotProps={{
+                htmlInput: {
+                  "data-testid": "firstName",
+                },
+              }}
             />
 
             <TextField
@@ -98,6 +109,11 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
               error={formik.touched.lastName && Boolean(formik.errors.lastName)}
               helperText={formik.touched.lastName && formik.errors.lastName}
               fullWidth
+              slotProps={{
+                htmlInput: {
+                  "data-testid": "lastName",
+                },
+              }}
             />
 
             <TextField
@@ -108,12 +124,13 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
               onBlur={formik.handleBlur}
               error={formik.touched.codeMeli && Boolean(formik.errors.codeMeli)}
               helperText={formik.touched.codeMeli && formik.errors.codeMeli}
+              fullWidth
               slotProps={{
                 htmlInput: {
                   maxLength: 10,
+                  "data-testid": "codeMeli",
                 },
               }}
-              fullWidth
             />
 
             <TextField
@@ -124,12 +141,13 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
               onBlur={formik.handleBlur}
               error={formik.touched.phone && Boolean(formik.errors.phone)}
               helperText={formik.touched.phone && formik.errors.phone}
+              fullWidth
               slotProps={{
                 htmlInput: {
                   maxLength: 11,
+                  "data-testid": "phone",
                 },
               }}
-              fullWidth
             />
 
             <FormControl
@@ -144,6 +162,7 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
                 value={formik.values.role}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
+                data-testid="role"
               >
                 <MenuItem value="manager">مدیر</MenuItem>
                 <MenuItem value="doctor">دکتر</MenuItem>
@@ -172,15 +191,20 @@ export const UserDialog = ({ open, onClose, row, onSaved }: Props) => {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose} color="inherit">
+          <Button onClick={onClose} color="inherit" data-testid="closeDialogButton">
             انصراف
           </Button>
           {row ? (
-            <Button type="submit" color="warning" variant="contained" loading={loading}>
+            <Button
+              type="submit"
+              color="warning"
+              variant="contained"
+              loading={loading}
+            >
               ویرایش
             </Button>
           ) : (
-            <Button type="submit" variant="contained" loading={loading}>
+            <Button type="submit" variant="contained" loading={loading} data-testid="saveUserButton">
               افزودن
             </Button>
           )}

@@ -1,4 +1,3 @@
-
 export default function LoginPage() {
-  return <p>login</p>
+  return <p></p>;
 }

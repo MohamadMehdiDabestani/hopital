@@ -103,6 +103,7 @@ export const createManagerColumns = ({
                 size="small"
                 onClick={(e) => onOpenResetMenu(e, params.row as UserRow)}
                 disabled={isResetting}
+                data-testid={`openReset${params.row.id}`}
               >
                 {isResetting ? (
                   <CircularProgress size={20} color="error" />
