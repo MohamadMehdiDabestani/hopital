@@ -9,7 +9,7 @@
     "lint": "eslint",
     "plop": "tsx node_modules/plop/bin/plop.js",
     "test": "npx playwright test",
-    "test:watch": "jest --watch",
+    "test:report": "npx playwright show-report",
     "db:generate": "drizzle-kit generate --config ./features/core/drizzle/drizzle.config.ts",
     "db:push": "drizzle-kit push --config ./features/core/drizzle/drizzle.config.ts",
     "db:migrate": "tsx ./features/core/drizzle/migrate.ts",

@@ -21,13 +21,19 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
   const [open, setOpen] = useState(false);
   const [row, setRow] = useState<UserRow | undefined>(undefined);
 
-  const [resetMenuAnchor, setResetMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedUserForReset, setSelectedUserForReset] = useState<UserRow | null>(null);
+  const [resetMenuAnchor, setResetMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
+  const [selectedUserForReset, setSelectedUserForReset] =
+    useState<UserRow | null>(null);
 
   const { show } = useNotificationStore();
-  const [resetPasswordLoadingId, setResetPasswordLoadingId] = useState<number | null>(null);
+  const [resetPasswordLoadingId, setResetPasswordLoadingId] = useState<
+    number | null
+  >(null);
 
-  const [dateTimeTrigger, setDateTimeTrigger] = useState<DateTimeTrigger>("shamsi");
+  const [dateTimeTrigger, setDateTimeTrigger] =
+    useState<DateTimeTrigger>("shamsi");
 
   const {
     data,
@@ -102,7 +108,12 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
         // onResetPassword: resetPassword,
         onOpenResetMenu: handleOpenResetMenu,
       }),
-    [dateTimeTrigger, resetPasswordLoadingId, resetPassword, handleOpenResetMenu],
+    [
+      dateTimeTrigger,
+      resetPasswordLoadingId,
+      resetPassword,
+      handleOpenResetMenu,
+    ],
   );
 
   return (
@@ -115,6 +126,7 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
       />
 
       <Menu
+        data-testid="resetMenu"
         anchorEl={resetMenuAnchor}
         open={Boolean(resetMenuAnchor)}
         onClose={handleCloseResetMenu}
@@ -122,7 +134,10 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
         <MenuItem onClick={() => handleSelectResetMode("random")}>
           رمز عبور تصادفی
         </MenuItem>
-        <MenuItem onClick={() => handleSelectResetMode("codeMeli")}>
+        <MenuItem
+          onClick={() => handleSelectResetMode("codeMeli")}
+          data-testid="resetCodeMeli"
+        >
           رمز عبور بر اساس کد ملی
         </MenuItem>
       </Menu>
@@ -151,6 +166,9 @@ export const UsersList = ({ initialData }: { initialData: any }) => {
           disableColumnFilter
           showToolbar
           slotProps={{
+            main: {
+              "data-testid": "usersGrid",
+            },
             columnsManagement: {
               getTogglableColumns: (columns) =>
                 columns

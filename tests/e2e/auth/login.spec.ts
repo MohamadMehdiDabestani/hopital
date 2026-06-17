@@ -79,7 +79,7 @@ test.describe("Login Page - Complete E2E", () => {
   });
 
   test("shows error notification when login fails", async ({ page }) => {
-    await page.getByTestId("phone").fill("09122222222");
+    await page.getByTestId("phone").fill("09135333333");
     await page.getByTestId("password").fill("wrongpassword");
 
     await page.getByTestId("login-submit").click();

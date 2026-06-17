@@ -15,12 +15,24 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
+    projects: [
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
+      name: "chromium",
+      use: {
+        storageState: "playwright/.auth/user.json",
+      },
+      dependencies: ["setup"],
+    },
+  ],
   use: {
     baseURL: "http://localhost:3000",
-    trace: "off",
+    trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    // channel: "chrome",
   },
 
   webServer: {
@@ -28,12 +40,4 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
-  // use: {
-  // },
-  // projects: [
-  //   {
-  //     name: "chromium",
-  //     use: { ...devices["Desktop Chrome"] },
-  //   },
-  // ],
 });

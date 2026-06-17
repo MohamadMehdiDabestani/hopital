@@ -66,3 +66,4 @@ main().catch((err) => {
 // manager :
 // phone : phone : 0913537705 - 5569235741
 // doctor : phone : 09135377506 - 123456789
+// e2e test user : doctor : phone : 09111111111 - 1122334455
