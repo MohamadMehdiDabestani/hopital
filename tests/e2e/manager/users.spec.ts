@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import * as XLSX from "xlsx";
 
 test.describe("Manager Page - Complete E2E", () => {
   test.beforeEach(async ({ page }) => {
@@ -48,7 +49,9 @@ test.describe("Manager Page - Complete E2E", () => {
 
     await page.getByTestId("saveUserButton").click();
 
-    await expect(page.getByText("شماره موبایل باید دقیقاً 11 رقم باشد")).toBeVisible();
+    await expect(
+      page.getByText("شماره موبایل باید دقیقاً 11 رقم باشد"),
+    ).toBeVisible();
   });
 
   test("validation for code meli", async ({ page }) => {
@@ -62,7 +65,9 @@ test.describe("Manager Page - Complete E2E", () => {
 
     await page.getByTestId("saveUserButton").click();
 
-    await expect(page.getByText("کد ملی باید دقیقاً 10 رقم باشد")).toBeVisible();
+    await expect(
+      page.getByText("کد ملی باید دقیقاً 10 رقم باشد"),
+    ).toBeVisible();
   });
 
   test("create user successfully", async ({ page }) => {
@@ -72,18 +77,13 @@ test.describe("Manager Page - Complete E2E", () => {
     await page.getByTestId("lastName").fill("تست");
     await page.getByTestId("codeMeli").fill("1234567890");
     await page.getByTestId("phone").fill("09123456789");
-  // باز کردن select
-  await page.getByTestId("role").click();
 
-  // صبر برای باز شدن listbox
-  const listbox = page.getByRole("listbox");
-  await expect(listbox).toBeVisible();
-
-  // انتخاب گزینه
-  await listbox.getByText("دکتر").click();
+    await page.getByTestId("role").click();
+    const listbox = page.getByRole("listbox");
+    await expect(listbox).toBeVisible();
+    await listbox.getByText("دکتر").click();
 
     await page.getByTestId("saveUserButton").click();
-
     await expect(page.getByTestId("userDialog")).not.toBeVisible();
   });
 
@@ -131,5 +131,27 @@ test.describe("Manager Page - Complete E2E", () => {
 
       await page.getByTestId("resetCodeMeli").click();
     }
+  });
+
+  test("exports users to excel", async ({ page }) => {
+    await page.goto("/dashboard/manager");
+
+    const downloadPromise = page.waitForEvent("download");
+
+    await page.getByRole("button", { name: "خروجی اکسل" }).click();
+
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toBe("users.xlsx");
+
+    const path = await download.path();
+
+    const workbook = XLSX.readFile(path!);
+
+    const sheet = workbook.Sheets["Users"];
+
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    expect(data.length).toBeGreaterThan(0);
   });
 });
